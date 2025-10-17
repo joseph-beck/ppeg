@@ -1,0 +1,64 @@
+stages:
+  - check
+  - build
+  - test
+
+.rust:
+  before_script:
+    - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    - export PATH=$HOME/.cargo/bin:$PATH
+    - rustup --version
+    - rustc --version
+    - cargo --version
+
+.sonar:
+  before_script:
+    - export SONAR_SCANNER_VERSION=7.2.0.5079
+    - export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux-x64
+    - curl --create-dirs -sSLo $HOME/.sonar/sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux-x64.zip
+    - unzip -o $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
+    - export PATH=$SONAR_SCANNER_HOME/bin:$PATH
+
+check:sonar:
+  extends: .sonar
+  stage: check
+  script:
+    - sonar-scanner
+
+check:clippy:
+  extends: .rust
+  stage: check
+  script:
+    - rustup component add clippy
+    - "cargo clippy
+      --color always
+      --verbose
+      --all-targets
+      --all-features"
+
+check:fmt:
+  extends: .rust
+  stage: check
+  script:
+    - rustup component add rustfmt
+    - "cargo fmt
+      --check
+      --verbose"
+
+build:build:
+  extends: .rust
+  stage: build
+  script:
+    - "cargo build
+      --color always
+      --verbose"
+
+test:test:
+  extends: .rust
+  stage: test
+  script:
+    - "cargo test
+      --color always
+      --verbose
+      --all-features
+      --all-targets"
