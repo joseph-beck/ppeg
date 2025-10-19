@@ -1,3 +1,4 @@
+pub mod cst;
 pub mod error;
 pub mod grammar;
 pub mod parser;
