@@ -2,31 +2,37 @@ use crate::error::ParserError;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
+  /// Matches one and another occurrences of an expression.
+  /// Expression for `EE'`. ?
+  OneAndOne,
+  /// Matches one and another occurrences of an expression.
+  /// Expression for `E|E'`. ?
+  OneOrOne,
   /// Matches zero or more occurrences of the expression.
   /// Expression for `E*`.
   ZeroOrMore,
 }
 
-pub struct Rule {
+pub struct Rule<'a> {
   /// Name of the rule.
   pub name: String,
   /// Expression matching used to parse this rule.
   pub expression: Expression,
   /// String value used to match against this rule.
-  pub value: String,
+  pub value: &'a str,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Parser {
+pub struct Parser<'a> {
   /// Input string to be parsed.
-  input: String,
+  input: &'a str,
   /// Current position in the input string.
   position: usize,
 }
 
-impl Parser {
+impl<'a> Parser<'a> {
   /// Creates a new instance of the parser with the given input string.
-  pub fn new(input: String) -> Self {
+  pub fn new(input: &'a str) -> Self {
     Parser { input, position: 0 }
   }
 
@@ -36,11 +42,19 @@ impl Parser {
   }
 
   /// Returns the substring of the input from the current position to the end.
-  pub fn current(&self) -> String {
-    self.input[self.position..].to_string()
+  pub fn current(&self) -> &'a str {
+    &self.input[self.position..]
   }
 
-  pub fn zero_or_more(&self, rule: Rule) -> Result<(), ParserError> {
+  pub fn one_and_one(&self, _rule: Rule) -> Result<(), ParserError<'a>> {
+    Ok(())
+  }
+
+  pub fn one_or_one(&self, _rule: Rule) -> Result<(), ParserError<'a>> {
+    Ok(())
+  }
+
+  pub fn zero_or_more(&self, rule: Rule) -> Result<(), ParserError<'a>> {
     match self.current() == rule.value {
       true => Ok(()),
       false => Err(ParserError::FailedToMatch {
@@ -52,10 +66,10 @@ impl Parser {
   }
 }
 
-impl Default for Parser {
+impl<'a> Default for Parser<'a> {
   /// Creates a default parser with an empty input string.
   fn default() -> Self {
-    Parser::new(String::new())
+    Parser::new("")
   }
 }
 
@@ -65,11 +79,11 @@ mod tests {
 
   #[test]
   fn test_parser_new() {
-    let parser = Parser::new(String::new());
+    let parser = Parser::new("");
     assert_eq!(
       parser,
       Parser {
-        input: String::new(),
+        input: "",
         position: 0
       }
     );
@@ -78,29 +92,29 @@ mod tests {
   #[test]
   fn test_parser_default() {
     let parser = Parser::default();
-    assert_eq!(parser, Parser::new(String::new()));
+    assert_eq!(parser, Parser::new(""));
   }
 
   #[test]
   fn test_parser_advance() {
-    let mut parser = Parser::new("abc".to_string());
+    let mut parser = Parser::new("abc");
     parser.advance(2);
     assert_eq!(parser.position, 2);
   }
 
   #[test]
   fn test_parser_current() {
-    let parser = Parser::new("abc".to_string());
-    assert_eq!(parser.current(), "abc".to_string());
+    let parser = Parser::new("abc");
+    assert_eq!(parser.current(), "abc");
   }
 
   #[test]
   fn test_parser_zero_or_more_match() {
-    let parser = Parser::new("a".to_string());
+    let parser = Parser::new("a");
     let rule = Rule {
       name: "test_rule".to_string(),
       expression: Expression::ZeroOrMore,
-      value: "a".to_string(),
+      value: "a",
     };
     let result = parser.zero_or_more(rule);
     assert_eq!(result, Ok(()));
@@ -108,18 +122,18 @@ mod tests {
 
   #[test]
   fn test_parser_zero_or_more_no_match() {
-    let parser = Parser::new("a".to_string());
+    let parser = Parser::new("a");
     let rule = Rule {
       name: "test_rule".to_string(),
       expression: Expression::ZeroOrMore,
-      value: "b".to_string(),
+      value: "b",
     };
     let result = parser.zero_or_more(rule);
     assert_eq!(
       result,
       Err(ParserError::FailedToMatch {
         position: 0,
-        input: "a".to_string(),
+        input: "a",
         expression: Expression::ZeroOrMore,
       })
     );
