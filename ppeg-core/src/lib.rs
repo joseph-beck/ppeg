@@ -1,19 +1,15 @@
 pub mod cst;
 pub mod error;
 pub mod grammar;
+pub mod input;
 pub mod parser;
 
-pub fn add(left: u64, right: u64) -> u64 {
-  left + right
-}
+pub trait ParserInput<'a> {
+  type Item;
 
-#[cfg(test)]
-mod tests {
-  use super::*;
+  fn current(&self) -> Option<Self::Item>;
 
-  #[test]
-  fn it_works() {
-    let result = add(2, 2);
-    assert_eq!(result, 4);
-  }
+  fn length(&self) -> usize;
+
+  fn remaining(&self) -> usize;
 }
