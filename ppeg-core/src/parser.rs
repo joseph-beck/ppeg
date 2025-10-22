@@ -43,14 +43,56 @@ impl<'a> Parser<'a> {
 
   /// Returns the substring of the input from the current position to the end.
   pub fn current(&self) -> &'a str {
-    &self.input[self.position..]
+    &self.input[self.position..self.position + 1]
   }
 
-  pub fn one_and_one(&self, _rule_one: Rule, _rule_two: Rule) -> Result<(), ParserError<'a>> {
-    Ok(())
+  /// Returns the total length of the input string.
+  pub fn length(&self) -> usize {
+    self.input.len()
+  }
+
+  /// Returns whether the input string is empty.
+  pub fn empty(&self) -> bool {
+    self.input.is_empty()
+  }
+
+  pub fn one_and_one(&mut self, rule_one: Rule, rule_two: Rule) -> Result<(), ParserError<'a>> {
+    if self.empty() {
+      return Err(ParserError::EndOfInput {
+        position: self.position,
+        input: None,
+      });
+    }
+
+    match self.current() == rule_one.value {
+      true => {
+        self.advance(1);
+
+        match self.current() == rule_two.value {
+          true => Ok(()),
+          false => Err(ParserError::FailedToMatch {
+            position: self.position,
+            input: self.current(),
+            expression: rule_two.expression,
+          }),
+        }
+      }
+      false => Err(ParserError::FailedToMatch {
+        position: self.position,
+        input: self.current(),
+        expression: rule_one.expression,
+      }),
+    }
   }
 
   pub fn one_or_one(&self, rule_one: Rule, rule_two: Rule) -> Result<(), ParserError<'a>> {
+    if self.empty() {
+      return Err(ParserError::EndOfInput {
+        position: self.position,
+        input: None,
+      });
+    }
+
     match self.current() == rule_one.value {
       true => Ok(()),
       false => match self.current() == rule_two.value {
@@ -65,14 +107,27 @@ impl<'a> Parser<'a> {
   }
 
   pub fn zero_or_more(&self, rule: Rule) -> Result<(), ParserError<'a>> {
-    match self.current() == rule.value {
-      true => Ok(()),
-      false => Err(ParserError::FailedToMatch {
+    if self.empty() {
+      return Err(ParserError::EndOfInput {
         position: self.position,
-        input: self.current(),
-        expression: rule.expression,
-      }),
+        input: None,
+      });
     }
+
+    for i in self.position..self.length() {
+      match self.current() == rule.value {
+        true => continue,
+        false => {
+          return Err(ParserError::FailedToMatch {
+            position: i,
+            input: self.current(),
+            expression: rule.expression,
+          });
+        }
+      }
+    }
+
+    Ok(())
   }
 }
 
@@ -115,7 +170,124 @@ mod tests {
   #[test]
   fn test_parser_current() {
     let parser = Parser::new("abc");
-    assert_eq!(parser.current(), "abc");
+    assert_eq!(parser.current(), "a");
+  }
+
+  #[test]
+  fn test_parser_length() {
+    let parser = Parser::new("abc");
+    assert_eq!(parser.length(), 3);
+  }
+
+  #[test]
+  fn test_parser_empty_not_empty() {
+    let parser = Parser::new("ab");
+    assert!(!parser.empty());
+  }
+
+  #[test]
+  fn test_parser_empty_empty() {
+    let parser = Parser::new("");
+    assert!(parser.empty());
+  }
+
+  #[test]
+  fn test_parser_one_and_one_no_match_first_value() {
+    let mut parser = Parser::new("ba");
+    let rule_one = Rule {
+      name: "rule_one".to_string(),
+      expression: Expression::OneAndOne,
+      value: "a",
+    };
+    let rule_two = Rule {
+      name: "rule_two".to_string(),
+      expression: Expression::OneAndOne,
+      value: "b",
+    };
+
+    let result = parser.one_and_one(rule_one, rule_two);
+    assert_eq!(
+      result,
+      Err(ParserError::FailedToMatch {
+        position: 0,
+        input: "b",
+        expression: Expression::OneAndOne,
+      })
+    );
+  }
+
+  #[test]
+  fn test_parser_one_and_one_no_match_last_value() {
+    let mut parser = Parser::new("aa");
+    let rule_one = Rule {
+      name: "rule_one".to_string(),
+      expression: Expression::OneAndOne,
+      value: "a",
+    };
+    let rule_two = Rule {
+      name: "rule_two".to_string(),
+      expression: Expression::OneAndOne,
+      value: "b",
+    };
+
+    let result = parser.one_and_one(rule_one, rule_two);
+    assert_eq!(
+      result,
+      Err(ParserError::FailedToMatch {
+        position: 1,
+        input: "a",
+        expression: Expression::OneAndOne,
+      })
+    );
+  }
+
+  #[test]
+  fn test_parser_one_and_one_no_match() {
+    let mut parser = Parser::new("ac");
+    let rule_one = Rule {
+      name: "rule_one".to_string(),
+      expression: Expression::OneAndOne,
+      value: "a",
+    };
+    let rule_two = Rule {
+      name: "rule_two".to_string(),
+      expression: Expression::OneAndOne,
+      value: "b",
+    };
+
+    let result = parser.one_and_one(rule_one, rule_two);
+    assert_eq!(
+      result,
+      Err(ParserError::FailedToMatch {
+        position: 1,
+        input: "c",
+        expression: Expression::OneAndOne,
+      })
+    );
+  }
+
+  #[test]
+  fn test_parser_one_and_one_empty_input() {
+    let mut parser = Parser::new("");
+    let rule_one = Rule {
+      name: "rule_one".to_string(),
+      expression: Expression::OneAndOne,
+      value: "a",
+    };
+    let rule_two = Rule {
+      name: "rule_two".to_string(),
+      expression: Expression::OneAndOne,
+      value: "b",
+    };
+
+    let result = parser.one_and_one(rule_one, rule_two);
+    assert_eq!(
+      result,
+      Err(ParserError::EndOfInput {
+        position: 0,
+        input: None,
+      })
+    );
   }
 
   #[test]
@@ -155,6 +327,30 @@ mod tests {
   }
 
   #[test]
+  fn test_parser_one_or_one_empty_input() {
+    let parser = Parser::new("");
+    let rule_one = Rule {
+      name: "rule_one".to_string(),
+      expression: Expression::OneOrOne,
+      value: "a",
+    };
+    let rule_two = Rule {
+      name: "rule_two".to_string(),
+      expression: Expression::OneOrOne,
+      value: "b",
+    };
+
+    let result = parser.one_or_one(rule_one, rule_two);
+    assert_eq!(
+      result,
+      Err(ParserError::EndOfInput {
+        position: 0,
+        input: None,
+      })
+    );
+  }
+
+  #[test]
   fn test_parser_one_or_one_no_match() {
     let parser = Parser::new("c");
     let rule_one = Rule {
@@ -180,7 +376,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parser_zero_or_more_match() {
+  fn test_parser_zero_or_more_match_one() {
     let parser = Parser::new("a");
     let rule = Rule {
       name: "test_rule".to_string(),
@@ -190,6 +386,38 @@ mod tests {
 
     let result = parser.zero_or_more(rule);
     assert_eq!(result, Ok(()));
+  }
+
+  #[test]
+  fn test_parser_zero_or_more_match_two() {
+    let parser = Parser::new("aaa");
+    let rule = Rule {
+      name: "test_rule".to_string(),
+      expression: Expression::ZeroOrMore,
+      value: "a",
+    };
+
+    let result = parser.zero_or_more(rule);
+    assert_eq!(result, Ok(()));
+  }
+
+  #[test]
+  fn test_parser_zero_or_more_empty_input() {
+    let parser = Parser::new("");
+    let rule = Rule {
+      name: "test_rule".to_string(),
+      expression: Expression::ZeroOrMore,
+      value: "a",
+    };
+
+    let result = parser.zero_or_more(rule);
+    assert_eq!(
+      result,
+      Err(ParserError::EndOfInput {
+        position: 0,
+        input: None,
+      })
+    );
   }
 
   #[test]

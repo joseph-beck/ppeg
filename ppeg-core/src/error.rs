@@ -9,5 +9,8 @@ pub enum ParserError<'a> {
     expression: Expression,
   },
   /// Occurs when trying to consume when at the end of the input.
-  EndOfInput { position: usize, input: &'a str },
+  EndOfInput {
+    position: usize,
+    input: Option<&'a str>,
+  },
 }
