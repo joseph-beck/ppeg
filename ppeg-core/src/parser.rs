@@ -106,7 +106,7 @@ impl<'a> Parser<'a> {
     }
   }
 
-  pub fn zero_or_more(&self, rule: Rule) -> Result<(), ParserError<'a>> {
+  pub fn zero_or_more(&mut self, rule: Rule) -> Result<(), ParserError<'a>> {
     if self.empty() {
       return Err(ParserError::EndOfInput {
         position: self.position,
@@ -116,7 +116,9 @@ impl<'a> Parser<'a> {
 
     for i in self.position..self.length() {
       match self.current() == rule.value {
-        true => continue,
+        true => {
+          self.advance(1);
+        }
         false => {
           return Err(ParserError::FailedToMatch {
             position: i,
@@ -377,7 +379,7 @@ mod tests {
 
   #[test]
   fn test_parser_zero_or_more_match_one() {
-    let parser = Parser::new("a");
+    let mut parser = Parser::new("a");
     let rule = Rule {
       name: "test_rule".to_string(),
       expression: Expression::ZeroOrMore,
@@ -390,7 +392,7 @@ mod tests {
 
   #[test]
   fn test_parser_zero_or_more_match_two() {
-    let parser = Parser::new("aaa");
+    let mut parser = Parser::new("aaa");
     let rule = Rule {
       name: "test_rule".to_string(),
       expression: Expression::ZeroOrMore,
@@ -403,7 +405,7 @@ mod tests {
 
   #[test]
   fn test_parser_zero_or_more_empty_input() {
-    let parser = Parser::new("");
+    let mut parser = Parser::new("");
     let rule = Rule {
       name: "test_rule".to_string(),
       expression: Expression::ZeroOrMore,
@@ -421,8 +423,8 @@ mod tests {
   }
 
   #[test]
-  fn test_parser_zero_or_more_no_match() {
-    let parser = Parser::new("a");
+  fn test_parser_zero_or_more_no_match_one() {
+    let mut parser = Parser::new("a");
     let rule = Rule {
       name: "test_rule".to_string(),
       expression: Expression::ZeroOrMore,
@@ -435,6 +437,26 @@ mod tests {
       Err(ParserError::FailedToMatch {
         position: 0,
         input: "a",
+        expression: Expression::ZeroOrMore,
+      })
+    );
+  }
+
+  #[test]
+  fn test_parser_zero_or_more_no_match_two() {
+    let mut parser = Parser::new("abc");
+    let rule = Rule {
+      name: "test_rule".to_string(),
+      expression: Expression::ZeroOrMore,
+      value: "a",
+    };
+
+    let result = parser.zero_or_more(rule);
+    assert_eq!(
+      result,
+      Err(ParserError::FailedToMatch {
+        position: 1,
+        input: "b",
         expression: Expression::ZeroOrMore,
       })
     );
