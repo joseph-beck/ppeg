@@ -50,6 +50,12 @@ impl Grammars<'_> {
   }
 }
 
+impl Default for Grammars<'_> {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 impl std::fmt::Debug for Grammars<'_> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     write!(f, "Grammars: {:?}", self.grammars)
@@ -153,17 +159,6 @@ impl<'a> Parser<'a> {
         }
         Some(Rule::ZeroOrMore) => {
           outputs.push(Output::new(self.zero_or_more(), Rule::ZeroOrMore));
-          self.advance(1);
-        }
-        None => {
-          outputs.push(Output::new(
-            Err(ParserError::FailedToMatch {
-              position: self.position,
-              input: self.current(),
-              rule: Rule::Error,
-            }),
-            Rule::Error,
-          ));
           self.advance(1);
         }
         _ => {
