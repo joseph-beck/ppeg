@@ -22,7 +22,11 @@ pub enum Rule {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Grammar<'a> {
+  /// How the grammar is matched and represented.
+  /// For example "A".
   value: &'a str,
+  /// Rule that applies to this grammar.
+  /// For example Rule::OneAndOne.
   rule: Rule,
 }
 
@@ -34,6 +38,7 @@ impl<'a> Grammar<'a> {
 
 #[derive(Clone, PartialEq)]
 pub struct Grammars<'a> {
+  /// Mapping of grammar values to their corresponding rules.
   grammars: HashMap<&'a str, Rule>,
 }
 
@@ -52,10 +57,13 @@ impl std::fmt::Debug for Grammars<'_> {
 }
 
 impl<'a> Grammars<'a> {
+  /// Inserts a new grammar into the grammars lookup table.
+  /// Breaks down the grammar into its value and rule components.
   pub fn insert(&mut self, grammar: Grammar<'a>) {
     self.grammars.insert(grammar.value, grammar.rule);
   }
 
+  /// Gets the rule associated with the given grammar value.
   pub fn get(&self, value: &str) -> Option<Rule> {
     self.grammars.get(value).cloned()
   }
@@ -63,7 +71,10 @@ impl<'a> Grammars<'a> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Output<'a> {
+  /// Output result of parsing.
+  /// Ok if successful, Err with ParserError if failed.
   pub result: Result<&'a str, ParserError<'a>>,
+  /// Rule that was applied to produce this output.
   pub rule: Rule,
 }
 
@@ -113,6 +124,7 @@ impl<'a> Parser<'a> {
     self.input.is_empty() || self.position >= self.length()
   }
 
+  /// Evaluates the input string against the defined grammars and produces a vec of outputs.
   pub fn evaluate(&mut self) -> Result<Vec<Output<'a>>, ParserError<'a>> {
     if self.empty() {
       return Err(ParserError::EndOfInput {
