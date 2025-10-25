@@ -1,4 +1,4 @@
-use crate::parser::Expression;
+use crate::parser::Rule;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ParserError<'a> {
@@ -6,7 +6,7 @@ pub enum ParserError<'a> {
   FailedToMatch {
     position: usize,
     input: &'a str,
-    expression: Expression,
+    rule: Rule,
   },
   /// Occurs when trying to consume when at the end of the input.
   EndOfInput {
