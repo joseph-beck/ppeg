@@ -79,13 +79,13 @@ impl<'a> Grammars<'a> {
 pub struct Output<'a> {
   /// Output result of parsing.
   /// Ok if successful, Err with ParserError if failed.
-  pub result: Result<&'a str, ParserError<'a>>,
+  pub result: Result<Vec<&'a str>, ParserError<'a>>,
   /// Rule that was applied to produce this output.
   pub rule: Rule,
 }
 
 impl<'a> Output<'a> {
-  pub fn new(result: Result<&'a str, ParserError<'a>>, rule: Rule) -> Self {
+  pub fn new(result: Result<Vec<&'a str>, ParserError<'a>>, rule: Rule) -> Self {
     Output { result, rule }
   }
 }
@@ -126,13 +126,13 @@ impl<'a> Parser<'a> {
   }
 
   /// Returns whether the input string is empty.
-  pub fn empty(&self) -> bool {
+  pub fn is_empty(&self) -> bool {
     self.input.is_empty() || self.position >= self.length()
   }
 
   /// Judges, evaluates, the input string against the defined grammars and produces a vec of outputs.
   pub fn judge(&mut self) -> Result<Vec<Output<'a>>, ParserError<'a>> {
-    if self.empty() {
+    if self.is_empty() {
       return Err(ParserError::EndOfInput {
         position: self.position,
         input: None,
@@ -141,25 +141,22 @@ impl<'a> Parser<'a> {
 
     let mut outputs = Vec::new();
 
-    while !self.empty() {
+    while !self.is_empty() {
       let rule = self.grammars.get(self.current());
 
       match rule {
         Some(Rule::Empty) => {
-          outputs.push(Output::new(Ok(""), Rule::Empty));
+          outputs.push(Output::new(Ok(vec![self.current()]), Rule::Empty));
           self.advance(1);
         }
         Some(Rule::OneAndOne) => {
           outputs.push(Output::new(self.one_and_one(), Rule::OneAndOne));
-          self.advance(1);
         }
         Some(Rule::OneOrOne) => {
           outputs.push(Output::new(self.one_or_one(), Rule::OneOrOne));
-          self.advance(1);
         }
         Some(Rule::ZeroOrMore) => {
           outputs.push(Output::new(self.zero_or_more(), Rule::ZeroOrMore));
-          self.advance(1);
         }
         _ => {
           outputs.push(Output::new(
@@ -178,19 +175,25 @@ impl<'a> Parser<'a> {
     Ok(outputs)
   }
 
-  pub fn one_and_one(&mut self) -> Result<&'a str, ParserError<'a>> {
+  pub fn one_and_one(&mut self) -> Result<Vec<&'a str>, ParserError<'a>> {
     // here we can do some logic later.
-    Ok(self.current())
+    let current = self.current();
+    self.advance(1);
+    Ok(vec![current])
   }
 
-  pub fn one_or_one(&self) -> Result<&'a str, ParserError<'a>> {
+  pub fn one_or_one(&mut self) -> Result<Vec<&'a str>, ParserError<'a>> {
     // here we can do some logic later.
-    Ok(self.current())
+    let current = self.current();
+    self.advance(1);
+    Ok(vec![current])
   }
 
-  pub fn zero_or_more(&mut self) -> Result<&'a str, ParserError<'a>> {
+  pub fn zero_or_more(&mut self) -> Result<Vec<&'a str>, ParserError<'a>> {
     // here we can do some logic later.
-    Ok(self.current())
+    let current = self.current();
+    self.advance(1);
+    Ok(vec![current])
   }
 }
 
@@ -262,21 +265,21 @@ mod tests {
   #[test]
   fn test_parser_empty_not_empty() {
     let parser = Parser::new("ab", 0, Grammars::new());
-    assert!(!parser.empty());
+    assert!(!parser.is_empty());
   }
 
   #[test]
   fn test_parser_empty_empty_no_input() {
     let parser = Parser::new("", 0, Grammars::new());
-    assert!(parser.empty());
+    assert!(parser.is_empty());
   }
 
   #[test]
   fn test_parser_empty_empty_input() {
     let mut parser = Parser::new("a", 0, Grammars::new());
-    assert!(!parser.empty());
+    assert!(!parser.is_empty());
     parser.advance(1);
-    assert!(parser.empty());
+    assert!(parser.is_empty());
   }
 
   #[test]
@@ -303,8 +306,8 @@ mod tests {
     assert_eq!(
       result,
       Ok(vec![
-        Output::new(Ok("a"), Rule::OneAndOne),
-        Output::new(Ok("a"), Rule::OneAndOne)
+        Output::new(Ok(vec!["a"]), Rule::OneAndOne),
+        Output::new(Ok(vec!["a"]), Rule::OneAndOne)
       ])
     );
   }
@@ -317,7 +320,7 @@ mod tests {
     let mut parser = Parser::new("a", 0, grammars);
 
     let result = parser.judge();
-    assert_eq!(result, Ok(vec![Output::new(Ok("a"), Rule::OneOrOne)]));
+    assert_eq!(result, Ok(vec![Output::new(Ok(vec!["a"]), Rule::OneOrOne)]));
   }
 
   #[test]
@@ -331,9 +334,9 @@ mod tests {
     assert_eq!(
       result,
       Ok(vec![
-        Output::new(Ok("a"), Rule::ZeroOrMore),
-        Output::new(Ok("a"), Rule::ZeroOrMore),
-        Output::new(Ok("a"), Rule::ZeroOrMore)
+        Output::new(Ok(vec!["a"]), Rule::ZeroOrMore),
+        Output::new(Ok(vec!["a"]), Rule::ZeroOrMore),
+        Output::new(Ok(vec!["a"]), Rule::ZeroOrMore)
       ])
     );
   }
@@ -350,9 +353,9 @@ mod tests {
     assert_eq!(
       result,
       Ok(vec![
-        Output::new(Ok("a"), Rule::ZeroOrMore),
-        Output::new(Ok("a"), Rule::ZeroOrMore),
-        Output::new(Ok("b"), Rule::OneAndOne)
+        Output::new(Ok(vec!["a"]), Rule::ZeroOrMore),
+        Output::new(Ok(vec!["a"]), Rule::ZeroOrMore),
+        Output::new(Ok(vec!["b"]), Rule::OneAndOne)
       ])
     );
   }
