@@ -130,8 +130,8 @@ impl<'a> Parser<'a> {
     self.input.is_empty() || self.position >= self.length()
   }
 
-  /// Evaluates the input string against the defined grammars and produces a vec of outputs.
-  pub fn evaluate(&mut self) -> Result<Vec<Output<'a>>, ParserError<'a>> {
+  /// Judges, evaluates, the input string against the defined grammars and produces a vec of outputs.
+  pub fn judge(&mut self) -> Result<Vec<Output<'a>>, ParserError<'a>> {
     if self.empty() {
       return Err(ParserError::EndOfInput {
         position: self.position,
@@ -280,9 +280,9 @@ mod tests {
   }
 
   #[test]
-  fn test_parser_evaluate_empty_input() {
+  fn test_parser_judge_empty_input() {
     let mut parser = Parser::new("", 0, Grammars::new());
-    let result = parser.evaluate();
+    let result = parser.judge();
     assert_eq!(
       result,
       Err(ParserError::EndOfInput {
@@ -293,13 +293,13 @@ mod tests {
   }
 
   #[test]
-  fn test_parser_evaluate_one_and_one() {
+  fn test_parser_judge_one_and_one() {
     let mut grammars = Grammars::new();
     grammars.insert(Grammar::new("a", Rule::OneAndOne));
 
     let mut parser = Parser::new("aa", 0, grammars);
 
-    let result = parser.evaluate();
+    let result = parser.judge();
     assert_eq!(
       result,
       Ok(vec![
@@ -310,24 +310,24 @@ mod tests {
   }
 
   #[test]
-  fn test_parser_evaluate_one_or_one() {
+  fn test_parser_judge_one_or_one() {
     let mut grammars = Grammars::new();
     grammars.insert(Grammar::new("a", Rule::OneOrOne));
 
     let mut parser = Parser::new("a", 0, grammars);
 
-    let result = parser.evaluate();
+    let result = parser.judge();
     assert_eq!(result, Ok(vec![Output::new(Ok("a"), Rule::OneOrOne)]));
   }
 
   #[test]
-  fn test_parser_evaluate_zero_or_more() {
+  fn test_parser_judge_zero_or_more() {
     let mut grammars = Grammars::new();
     grammars.insert(Grammar::new("a", Rule::ZeroOrMore));
 
     let mut parser = Parser::new("aaa", 0, grammars);
 
-    let result = parser.evaluate();
+    let result = parser.judge();
     assert_eq!(
       result,
       Ok(vec![
@@ -339,14 +339,14 @@ mod tests {
   }
 
   #[test]
-  fn test_parser_evaluate_mixed() {
+  fn test_parser_judge_mixed() {
     let mut grammars = Grammars::new();
     grammars.insert(Grammar::new("a", Rule::ZeroOrMore));
     grammars.insert(Grammar::new("b", Rule::OneAndOne));
 
     let mut parser = Parser::new("aab", 0, grammars);
 
-    let result = parser.evaluate();
+    let result = parser.judge();
     assert_eq!(
       result,
       Ok(vec![
@@ -358,13 +358,13 @@ mod tests {
   }
 
   #[test]
-  fn test_parser_evaluate_failed_to_match() {
+  fn test_parser_judge_failed_to_match() {
     let mut grammars = Grammars::new();
     grammars.insert(Grammar::new("a", Rule::OneAndOne));
 
     let mut parser = Parser::new("b", 0, grammars);
 
-    let result = parser.evaluate();
+    let result = parser.judge();
     assert_eq!(
       result,
       Ok(vec![Output::new(
