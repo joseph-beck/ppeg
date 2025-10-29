@@ -1,4 +1,12 @@
-use crate::ParserInput;
+pub trait ParserInput<'a> {
+  type Item;
+
+  fn current(&self) -> Option<Self::Item>;
+
+  fn length(&self) -> usize;
+
+  fn remaining(&self) -> usize;
+}
 
 pub struct Input<'a> {
   /// Data stored in the input.
