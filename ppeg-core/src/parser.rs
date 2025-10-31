@@ -24,10 +24,10 @@ pub enum Rule {
 pub struct Grammar<'a> {
   /// How the grammar is matched and represented.
   /// For example "A".
-  value: &'a str,
+  pub value: &'a str,
   /// Rule that applies to this grammar.
   /// For example Rule::OneAndOne.
-  rule: Rule,
+  pub rule: Rule,
 }
 
 impl<'a> Grammar<'a> {
@@ -70,8 +70,11 @@ impl<'a> Grammars<'a> {
   }
 
   /// Gets the rule associated with the given grammar value.
-  pub fn get(&self, value: &str) -> Option<Rule> {
-    self.grammars.get(value).cloned()
+  pub fn get(&self, value: &'a str) -> Option<Grammar<'a>> {
+    self
+      .grammars
+      .get(value)
+      .map(|rule| Grammar::new(value, rule.clone()))
   }
 }
 
@@ -142,22 +145,29 @@ impl<'a> Parser<'a> {
     let mut outputs = Vec::new();
 
     while !self.is_empty() {
-      let rule = self.grammars.get(self.current());
+      let grammar = self.grammars.get(self.current());
 
-      match rule {
-        Some(Rule::Empty) => {
-          outputs.push(Output::new(Ok(vec![self.current()]), Rule::Empty));
-          self.advance(1);
-        }
-        Some(Rule::OneAndOne) => {
-          outputs.push(Output::new(self.one_and_one(), Rule::OneAndOne));
-        }
-        Some(Rule::OneOrOne) => {
-          outputs.push(Output::new(self.one_or_one(), Rule::OneOrOne));
-        }
-        Some(Rule::ZeroOrMore) => {
-          outputs.push(Output::new(self.zero_or_more(), Rule::ZeroOrMore));
-        }
+      match grammar {
+        Some(g) => match g.rule {
+          Rule::Empty => {
+            outputs.push(Output::new(Ok(vec![self.current()]), Rule::Empty));
+            self.advance(1);
+          }
+          Rule::OneAndOne => {
+            outputs.push(Output::new(self.one_and_one(), Rule::OneAndOne));
+          }
+          Rule::OneOrOne => {
+            outputs.push(Output::new(self.one_or_one(), Rule::OneOrOne));
+          }
+          Rule::ZeroOrMore => {
+            outputs.push(Output::new(self.zero_or_more(), Rule::ZeroOrMore));
+          }
+          _ => {
+            // advance for now should handle this case.
+            self.advance(1);
+          }
+        },
+
         _ => {
           outputs.push(Output::new(
             Err(ParserError::FailedToMatch {
@@ -220,7 +230,7 @@ mod tests {
   fn test_grammars_get() {
     let mut grammars = Grammars::new();
     grammars.grammars.insert("e", Rule::Empty);
-    assert_eq!(grammars.get("e"), Some(Rule::Empty));
+    assert_eq!(grammars.get("e"), Some(Grammar::new("e", Rule::Empty)));
     assert_eq!(grammars.get("b"), None);
   }
 
