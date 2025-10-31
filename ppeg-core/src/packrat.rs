@@ -34,7 +34,7 @@ impl<'a> Default for Packrat<'a> {
 mod tests {
   use super::*;
 
-  use crate::parser::Rule;
+  use crate::parser::Expression;
 
   #[test]
   fn test_packrat_new() {
@@ -52,7 +52,7 @@ mod tests {
   fn test_packrat_insert() {
     let mut packrat: Packrat = Packrat::new();
     let key = ("rule1", 0);
-    let output = Output::new(Ok(vec!["a", "b"]), Rule::Empty);
+    let output = Output::new(Ok(vec!["a", "b"]), Expression::Empty);
 
     packrat.insert(key, output);
 
@@ -64,7 +64,7 @@ mod tests {
   fn test_packrat_get() {
     let mut packrat: Packrat = Packrat::new();
     let key = ("rule1", 0);
-    let output = Output::new(Ok(vec!["a", "b"]), Rule::Empty);
+    let output = Output::new(Ok(vec!["a", "b"]), Expression::Empty);
     packrat.memo_table.insert(key, output);
 
     assert!(packrat.get(key).is_some());
