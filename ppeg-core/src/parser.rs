@@ -154,13 +154,13 @@ impl<'a> Parser<'a> {
             self.advance(1);
           }
           Rule::OneAndOne => {
-            outputs.push(Output::new(self.one_and_one(), Rule::OneAndOne));
+            outputs.push(Output::new(self.one_and_one(g), Rule::OneAndOne));
           }
           Rule::OneOrOne => {
-            outputs.push(Output::new(self.one_or_one(), Rule::OneOrOne));
+            outputs.push(Output::new(self.one_or_one(g), Rule::OneOrOne));
           }
           Rule::ZeroOrMore => {
-            outputs.push(Output::new(self.zero_or_more(), Rule::ZeroOrMore));
+            outputs.push(Output::new(self.zero_or_more(g), Rule::ZeroOrMore));
           }
           _ => {
             // advance for now should handle this case.
@@ -185,25 +185,33 @@ impl<'a> Parser<'a> {
     Ok(outputs)
   }
 
-  pub fn one_and_one(&mut self) -> Result<Vec<&'a str>, ParserError<'a>> {
+  pub fn one_and_one(&mut self, _grammar: Grammar<'a>) -> Result<Vec<&'a str>, ParserError<'a>> {
     // here we can do some logic later.
     let current = self.current();
     self.advance(1);
     Ok(vec![current])
   }
 
-  pub fn one_or_one(&mut self) -> Result<Vec<&'a str>, ParserError<'a>> {
+  pub fn one_or_one(&mut self, _grammar: Grammar<'a>) -> Result<Vec<&'a str>, ParserError<'a>> {
     // here we can do some logic later.
     let current = self.current();
     self.advance(1);
     Ok(vec![current])
   }
 
-  pub fn zero_or_more(&mut self) -> Result<Vec<&'a str>, ParserError<'a>> {
-    // here we can do some logic later.
-    let current = self.current();
-    self.advance(1);
-    Ok(vec![current])
+  pub fn zero_or_more(&mut self, grammar: Grammar<'a>) -> Result<Vec<&'a str>, ParserError<'a>> {
+    let mut results = Vec::new();
+
+    while self.current() == grammar.value {
+      results.push(self.current());
+      self.advance(1);
+
+      if self.is_empty() {
+        break;
+      }
+    }
+
+    Ok(results)
   }
 }
 
@@ -334,7 +342,7 @@ mod tests {
   }
 
   #[test]
-  fn test_parser_judge_zero_or_more() {
+  fn test_parser_judge_zero_or_more_one() {
     let mut grammars = Grammars::new();
     grammars.insert(Grammar::new("a", Rule::ZeroOrMore));
 
@@ -343,10 +351,24 @@ mod tests {
     let result = parser.judge();
     assert_eq!(
       result,
+      Ok(vec![Output::new(Ok(vec!["a", "a", "a"]), Rule::ZeroOrMore),])
+    );
+  }
+
+  #[test]
+  fn test_parser_judge_zero_or_more_two() {
+    let mut grammars = Grammars::new();
+    grammars.insert(Grammar::new("a", Rule::ZeroOrMore));
+    grammars.insert(Grammar::new("b", Rule::Empty));
+
+    let mut parser = Parser::new("aab", 0, grammars);
+
+    let result = parser.judge();
+    assert_eq!(
+      result,
       Ok(vec![
-        Output::new(Ok(vec!["a"]), Rule::ZeroOrMore),
-        Output::new(Ok(vec!["a"]), Rule::ZeroOrMore),
-        Output::new(Ok(vec!["a"]), Rule::ZeroOrMore)
+        Output::new(Ok(vec!["a", "a",]), Rule::ZeroOrMore),
+        Output::new(Ok(vec!["b"]), Rule::Empty)
       ])
     );
   }
@@ -363,8 +385,7 @@ mod tests {
     assert_eq!(
       result,
       Ok(vec![
-        Output::new(Ok(vec!["a"]), Rule::ZeroOrMore),
-        Output::new(Ok(vec!["a"]), Rule::ZeroOrMore),
+        Output::new(Ok(vec!["a", "a"]), Rule::ZeroOrMore),
         Output::new(Ok(vec!["b"]), Rule::OneAndOne)
       ])
     );
