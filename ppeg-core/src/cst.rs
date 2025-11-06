@@ -4,11 +4,18 @@ pub struct CST<'a> {
   value: &'a str,
   /// Child nodes of this CST node.
   children: Vec<CST<'a>>,
+  /// Label for this CST node.
+  /// Marks whether this has been productive.
+  label: Option<Label>,
 }
 
 impl<'a> CST<'a> {
-  pub fn new(value: &'a str, children: Vec<CST<'a>>) -> Self {
-    CST { value, children }
+  pub fn new(value: &'a str, children: Vec<CST<'a>>, label: Option<Label>) -> Self {
+    CST {
+      value,
+      children,
+      label,
+    }
   }
 
   /// Gets the value of this CST node.
@@ -20,11 +27,41 @@ impl<'a> CST<'a> {
   pub fn add(&mut self, child: CST<'a>) {
     self.children.push(child);
   }
+
+  /// Update the label of this CST node.
+  pub fn update_label(&mut self, label: Label) {
+    self.label = Some(label);
+  }
+
+  /// Has this CST node been labelled as productive?
+  pub fn is_productive(&self) -> bool {
+    match &self.label {
+      Some(label) => label.productive,
+      None => false,
+    }
+  }
 }
 
 impl<'a> Default for CST<'a> {
   fn default() -> Self {
-    Self::new("", Vec::new())
+    Self::new("", Vec::new(), None)
+  }
+}
+
+pub struct Label {
+  /// Has this been labelled as productive?
+  productive: bool,
+}
+
+impl Label {
+  pub fn new(productive: bool) -> Self {
+    Label { productive }
+  }
+}
+
+impl Default for Label {
+  fn default() -> Self {
+    Label { productive: false }
   }
 }
 
@@ -34,7 +71,7 @@ mod tests {
 
   #[test]
   fn test_cst_new() {
-    let cst = CST::new("root", vec![CST::new("child", vec![])]);
+    let cst = CST::new("root", vec![CST::new("child", vec![], None)], None);
 
     assert_eq!(cst.value, "root");
     assert_eq!(cst.children[0].value, "child");
@@ -50,19 +87,43 @@ mod tests {
 
   #[test]
   fn test_cst_get() {
-    let cst = CST::new("root", vec![CST::new("child", vec![])]);
+    let cst = CST::new("root", vec![CST::new("child", vec![], None)], None);
     assert_eq!(cst.get(), "root");
   }
 
   #[test]
   fn test_cst_add() {
-    let mut cst = CST::new("root", vec![]);
+    let mut cst = CST::new("root", vec![], None);
 
-    cst.add(CST::new("child1", vec![]));
-    cst.add(CST::new("child2", vec![]));
+    cst.add(CST::new("child1", vec![], None));
+    cst.add(CST::new("child2", vec![], None));
 
     assert_eq!(cst.children.len(), 2);
     assert_eq!(cst.children[0].value, "child1");
     assert_eq!(cst.children[1].value, "child2");
+  }
+
+  #[test]
+  fn test_cst_label_productive() {
+    let mut cst = CST::new("root", vec![], None);
+    assert!(cst.label.is_none());
+
+    cst.update_label(Label::new(true));
+    assert!(cst.label.is_some());
+  }
+
+  #[test]
+  fn test_cst_is_productive() {
+    let mut cst = CST::new("root", vec![], None);
+    cst.update_label(Label::new(true));
+
+    assert!(cst.is_productive());
+  }
+
+  #[test]
+  fn test_label_default() {
+    let label: Label = Default::default();
+
+    assert!(!label.productive);
   }
 }
