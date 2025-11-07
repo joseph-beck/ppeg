@@ -8,6 +8,10 @@ pub enum ParserError<'a> {
     input: &'a str,
     rule: Expression,
   },
+  InvalidExpression {
+    position: usize,
+    rule: Expression,
+  },
   /// Occurs when trying to consume when at the end of the input.
   EndOfInput {
     position: usize,

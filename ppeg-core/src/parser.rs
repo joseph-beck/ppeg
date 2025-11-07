@@ -13,6 +13,9 @@ pub enum Expression {
   /// Matches one and another occurrences of an expression.
   /// Expression for `E|E'`. ?
   OneOrOne,
+  /// Matches one or more occurrences of the expression.
+  /// Expression for `EE*`.
+  OneOrMore,
   /// Matches zero or more occurrences of the expression.
   /// Expression for `E*`.
   ZeroOrMore,
@@ -133,7 +136,9 @@ impl<'a> Parser<'a> {
     self.input.is_empty() || self.position >= self.length()
   }
 
-  pub fn parse(self) -> Result<CST<'a>, ParserError<'a>> {
+  pub fn parse(&mut self) -> Result<CST<'a>, ParserError<'a>> {
+    let outputs = self.judge()?;
+    println!("Outputs: {:?}", outputs);
     Ok(CST::new("a", vec![], None))
   }
 
@@ -163,11 +168,22 @@ impl<'a> Parser<'a> {
           Expression::OneOrOne => {
             outputs.push(Output::new(self.one_or_one(g), Expression::OneOrOne));
           }
+          Expression::OneOrMore => {
+            outputs.push(Output::new(self.one_or_more(g), Expression::OneOrMore));
+          }
           Expression::ZeroOrMore => {
             outputs.push(Output::new(self.zero_or_more(g), Expression::ZeroOrMore));
           }
           _ => {
-            // advance for now should handle this case.
+            // advance by 1 for now should handle this case.
+            // to be implemented later.
+            outputs.push(Output::new(
+              Err(ParserError::InvalidExpression {
+                position: self.position,
+                rule: Expression::Error,
+              }),
+              Expression::Error,
+            ));
             self.advance(1);
           }
         },
@@ -200,6 +216,20 @@ impl<'a> Parser<'a> {
     let current = self.current();
     self.advance(1);
     Ok(vec![current])
+  }
+
+  pub fn one_or_more(&mut self, rule: Rule<'a>) -> Result<Vec<&'a str>, ParserError<'a>> {
+    match self.zero_or_more(rule) {
+      Ok(results) => match results.is_empty() {
+        true => Err(ParserError::FailedToMatch {
+          position: self.position,
+          input: self.current(),
+          rule: Expression::OneOrMore,
+        }),
+        false => Ok(results),
+      },
+      Err(e) => Err(e),
+    }
   }
 
   pub fn zero_or_more(&mut self, rule: Rule<'a>) -> Result<Vec<&'a str>, ParserError<'a>> {
@@ -395,6 +425,24 @@ mod tests {
   }
 
   #[test]
+  fn test_parser_judge_one_or_more() {
+    let mut grammar = Grammar::new();
+    grammar.insert(Rule::new("a", Expression::OneOrMore));
+    grammar.insert(Rule::new("b", Expression::Empty));
+
+    let mut parser = Parser::new("aab", 0, grammar);
+    let result = parser.judge();
+
+    assert_eq!(
+      result,
+      Ok(vec![
+        Output::new(Ok(vec!["a", "a",]), Expression::OneOrMore),
+        Output::new(Ok(vec!["b"]), Expression::Empty)
+      ])
+    );
+  }
+
+  #[test]
   fn test_parser_judge_mixed() {
     let mut grammar = Grammar::new();
     grammar.insert(Rule::new("a", Expression::ZeroOrMore));
@@ -431,5 +479,64 @@ mod tests {
         Expression::Error
       )])
     );
+  }
+
+  #[test]
+  fn test_parser_one_or_more_ok() {
+    let grammar = Grammar::new();
+    let one_or_more_rule = Rule::new("a", Expression::OneOrMore);
+
+    let mut parser = Parser::new("a", 0, grammar);
+    let result = parser.one_or_more(one_or_more_rule);
+
+    assert_eq!(result, Ok(vec!["a"]));
+  }
+
+  #[test]
+  fn test_parser_one_or_more_err() {
+    let grammar = Grammar::new();
+    let one_or_more_rule = Rule::new("a", Expression::OneOrMore);
+
+    let mut parser = Parser::new(" ", 0, grammar);
+    let result = parser.one_or_more(one_or_more_rule);
+
+    assert_eq!(
+      result,
+      Err(ParserError::FailedToMatch {
+        position: 0,
+        input: " ",
+        rule: Expression::OneOrMore,
+      })
+    );
+  }
+
+  #[test]
+  fn test_parser_zero_or_more_ok() {
+    let grammar = Grammar::new();
+    let zero_or_more_rule = Rule::new("a", Expression::ZeroOrMore);
+    let mut parser = Parser::new("a", 0, grammar.clone());
+
+    {
+      // one match
+      let result = parser.zero_or_more(zero_or_more_rule.clone());
+
+      assert_eq!(result, Ok(vec!["a"]));
+    }
+
+    {
+      // two match
+      parser = Parser::new("aa", 0, grammar.clone());
+      let result = parser.zero_or_more(zero_or_more_rule.clone());
+
+      assert_eq!(result, Ok(vec!["a", "a"]));
+    }
+
+    {
+      // no matches
+      parser = Parser::new(" ", 0, grammar);
+      let result = parser.zero_or_more(zero_or_more_rule);
+
+      assert_eq!(result, Ok(vec![]));
+    }
   }
 }
