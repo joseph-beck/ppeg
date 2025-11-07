@@ -40,6 +40,33 @@ impl<'a> CST<'a> {
       None => false,
     }
   }
+
+  /// Pretty print the CST.
+  /// Using this node as the root, outputs the tree structure.
+  /// For example:
+  /// `
+  /// root
+  /// -child1
+  /// --child11
+  /// -child2
+  /// `
+  pub fn pretty_print(&self, indent: Option<usize>) {
+    let indent = indent.unwrap_or(0);
+
+    for _ in 0..indent {
+      print!("-");
+    }
+
+    println!("{}", self.value);
+
+    if self.children.is_empty() {
+      return;
+    }
+
+    for child in &self.children {
+      child.pretty_print(Some(indent + 1));
+    }
+  }
 }
 
 impl<'a> Default for CST<'a> {
@@ -48,6 +75,7 @@ impl<'a> Default for CST<'a> {
   }
 }
 
+#[derive(Default)]
 pub struct Label {
   /// Has this been labelled as productive?
   productive: bool,
@@ -56,12 +84,6 @@ pub struct Label {
 impl Label {
   pub fn new(productive: bool) -> Self {
     Label { productive }
-  }
-}
-
-impl Default for Label {
-  fn default() -> Self {
-    Label { productive: false }
   }
 }
 
