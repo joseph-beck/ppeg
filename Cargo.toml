@@ -1,5 +1,5 @@
 [workspace]
-members = ["ppeg-cli", "ppeg-core"]
+members = ["ppeg-cli", "ppeg-core", "ppeg-example/arithmetic-expression"]
 resolver = "1"
 
 [workspace.dependencies]

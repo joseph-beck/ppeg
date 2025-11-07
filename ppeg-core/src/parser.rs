@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::error::ParserError;
+use crate::{cst::CST, error::ParserError};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
@@ -131,6 +131,10 @@ impl<'a> Parser<'a> {
   /// Returns whether the input string is empty.
   pub fn is_empty(&self) -> bool {
     self.input.is_empty() || self.position >= self.length()
+  }
+
+  pub fn parse(self) -> Result<CST<'a>, ParserError<'a>> {
+    Ok(CST::new("a", vec![], None))
   }
 
   /// Judges, evaluates, the input string against the defined grammars and produces a vec of outputs.
