@@ -41,6 +41,14 @@ impl<'a> CST<'a> {
     }
   }
 
+  /// Has this CST node been labelled as hidden?
+  pub fn is_hidden(&self) -> bool {
+    match &self.label {
+      Some(label) => label.hidden,
+      None => false,
+    }
+  }
+
   /// Pretty print the CST.
   /// Using this node as the root, outputs the tree structure.
   /// For example:
@@ -79,11 +87,13 @@ impl<'a> Default for CST<'a> {
 pub struct Label {
   /// Has this been labelled as productive?
   productive: bool,
+  /// Should this item be hidden in the tree?
+  hidden: bool,
 }
 
 impl Label {
-  pub fn new(productive: bool) -> Self {
-    Label { productive }
+  pub fn new(productive: bool, hidden: bool) -> Self {
+    Label { productive, hidden }
   }
 }
 
@@ -130,14 +140,14 @@ mod tests {
     let mut cst = CST::new("root", vec![], None);
     assert!(cst.label.is_none());
 
-    cst.update_label(Label::new(true));
+    cst.update_label(Label::new(true, false));
     assert!(cst.label.is_some());
   }
 
   #[test]
   fn test_cst_is_productive() {
     let mut cst = CST::new("root", vec![], None);
-    cst.update_label(Label::new(true));
+    cst.update_label(Label::new(true, false));
 
     assert!(cst.is_productive());
   }

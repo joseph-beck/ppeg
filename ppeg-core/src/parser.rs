@@ -25,6 +25,8 @@ pub enum Expression {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Rule<'a> {
+  /// As this is a named rule, it needs a name!
+  pub name: &'a str,
   /// How the grammar is matched and represented.
   /// For example "A".
   pub value: &'a str,
@@ -34,15 +36,19 @@ pub struct Rule<'a> {
 }
 
 impl<'a> Rule<'a> {
-  pub fn new(value: &'a str, expression: Expression) -> Self {
-    Rule { value, expression }
+  pub fn new(name: &'a str, value: &'a str, expression: Expression) -> Self {
+    Rule {
+      name,
+      value,
+      expression,
+    }
   }
 }
 
 #[derive(Clone, PartialEq)]
 pub struct Grammar<'a> {
   /// Mapping of grammar values to their corresponding rules.
-  grammars: HashMap<&'a str, Expression>,
+  grammars: HashMap<&'a str, Rule<'a>>,
 }
 
 impl Grammar<'_> {
@@ -69,15 +75,12 @@ impl<'a> Grammar<'a> {
   /// Inserts a new grammar into the grammars lookup table.
   /// Breaks down the grammar into its value and rule components.
   pub fn insert(&mut self, rule: Rule<'a>) {
-    self.grammars.insert(rule.value, rule.expression);
+    self.grammars.insert(rule.value, rule);
   }
 
   /// Gets the the rule from the grammar lookup.
   pub fn get(&self, value: &'a str) -> Option<Rule<'a>> {
-    self
-      .grammars
-      .get(value)
-      .map(|rule| Rule::new(value, rule.clone()))
+    self.grammars.get(value).cloned()
   }
 }
 
@@ -160,6 +163,7 @@ impl<'a> Parser<'a> {
         Some(g) => match g.expression {
           Expression::Empty => {
             outputs.push(Output::new(Ok(vec![self.current()]), Expression::Empty));
+            // When matching an empty CST node should be created with a label with hidden as true.
             self.advance(1);
           }
           Expression::OneAndOne => {
@@ -262,18 +266,26 @@ mod tests {
   #[test]
   fn test_grammars_insert() {
     let mut grammar = Grammar::new();
-    grammar.insert(Rule::new("e", Expression::Empty));
+    grammar.insert(Rule::new("e", "e", Expression::Empty));
 
-    assert_eq!(grammar.grammars.get("e"), Some(&Expression::Empty));
+    assert_eq!(
+      grammar.grammars.get("e"),
+      Some(&Rule::new("e", "e", Expression::Empty))
+    );
     assert_eq!(grammar.grammars.get("b"), None);
   }
 
   #[test]
   fn test_grammars_get() {
     let mut grammar = Grammar::new();
-    grammar.grammars.insert("e", Expression::Empty);
+    grammar
+      .grammars
+      .insert("e", Rule::new("e", "e", Expression::Empty));
 
-    assert_eq!(grammar.get("e"), Some(Rule::new("e", Expression::Empty)));
+    assert_eq!(
+      grammar.get("e"),
+      Some(Rule::new("e", "e", Expression::Empty))
+    );
     assert_eq!(grammar.get("b"), None);
   }
 
@@ -361,7 +373,7 @@ mod tests {
   #[test]
   fn test_parser_judge_one_and_one() {
     let mut grammars = Grammar::new();
-    grammars.insert(Rule::new("a", Expression::OneAndOne));
+    grammars.insert(Rule::new("a", "a", Expression::OneAndOne));
 
     let mut parser = Parser::new("aa", 0, grammars);
 
@@ -378,7 +390,7 @@ mod tests {
   #[test]
   fn test_parser_judge_one_or_one() {
     let mut grammar = Grammar::new();
-    grammar.insert(Rule::new("a", Expression::OneOrOne));
+    grammar.insert(Rule::new("a", "a", Expression::OneOrOne));
 
     let mut parser = Parser::new("a", 0, grammar);
     let result = parser.judge();
@@ -392,7 +404,7 @@ mod tests {
   #[test]
   fn test_parser_judge_zero_or_more_one() {
     let mut grammar = Grammar::new();
-    grammar.insert(Rule::new("a", Expression::ZeroOrMore));
+    grammar.insert(Rule::new("a", "a", Expression::ZeroOrMore));
 
     let mut parser = Parser::new("aaa", 0, grammar);
     let result = parser.judge();
@@ -409,8 +421,8 @@ mod tests {
   #[test]
   fn test_parser_judge_zero_or_more_two() {
     let mut grammar = Grammar::new();
-    grammar.insert(Rule::new("a", Expression::ZeroOrMore));
-    grammar.insert(Rule::new("b", Expression::Empty));
+    grammar.insert(Rule::new("a", "a", Expression::ZeroOrMore));
+    grammar.insert(Rule::new("b", "b", Expression::Empty));
 
     let mut parser = Parser::new("aab", 0, grammar);
     let result = parser.judge();
@@ -427,8 +439,8 @@ mod tests {
   #[test]
   fn test_parser_judge_one_or_more() {
     let mut grammar = Grammar::new();
-    grammar.insert(Rule::new("a", Expression::OneOrMore));
-    grammar.insert(Rule::new("b", Expression::Empty));
+    grammar.insert(Rule::new("a", "a", Expression::OneOrMore));
+    grammar.insert(Rule::new("b", "b", Expression::Empty));
 
     let mut parser = Parser::new("aab", 0, grammar);
     let result = parser.judge();
@@ -445,8 +457,8 @@ mod tests {
   #[test]
   fn test_parser_judge_mixed() {
     let mut grammar = Grammar::new();
-    grammar.insert(Rule::new("a", Expression::ZeroOrMore));
-    grammar.insert(Rule::new("b", Expression::OneAndOne));
+    grammar.insert(Rule::new("a", "a", Expression::ZeroOrMore));
+    grammar.insert(Rule::new("b", "b", Expression::OneAndOne));
 
     let mut parser = Parser::new("aab", 0, grammar);
     let result = parser.judge();
@@ -463,7 +475,7 @@ mod tests {
   #[test]
   fn test_parser_judge_failed_to_match() {
     let mut grammar = Grammar::new();
-    grammar.insert(Rule::new("a", Expression::OneAndOne));
+    grammar.insert(Rule::new("a", "a", Expression::OneAndOne));
 
     let mut parser = Parser::new("b", 0, grammar);
     let result = parser.judge();
@@ -484,7 +496,7 @@ mod tests {
   #[test]
   fn test_parser_one_or_more_ok() {
     let grammar = Grammar::new();
-    let one_or_more_rule = Rule::new("a", Expression::OneOrMore);
+    let one_or_more_rule = Rule::new("a", "a", Expression::OneOrMore);
 
     let mut parser = Parser::new("a", 0, grammar);
     let result = parser.one_or_more(one_or_more_rule);
@@ -495,7 +507,7 @@ mod tests {
   #[test]
   fn test_parser_one_or_more_err() {
     let grammar = Grammar::new();
-    let one_or_more_rule = Rule::new("a", Expression::OneOrMore);
+    let one_or_more_rule = Rule::new("a", "a", Expression::OneOrMore);
 
     let mut parser = Parser::new(" ", 0, grammar);
     let result = parser.one_or_more(one_or_more_rule);
@@ -513,7 +525,7 @@ mod tests {
   #[test]
   fn test_parser_zero_or_more_ok() {
     let grammar = Grammar::new();
-    let zero_or_more_rule = Rule::new("a", Expression::ZeroOrMore);
+    let zero_or_more_rule = Rule::new("a", "a", Expression::ZeroOrMore);
     let mut parser = Parser::new("a", 0, grammar.clone());
 
     {
