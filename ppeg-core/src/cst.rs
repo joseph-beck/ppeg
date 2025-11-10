@@ -1,4 +1,5 @@
 /// Concrete Syntax Tree (CST).
+#[derive(Debug, Clone)]
 pub struct CST<'a> {
   /// Value stored at this CST node.
   value: &'a str,
@@ -83,7 +84,7 @@ impl<'a> Default for CST<'a> {
   }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct Label {
   /// Has this been labelled as productive?
   productive: bool,

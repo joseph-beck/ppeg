@@ -17,4 +17,6 @@ pub enum ParserError<'a> {
     position: usize,
     input: Option<&'a str>,
   },
+  /// Catch all unknown error.
+  Unknown,
 }

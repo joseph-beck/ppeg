@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, vec};
 
 use crate::{cst::CST, error::ParserError};
 
@@ -142,7 +142,63 @@ impl<'a> Parser<'a> {
   pub fn parse(&mut self) -> Result<CST<'a>, ParserError<'a>> {
     let outputs = self.judge()?;
     println!("Outputs: {:?}", outputs);
-    Ok(CST::new("a", vec![], None))
+
+    if outputs.is_empty() {
+      return Err(ParserError::EndOfInput {
+        position: self.position,
+        input: None,
+      });
+    }
+
+    match self.create_cst(&mut CST::default(), outputs) {
+      Ok(cst) => Ok(cst),
+      Err(e) => Err(e),
+    }
+  }
+
+  pub fn create_cst(
+    &mut self,
+    cst: &mut CST<'a>,
+    rest: Vec<Output<'a>>,
+  ) -> Result<CST<'a>, ParserError<'a>> {
+    if rest.is_empty() {
+      return Ok(cst.clone());
+    }
+
+    let current = rest.first().unwrap();
+
+    match current.expression {
+      // If we have an empty expression, lets just skip it and keep creating CST nodes.
+      Expression::Empty => self.create_cst(cst, rest[1..].to_vec()),
+      // This is a choice.
+      Expression::OneOrOne => match current.result.clone() {
+        Ok(values) => {
+          if values.len() != 1 {
+            return Err(ParserError::InvalidExpression {
+              position: self.position,
+              rule: Expression::OneOrOne,
+            });
+          }
+
+          let value = values.first().unwrap();
+          let child = cst.clone();
+          self.create_cst(&mut CST::new(value, vec![child], None), rest[1..].to_vec())
+        }
+        Err(e) => Err(e),
+      },
+      // This is a value, like 1.
+      Expression::OneOrMore => match current.result.clone() {
+        Ok(values) => {
+          for value in values {
+            let child = CST::new(value, Vec::new(), None);
+            cst.add(child);
+          }
+          self.create_cst(cst, rest[1..].to_vec())
+        }
+        Err(e) => Err(e),
+      },
+      _ => Err(ParserError::Unknown),
+    }
   }
 
   /// Judges, evaluates, the input string against the defined grammars and produces a vec of outputs.
