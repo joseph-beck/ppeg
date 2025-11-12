@@ -4,19 +4,25 @@ use crate::{cst::CST, error::ParserError};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
-  /// Matches what is an empty expression.
+  /// Matches what is an "empty" expression.
+  /// This means that it matches with what it is given,
+  /// consumes the output but gives no output.
   /// Expression for `ε` symbol.
   Empty,
-  /// Matches one and another occurrences of an expression.
+  /// Matches a sequence of the given expressions.
+  /// For example, `AB` matches A followed by B.
   /// Expression for `EE'`. ?
-  OneAndOne,
+  Sequence,
   /// Matches a or b occurrences of an expression.
+  /// For example, `A|B` matches either A or B.
   /// Expression for `E|E'`. ?
   Choice,
   /// Matches one or more occurrences of the expression.
+  /// For example, `A` matches one or more occurrences of A.
   /// Expression for `EE*`.
   OneOrMore,
   /// Matches zero or more occurrences of the expression.
+  /// For example, `A` matches zero or more occurrences of A.
   /// Expression for `E*`.
   ZeroOrMore,
   /// Matches when an error has occurred.
@@ -177,7 +183,7 @@ impl<'a> Parser<'a> {
       // If we have an empty expression, lets just skip it and keep creating CST nodes.
       Expression::Empty => self.create_cst(cst, rest[1..].to_vec()),
       // This is a choice.
-      Expression::Choice | Expression::OneAndOne => match current.result.clone() {
+      Expression::Choice | Expression::Sequence => match current.result.clone() {
         Ok(values) => {
           if values.len() != 1 {
             return Err(ParserError::InvalidExpression {
@@ -235,8 +241,8 @@ impl<'a> Parser<'a> {
             // When matching an empty CST node should be created with a label with hidden as true.
             self.advance(1);
           }
-          Expression::OneAndOne => {
-            outputs.push(Output::new(self.one_and_one(g), Expression::OneAndOne));
+          Expression::Sequence => {
+            outputs.push(Output::new(self.sequence(g), Expression::Sequence));
           }
           Expression::Choice => {
             outputs.push(Output::new(self.choice(g), Expression::Choice));
@@ -277,11 +283,23 @@ impl<'a> Parser<'a> {
     Ok(outputs)
   }
 
-  pub fn one_and_one(&mut self, _rule: Rule<'a>) -> Result<Vec<&'a str>, ParserError<'a>> {
-    // here we can do some logic later.
-    let current = self.current();
-    self.advance(1);
-    Ok(vec![current])
+  pub fn sequence(&mut self, rule: Rule<'a>) -> Result<Vec<&'a str>, ParserError<'a>> {
+    let mut results = Vec::new();
+
+    for rule_value in &rule.values {
+      if self.current() != *rule_value {
+        return Err(ParserError::FailedToMatch {
+          position: self.position,
+          input: self.current(),
+          rule: rule.expression,
+        });
+      }
+
+      results.push(self.current());
+      self.advance(1);
+    }
+
+    Ok(results)
   }
 
   pub fn choice(&mut self, rule: Rule<'a>) -> Result<Vec<&'a str>, ParserError<'a>> {
@@ -454,18 +472,83 @@ mod tests {
   }
 
   #[test]
-  fn test_parser_judge_one_and_one() {
+  fn test_parser_judge_sequence_a_ok() {
     let mut grammars = Grammar::new();
-    grammars.insert(Rule::new("a", vec!["a"], Expression::OneAndOne));
+    grammars.insert(Rule::new("a", vec!["a"], Expression::Sequence));
 
-    let mut parser = Parser::new("aa", 0, grammars);
+    let mut parser = Parser::new("a", 0, grammars);
+
+    let result = parser.judge();
+    assert_eq!(
+      result,
+      Ok(vec![Output::new(Ok(vec!["a"]), Expression::Sequence),])
+    );
+  }
+
+  #[test]
+  fn test_parser_judge_sequence_a_err() {
+    let mut grammars = Grammar::new();
+    grammars.insert(Rule::new("a", vec!["a"], Expression::Sequence));
+
+    let mut parser = Parser::new("b", 0, grammars);
+
+    let result = parser.judge();
+    assert_eq!(
+      result,
+      Ok(vec![Output::new(
+        Err(ParserError::FailedToMatch {
+          position: 0,
+          input: "b",
+          rule: Expression::Error
+        }),
+        Expression::Error
+      ),])
+    );
+  }
+
+  #[test]
+  fn test_parser_judge_sequence_ab_ok() {
+    let mut grammars = Grammar::new();
+    grammars.insert(Rule::new("a", vec!["a", "b"], Expression::Sequence));
+
+    let mut parser = Parser::new("ab", 0, grammars);
+
+    let result = parser.judge();
+    assert_eq!(
+      result,
+      Ok(vec![Output::new(Ok(vec!["a", "b"]), Expression::Sequence),])
+    );
+  }
+
+  #[test]
+  fn test_parser_judge_sequence_ab_err() {
+    let mut grammars = Grammar::new();
+    grammars.insert(Rule::new("a", vec!["a", "b"], Expression::Sequence));
+
+    let mut parser = Parser::new("ac", 0, grammars);
 
     let result = parser.judge();
     assert_eq!(
       result,
       Ok(vec![
-        Output::new(Ok(vec!["a"]), Expression::OneAndOne),
-        Output::new(Ok(vec!["a"]), Expression::OneAndOne)
+        Output::new(
+          // different failure as we failing in the sequence parsing segment.
+          Err(ParserError::FailedToMatch {
+            position: 1,
+            input: "c",
+            rule: Expression::Sequence
+          }),
+          Expression::Sequence
+        ),
+        // for now two errors are correct as it attempts to reparse the unconsumed remainder of the input.
+        Output::new(
+          Err(ParserError::FailedToMatch {
+            position: 1,
+            input: "c",
+            rule: Expression::Error
+          }),
+          Expression::Error
+        )
       ])
     );
   }
@@ -614,7 +697,7 @@ mod tests {
   fn test_parser_judge_mixed() {
     let mut grammar = Grammar::new();
     grammar.insert(Rule::new("a", vec!["a"], Expression::ZeroOrMore));
-    grammar.insert(Rule::new("b", vec!["b"], Expression::OneAndOne));
+    grammar.insert(Rule::new("b", vec!["b"], Expression::Sequence));
 
     let mut parser = Parser::new("aab", 0, grammar);
     let result = parser.judge();
@@ -623,7 +706,7 @@ mod tests {
       result,
       Ok(vec![
         Output::new(Ok(vec!["a", "a"]), Expression::ZeroOrMore),
-        Output::new(Ok(vec!["b"]), Expression::OneAndOne)
+        Output::new(Ok(vec!["b"]), Expression::Sequence)
       ])
     );
   }
@@ -631,7 +714,7 @@ mod tests {
   #[test]
   fn test_parser_judge_failed_to_match() {
     let mut grammar = Grammar::new();
-    grammar.insert(Rule::new("a", vec!["a"], Expression::OneAndOne));
+    grammar.insert(Rule::new("a", vec!["a"], Expression::Sequence));
 
     let mut parser = Parser::new("b", 0, grammar);
     let result = parser.judge();
