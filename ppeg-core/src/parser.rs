@@ -150,8 +150,10 @@ impl<'a> Parser<'a> {
       });
     }
 
-    match self.create_cst(&mut CST::default(), outputs) {
-      Ok(cst) => Ok(cst),
+    let mut cst = CST::default();
+
+    match self.create_cst(&mut cst, outputs) {
+      Ok(_) => Ok(cst),
       Err(e) => Err(e),
     }
   }
@@ -160,9 +162,9 @@ impl<'a> Parser<'a> {
     &mut self,
     cst: &mut CST<'a>,
     rest: Vec<Output<'a>>,
-  ) -> Result<CST<'a>, ParserError<'a>> {
+  ) -> Result<(), ParserError<'a>> {
     if rest.is_empty() {
-      return Ok(cst.clone());
+      return Ok(());
     }
 
     let current = rest.first().unwrap();
@@ -171,7 +173,7 @@ impl<'a> Parser<'a> {
       // If we have an empty expression, lets just skip it and keep creating CST nodes.
       Expression::Empty => self.create_cst(cst, rest[1..].to_vec()),
       // This is a choice.
-      Expression::OneOrOne => match current.result.clone() {
+      Expression::OneOrOne | Expression::OneAndOne => match current.result.clone() {
         Ok(values) => {
           if values.len() != 1 {
             return Err(ParserError::InvalidExpression {
@@ -180,20 +182,27 @@ impl<'a> Parser<'a> {
             });
           }
 
-          let value = values.first().unwrap();
-          let child = cst.clone();
-          self.create_cst(&mut CST::new(value, vec![child], None), rest[1..].to_vec())
+          let child = CST::new(values.first().unwrap(), vec![], None);
+          cst.add(child);
+          self
+            .create_cst(cst.child(0).unwrap(), rest[1..].to_vec())
+            .unwrap();
+          Ok(())
         }
         Err(e) => Err(e),
       },
       // This is a value, like 1.
-      Expression::OneOrMore => match current.result.clone() {
+      Expression::ZeroOrMore | Expression::OneOrMore => match current.result.clone() {
         Ok(values) => {
           for value in values {
             let child = CST::new(value, Vec::new(), None);
             cst.add(child);
           }
-          self.create_cst(cst, rest[1..].to_vec())
+
+          self
+            .create_cst(cst.child(0).unwrap(), rest[1..].to_vec())
+            .unwrap();
+          Ok(())
         }
         Err(e) => Err(e),
       },
@@ -273,12 +282,14 @@ impl<'a> Parser<'a> {
 
   pub fn one_or_one(&mut self, _rule: Rule<'a>) -> Result<Vec<&'a str>, ParserError<'a>> {
     // here we can do some logic later.
+    println!("{}, {:?}", self.current(), _rule);
     let current = self.current();
     self.advance(1);
     Ok(vec![current])
   }
 
   pub fn one_or_more(&mut self, rule: Rule<'a>) -> Result<Vec<&'a str>, ParserError<'a>> {
+    println!("{}, {:?}", self.current(), rule);
     match self.zero_or_more(rule) {
       Ok(results) => match results.is_empty() {
         true => Err(ParserError::FailedToMatch {

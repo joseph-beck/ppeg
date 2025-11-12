@@ -6,8 +6,8 @@ fn main() {
   grammar.insert(Rule::new("ONE", "1", Expression::OneOrMore));
   grammar.insert(Rule::new("TWO", "2", Expression::OneOrMore));
   grammar.insert(Rule::new("THREE", "3", Expression::OneOrMore));
-  grammar.insert(Rule::new("L_BRACKET", "(", Expression::Empty));
-  grammar.insert(Rule::new("R_BRACKET", ")", Expression::Empty));
+  grammar.insert(Rule::new("L_BRACKET", "(", Expression::OneOrOne));
+  grammar.insert(Rule::new("R_BRACKET", ")", Expression::OneOrOne));
   grammar.insert(Rule::new("STAR", "*", Expression::OneOrOne));
   grammar.insert(Rule::new("PLUS", "+", Expression::OneOrOne));
 

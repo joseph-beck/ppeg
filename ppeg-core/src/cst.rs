@@ -29,6 +29,10 @@ impl<'a> CST<'a> {
     self.children.push(child);
   }
 
+  pub fn child(&mut self, index: usize) -> Option<&mut CST<'a>> {
+    self.children.get_mut(index)
+  }
+
   /// Update the label of this CST node.
   pub fn update_label(&mut self, label: Label) {
     self.label = Some(label);
@@ -80,7 +84,7 @@ impl<'a> CST<'a> {
 
 impl<'a> Default for CST<'a> {
   fn default() -> Self {
-    Self::new("", Vec::new(), None)
+    Self::new("root", Vec::new(), None)
   }
 }
 
@@ -114,7 +118,7 @@ mod tests {
   fn test_cst_default() {
     let cst: CST = Default::default();
 
-    assert_eq!(cst.value, "");
+    assert_eq!(cst.value, "root");
     assert!(cst.children.is_empty());
   }
 
@@ -134,6 +138,16 @@ mod tests {
     assert_eq!(cst.children.len(), 2);
     assert_eq!(cst.children[0].value, "child1");
     assert_eq!(cst.children[1].value, "child2");
+  }
+
+  #[test]
+  fn test_cst_child() {
+    let mut cst = CST::new("root", vec![], None);
+
+    cst.add(CST::new("child1", vec![], None));
+    let child1 = cst.child(0).unwrap();
+
+    assert_eq!(child1.value, "child1");
   }
 
   #[test]
