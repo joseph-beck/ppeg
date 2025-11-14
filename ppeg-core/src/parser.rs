@@ -3,28 +3,32 @@ use std::{collections::HashMap, vec};
 use crate::{cst::CST, error::ParserError};
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Expression {
+pub enum Expression<'a> {
   /// Matches what is an "empty" expression.
   /// This means that it matches with what it is given,
   /// consumes the output but gives no output.
   /// Expression for `ε` symbol.
   Empty,
+  /// Matches a single character.
+  /// For example, `A` matches the character A.
+  /// Expression for `C`.
+  Char(&'a str),
   /// Matches a sequence of the given expressions.
   /// For example, `AB` matches A followed by B.
   /// Expression for `EE'`. ?
-  Sequence,
+  Sequence(Vec<Expression<'a>>),
   /// Matches a or b occurrences of an expression.
   /// For example, `A|B` matches either A or B.
   /// Expression for `E|E'`. ?
-  Choice,
+  Choice(Vec<Expression<'a>>),
   /// Matches one or more occurrences of the expression.
   /// For example, `A` matches one or more occurrences of A.
   /// Expression for `EE*`.
-  OneOrMore,
+  OneOrMore(Box<Expression<'a>>),
   /// Matches zero or more occurrences of the expression.
   /// For example, `A` matches zero or more occurrences of A.
   /// Expression for `E*`.
-  ZeroOrMore,
+  ZeroOrMore(Box<Expression<'a>>),
   /// Matches when an error has occurred.
   Error,
 }
@@ -38,11 +42,11 @@ pub struct Rule<'a> {
   pub values: Vec<&'a str>,
   /// Expression that applies to this rule.
   /// For example Expression::OneAndOne.
-  pub expression: Expression,
+  pub expression: Expression<'a>,
 }
 
 impl<'a> Rule<'a> {
-  pub fn new(name: &'a str, values: Vec<&'a str>, expression: Expression) -> Self {
+  pub fn new(name: &'a str, values: Vec<&'a str>, expression: Expression<'a>) -> Self {
     Rule {
       name,
       values,
@@ -100,11 +104,11 @@ pub struct Output<'a> {
   /// Ok if successful, Err with ParserError if failed.
   pub result: Result<Vec<&'a str>, ParserError<'a>>,
   /// Rule that was applied to produce this output.
-  pub expression: Expression,
+  pub expression: Expression<'a>,
 }
 
 impl<'a> Output<'a> {
-  pub fn new(result: Result<Vec<&'a str>, ParserError<'a>>, expression: Expression) -> Self {
+  pub fn new(result: Result<Vec<&'a str>, ParserError<'a>>, expression: Expression<'a>) -> Self {
     Output { result, expression }
   }
 }

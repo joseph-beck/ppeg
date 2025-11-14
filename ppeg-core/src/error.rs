@@ -6,11 +6,11 @@ pub enum ParserError<'a> {
   FailedToMatch {
     position: usize,
     input: &'a str,
-    rule: Expression,
+    rule: Expression<'a>,
   },
   InvalidExpression {
     position: usize,
-    rule: Expression,
+    rule: Expression<'a>,
   },
   /// Occurs when trying to consume when at the end of the input.
   EndOfInput {
