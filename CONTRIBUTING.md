@@ -13,6 +13,15 @@ When contributing please make sure that you follow the guidelines set out within
 
 All commits should follow the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) guidelines to help ensure consistency. This looks something like `type: description` for example `fix: optional type` or `docs: add docs for cst struct`. Using a type and a short description for the change.
 
+Commits should pass all `pre-commit`, `pre-push` and `commit-msg` hooks, found in [.githooks](.githooks). To setup use:
+
+```sh
+git config core.hooksPath .githooks
+chmod +x .githooks/commit-msg
+chmod +x .githooks/pre-commit
+chmod +x .githooks/pre-push
+```
+
 ## Branching
 
 When creating a branch please ensure that it follows similar convention to commits, with the it being `<type>/<short-description>` for example `feat/memo-table` or `fix/cst-generation`.

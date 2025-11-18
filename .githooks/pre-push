@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# ---------------------------------------------------------
+# cargo build
+# ---------------------------------------------------------
+if cargo build; then
+    echo "cargo build pass"
+else
+    echo "cargo build fail"
+    exit 1
+fi
+
+# ---------------------------------------------------------
+# cargo test
+# ---------------------------------------------------------
+if cargo test; then
+    echo "cargo test pass"
+else
+    echo "cargo test fail"
+    exit 1
+fi
