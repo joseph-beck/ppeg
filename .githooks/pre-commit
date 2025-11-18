@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# ---------------------------------------------------------
+# cargo fmt (formatting)
+# ---------------------------------------------------------
+if cargo fmt --check; then
+    echo "cargo fmt pass"
+else
+    echo "cargo fmt fail"
+    exit 1
+fi
+
+# ---------------------------------------------------------
+# cargo clippy (linting)
+# ---------------------------------------------------------
+if cargo clippy; then
+    echo "cargo clippy pass"
+else
+    echo "cargo clippy fail"
+    exit 1
+fi
+
+# ---------------------------------------------------------
+# cargo audit
+# ---------------------------------------------------------
+if cargo audit; then
+    echo "cargo audit pass"
+else
+    echo "cargo audit fail"
+    exit 1
+fi
+
+# ---------------------------------------------------------
+# cargo check
+# ---------------------------------------------------------
+if cargo check; then
+    echo "cargo check pass"
+else
+    echo "cargo check fail"
+    exit 1
+fi
