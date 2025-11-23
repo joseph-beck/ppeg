@@ -25,8 +25,11 @@ impl<'a> CST<'a> {
   }
 
   /// Add a child CST node to the current CST.
-  pub fn add(&mut self, child: CST<'a>) {
-    self.children.push(child);
+  pub fn add(&mut self, child: Option<CST<'a>>) {
+    match child {
+      None => return,
+      Some(c) => self.children.push(c),
+    }
   }
 
   pub fn child(&mut self, index: usize) -> Option<&mut CST<'a>> {
@@ -132,8 +135,8 @@ mod tests {
   fn test_cst_add() {
     let mut cst = CST::new("root", vec![], None);
 
-    cst.add(CST::new("child1", vec![], None));
-    cst.add(CST::new("child2", vec![], None));
+    cst.add(Some(CST::new("child1", vec![], None)));
+    cst.add(Some(CST::new("child2", vec![], None)));
 
     assert_eq!(cst.children.len(), 2);
     assert_eq!(cst.children[0].value, "child1");
@@ -144,7 +147,7 @@ mod tests {
   fn test_cst_child() {
     let mut cst = CST::new("root", vec![], None);
 
-    cst.add(CST::new("child1", vec![], None));
+    cst.add(Some(CST::new("child1", vec![], None)));
     let child1 = cst.child(0).unwrap();
 
     assert_eq!(child1.value, "child1");

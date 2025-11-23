@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, vec};
 
 use crate::{cst::CST, error::ParserError};
 
@@ -37,21 +37,14 @@ pub enum Expression<'a> {
 pub struct Rule<'a> {
   /// As this is a named rule, it needs a name!
   pub name: &'a str,
-  /// How the grammar is matched and represented.
-  /// For example "A".
-  pub values: Vec<&'a str>,
   /// Expression that applies to this rule.
   /// For example Expression::OneAndOne.
   pub expression: Expression<'a>,
 }
 
 impl<'a> Rule<'a> {
-  pub fn new(name: &'a str, values: Vec<&'a str>, expression: Expression<'a>) -> Self {
-    Rule {
-      name,
-      values,
-      expression,
-    }
+  pub fn new(name: &'a str, expression: Expression<'a>) -> Self {
+    Rule { name, expression }
   }
 }
 
@@ -89,12 +82,8 @@ impl<'a> Grammar<'a> {
   }
 
   /// Gets the the rule from the grammar lookup.
-  pub fn get(&self, value: &'a str) -> Option<Rule<'a>> {
-    self
-      .grammars
-      .values()
-      .find(|rule| rule.values.contains(&value))
-      .cloned()
+  pub fn get(&self, name: &'a str) -> Option<Rule<'a>> {
+    self.grammars.get(name).map(|rule| rule.clone())
   }
 }
 
@@ -115,45 +104,21 @@ impl<'a> Output<'a> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Parser<'a> {
-  /// Input string to be parsed.
-  input: &'a str,
-  /// Current position in the input string.
-  position: usize,
   /// Grammars lookup table.
   grammar: Grammar<'a>,
 }
 
 impl<'a> Parser<'a> {
   /// Creates a new instance of the parser with the given input string.
-  pub fn new(input: &'a str, position: usize, grammar: Grammar<'a>) -> Self {
-    Parser {
-      input,
-      position,
-      grammar,
-    }
+  pub fn new(grammar: Grammar<'a>) -> Self {
+    Parser { grammar }
   }
 
-  /// Advances the current position by `n` characters.
-  pub fn advance(&mut self, n: usize) {
-    self.position += n;
-  }
-
-  /// Returns the substring of the input from the current position to the end.
-  pub fn current(&self) -> &'a str {
-    &self.input[self.position..self.position + 1]
-  }
-
-  /// Returns the total length of the input string.
-  pub fn length(&self) -> usize {
-    self.input.len()
-  }
-
-  /// Returns whether the input string is empty.
-  pub fn is_empty(&self) -> bool {
-    self.input.is_empty() || self.position >= self.length()
-  }
-
-  pub fn parse(&mut self, input: &'a str, rule_name: &'a str) -> Result<CST<'a>, ParserError<'a>> {
+  pub fn parse(
+    &mut self,
+    input: &mut &'a str,
+    rule_name: &'a str,
+  ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
     let rule = self
       .grammar
       .get(rule_name)
@@ -162,29 +127,76 @@ impl<'a> Parser<'a> {
         name: rule_name,
       })?;
 
-    self.input = input;
-    self.position = 0;
-
-    match self.match_success(&rule.expression) {
-      Ok(cst) => Ok(cst),
-      Err(_) => self.match_failure(),
+    let (remaining, cst) = self.match_success(input, &rule.expression)?;
+    match cst {
+      Some(cst) => Ok((remaining, Some(cst))),
+      None => Ok((remaining, None)),
     }
   }
 
-  pub fn match_success(&mut self, expression: &Expression) -> Result<CST<'a>, ParserError<'a>> {
+  pub fn match_success(
+    &mut self,
+    input: &mut &'a str,
+    expression: &Expression<'a>,
+  ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
     match expression {
-      Expression::Empty => Ok(CST::default()),
+      Expression::Empty => Ok((input, None)),
+      Expression::Char(e) => {
+        let (remaining, node) = self.match_success(input, expression)?;
+
+        match node {
+          Some(n) => Ok((remaining, Some(CST::new(e, vec![n], None)))),
+          None => Err(ParserError::Unknown),
+        }
+      }
       Expression::Sequence(e) => {
         let mut cst = CST::default();
 
         for expr in e {
-          let res = self.match_success(expr)?;
-          cst.add(res);
+          let (remaining, node) = self.match_success(input, expr)?;
+          *input = remaining;
+
+          cst.add(node);
         }
 
-        Ok(cst)
+        Ok((input, Some(cst)))
       }
-      Expression::Choice(_e) => Err(ParserError::Unknown),
+      Expression::Choice(e) => {
+        for expr in e {
+          match self.match_success(input, expr) {
+            Ok((remaining, node)) => {
+              *input = remaining;
+              return Ok((input, node));
+            }
+            Err(_) => continue,
+          }
+        }
+        Err(ParserError::Unknown)
+      }
+      Expression::ZeroOrMore(e) => {
+        let mut cst = CST::default();
+        let nodes = self.zero_or_more(input, e)?;
+
+        for node in nodes {
+          cst.add(Some(node));
+        }
+
+        Ok((input, Some(cst)))
+      }
+      Expression::OneOrMore(e) => {
+        let mut cst = CST::default();
+        let nodes = self.zero_or_more(input, e)?;
+
+        if nodes.is_empty() {
+          return Err(ParserError::Unknown);
+        }
+
+        for node in nodes {
+          cst.add(Some(node));
+        }
+
+        Ok((input, Some(cst)))
+      }
       _ => Err(ParserError::Unknown),
     }
   }
@@ -192,12 +204,36 @@ impl<'a> Parser<'a> {
   pub fn match_failure(&mut self) -> Result<CST<'a>, ParserError<'a>> {
     Err(ParserError::Unknown)
   }
+
+  fn zero_or_more(
+    &mut self,
+    input: &mut &'a str,
+    expression: &Expression<'a>,
+  ) -> Result<Vec<CST<'a>>, ParserError<'a>> {
+    let mut cst = Vec::new();
+
+    loop {
+      match self.match_success(input, &expression) {
+        Ok((remaining, node)) => {
+          match node {
+            Some(n) => cst.push(n),
+            None => continue,
+          }
+
+          *input = remaining;
+        }
+        Err(_) => break,
+      }
+    }
+
+    Ok(cst)
+  }
 }
 
 impl<'a> Default for Parser<'a> {
   /// Creates a default parser with an empty input string.
   fn default() -> Self {
-    Parser::new("", 0, Grammar::new())
+    Parser::new(Grammar::new())
   }
 }
 
@@ -208,11 +244,11 @@ mod tests {
   #[test]
   fn test_grammars_insert() {
     let mut grammar = Grammar::new();
-    grammar.insert(Rule::new("e", vec!["e"], Expression::Empty));
+    grammar.insert(Rule::new("e", Expression::Empty));
 
     assert_eq!(
       grammar.grammars.get("e"),
-      Some(&Rule::new("e", vec!["e"], Expression::Empty))
+      Some(&Rule::new("e", Expression::Empty))
     );
     assert_eq!(grammar.grammars.get("b"), None);
   }
@@ -222,12 +258,9 @@ mod tests {
     let mut grammar = Grammar::new();
     grammar
       .grammars
-      .insert("e", Rule::new("e", vec!["e"], Expression::Empty));
+      .insert("e", Rule::new("e", Expression::Empty));
 
-    assert_eq!(
-      grammar.get("e"),
-      Some(Rule::new("e", vec!["e"], Expression::Empty))
-    );
+    assert_eq!(grammar.get("e"), Some(Rule::new("e", Expression::Empty)));
     assert_eq!(grammar.get("b"), None);
   }
 }
