@@ -129,9 +129,12 @@ impl<'a> Parser<'a> {
       })?;
 
     let (remaining, cst) = self.match_success(input, &rule.expression)?;
-    match cst {
-      Some(cst) => Ok((remaining, Some(cst))),
-      None => Ok((remaining, None)),
+    if let Some(node) = cst {
+      let mut root = CST::new(rule.name, vec![], None);
+      root.add(Some(node));
+      Ok((remaining, Some(root)))
+    } else {
+      Ok((remaining, None))
     }
   }
 
@@ -142,72 +145,105 @@ impl<'a> Parser<'a> {
   ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
     match expression {
       Expression::Empty => Ok((input, None)),
-      Expression::Char(e) => {
-        if input.len() > 1 {
-          let (remaining, node) =
-            self.match_success(&mut &input[1..input.len() - 1], expression)?;
-
-          match node {
-            Some(n) => Ok((remaining, Some(CST::new(e, vec![n], None)))),
-            None => Err(ParserError::Unknown),
-          }
+      Expression::Char(char) => {
+        if input.starts_with(char) {
+          let remaining = &input[char.len()..];
+          let node = CST::new(char, vec![], None);
+          *input = remaining;
+          Ok((remaining, Some(node)))
         } else {
           Err(ParserError::Unknown)
         }
       }
-      Expression::Sequence(e) => {
-        let mut cst = CST::default();
+      Expression::Sequence(exprs) => {
+        let mut cst = CST::new("sequence", vec![], None);
 
-        for expr in e {
+        for expr in exprs {
           let (remaining, node) = self.match_success(input, expr)?;
-          *input = &remaining[1..remaining.len() - 1];
+          *input = remaining;
 
           cst.add(node);
         }
 
-        Ok((input, Some(cst)))
+        Ok((*input, Some(cst)))
       }
-      Expression::Choice(e) => {
-        for expr in e {
+      Expression::Choice(exprs) => {
+        for expr in exprs {
           match self.match_success(input, expr) {
-            Ok((remaining, node)) => {
-              *input = &remaining[1..remaining.len() - 1];
-              return Ok((input, node));
+            Ok((remaining, cst)) => {
+              *input = remaining;
+
+              match cst {
+                Some(n) => return Ok((remaining, Some(CST::new("choice", vec![n], None)))),
+                None => return Ok((remaining, None)),
+              }
             }
             Err(_) => continue,
           }
         }
         Err(ParserError::Unknown)
       }
-      Expression::ZeroOrMore(e) => {
-        let mut cst = CST::default();
-        let nodes = self.zero_or_more(input, e)?;
+      Expression::ZeroOrMore(expr) => {
+        let mut cst = CST::new("zero_or_more", vec![], None);
+        let mut children: Vec<CST<'a>> = Vec::new();
 
-        for node in nodes {
-          cst.add(Some(node));
+        loop {
+          let start_length = input.len();
+
+          match self.match_success(input, expr) {
+            Ok((remaining, cst)) => {
+              if remaining.len() == start_length {
+                break;
+              }
+
+              *input = remaining;
+
+              if let Some(n) = cst {
+                children.push(n);
+              } else {
+                break;
+              }
+            }
+            Err(_) => break,
+          }
         }
 
-        Ok((input, Some(cst)))
+        for child in children {
+          cst.add(Some(child));
+        }
+
+        match cst.is_leaf() {
+          true => Ok((*input, None)),
+          false => Ok((*input, Some(cst))),
+        }
       }
-      Expression::OneOrMore(e) => {
-        let mut cst = CST::default();
-        let nodes = self.zero_or_more(input, e)?;
+      Expression::OneOrMore(expr) => {
+        let start_length = input.len();
+        let (remaining, cst) = self.match_success(input, &Expression::ZeroOrMore(expr.clone()))?;
 
-        if nodes.is_empty() {
-          return Err(ParserError::Unknown);
+        if remaining.len() == start_length {
+          return Err(ParserError::FailedToMatch {
+            position: 0,
+            input,
+            name: "one_or_more",
+          });
         }
 
-        for node in nodes {
-          cst.add(Some(node));
-        }
-
-        Ok((input, Some(cst)))
+        Ok((remaining, cst))
       }
       Expression::NamedRule(n) => {
         let rule = self.grammar.get(n);
 
         match rule {
-          Some(r) => self.match_success(input, &r.expression),
+          Some(r) => {
+            let (remaining, cst_option) = self.match_success(input, &r.expression)?;
+            *input = remaining;
+
+            match cst_option {
+              Some(child) => Ok((remaining, Some(CST::new(n, vec![child], None)))),
+              None => Ok((remaining, Some(CST::new(n, vec![], None)))),
+            }
+          }
           None => Err(ParserError::RuleNotFound {
             position: 0,
             name: n,
@@ -219,30 +255,6 @@ impl<'a> Parser<'a> {
 
   pub fn match_failure(&mut self) -> Result<CST<'a>, ParserError<'a>> {
     Err(ParserError::Unknown)
-  }
-
-  fn zero_or_more(
-    &mut self,
-    input: &mut &'a str,
-    expression: &Expression<'a>,
-  ) -> Result<Vec<CST<'a>>, ParserError<'a>> {
-    let mut cst = Vec::new();
-
-    loop {
-      match self.match_success(input, &expression) {
-        Ok((remaining, node)) => {
-          match node {
-            Some(n) => cst.push(n),
-            None => continue,
-          }
-
-          *input = &remaining[1..remaining.len() - 1];
-        }
-        Err(_) => break,
-      }
-    }
-
-    Ok(cst)
   }
 }
 

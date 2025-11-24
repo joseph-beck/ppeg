@@ -57,6 +57,10 @@ impl<'a> CST<'a> {
     }
   }
 
+  pub fn is_leaf(&self) -> bool {
+    self.children.is_empty()
+  }
+
   /// Pretty print the CST.
   /// Using this node as the root, outputs the tree structure.
   /// For example:
@@ -168,6 +172,15 @@ mod tests {
     cst.update_label(Label::new(true, false));
 
     assert!(cst.is_productive());
+  }
+
+  #[test]
+  fn test_cst_is_leaf() {
+    let mut cst = CST::new("root", vec![], None);
+    assert!(cst.is_leaf());
+
+    cst.add(Some(CST::new("child", vec![], None)));
+    assert!(!cst.is_leaf());
   }
 
   #[test]
