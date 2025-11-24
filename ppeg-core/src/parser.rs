@@ -84,7 +84,7 @@ impl<'a> Grammar<'a> {
 
   /// Gets the the rule from the grammar lookup.
   pub fn get(&self, name: &'a str) -> Option<Rule<'a>> {
-    self.grammars.get(name).map(|rule| rule.clone())
+    self.grammars.get(name).cloned()
   }
 }
 

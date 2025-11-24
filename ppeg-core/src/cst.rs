@@ -27,7 +27,7 @@ impl<'a> CST<'a> {
   /// Add a child CST node to the current CST.
   pub fn add(&mut self, child: Option<CST<'a>>) {
     match child {
-      None => return,
+      None => (),
       Some(c) => self.children.push(c),
     }
   }
