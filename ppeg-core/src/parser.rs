@@ -29,8 +29,9 @@ pub enum Expression<'a> {
   /// For example, `A` matches zero or more occurrences of A.
   /// Expression for `E*`.
   ZeroOrMore(Box<Expression<'a>>),
-  /// Matches when an error has occurred.
-  Error,
+  /// Matches a named rule.
+  /// Expression for `N`.
+  NamedRule(&'a str),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -142,11 +143,16 @@ impl<'a> Parser<'a> {
     match expression {
       Expression::Empty => Ok((input, None)),
       Expression::Char(e) => {
-        let (remaining, node) = self.match_success(input, expression)?;
+        if input.len() > 1 {
+          let (remaining, node) =
+            self.match_success(&mut &input[1..input.len() - 1], expression)?;
 
-        match node {
-          Some(n) => Ok((remaining, Some(CST::new(e, vec![n], None)))),
-          None => Err(ParserError::Unknown),
+          match node {
+            Some(n) => Ok((remaining, Some(CST::new(e, vec![n], None)))),
+            None => Err(ParserError::Unknown),
+          }
+        } else {
+          Err(ParserError::Unknown)
         }
       }
       Expression::Sequence(e) => {
@@ -154,7 +160,7 @@ impl<'a> Parser<'a> {
 
         for expr in e {
           let (remaining, node) = self.match_success(input, expr)?;
-          *input = remaining;
+          *input = &remaining[1..remaining.len() - 1];
 
           cst.add(node);
         }
@@ -165,7 +171,7 @@ impl<'a> Parser<'a> {
         for expr in e {
           match self.match_success(input, expr) {
             Ok((remaining, node)) => {
-              *input = remaining;
+              *input = &remaining[1..remaining.len() - 1];
               return Ok((input, node));
             }
             Err(_) => continue,
@@ -197,7 +203,17 @@ impl<'a> Parser<'a> {
 
         Ok((input, Some(cst)))
       }
-      _ => Err(ParserError::Unknown),
+      Expression::NamedRule(n) => {
+        let rule = self.grammar.get(n);
+
+        match rule {
+          Some(r) => self.match_success(input, &r.expression),
+          None => Err(ParserError::RuleNotFound {
+            position: 0,
+            name: n,
+          }),
+        }
+      }
     }
   }
 
@@ -220,7 +236,7 @@ impl<'a> Parser<'a> {
             None => continue,
           }
 
-          *input = remaining;
+          *input = &remaining[1..remaining.len() - 1];
         }
         Err(_) => break,
       }

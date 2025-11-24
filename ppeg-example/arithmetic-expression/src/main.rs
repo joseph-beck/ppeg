@@ -13,29 +13,37 @@ fn main() {
     Expression::Char("9"),
     Expression::Char("0"),
   ])));
-  let factor = Expression::ZeroOrMore(Box::new(digit.clone()));
-  let term = Expression::Choice(vec![
-    factor.clone(),
-    Expression::ZeroOrMore(Box::new(Expression::Sequence(vec![
-      factor.clone(),
-      Expression::Char("*"),
-      factor.clone(),
-    ]))),
-  ]);
-  let arithmetic_expression = Expression::Choice(vec![
-    term.clone(),
-    Expression::ZeroOrMore(Box::new(Expression::Sequence(vec![
-      term.clone(),
-      Expression::Char("+"),
-      term.clone(),
-    ]))),
-  ]);
+  let factor = Rule::new("factor", Expression::ZeroOrMore(Box::new(digit.clone())));
+  let term = Rule::new(
+    "term",
+    Expression::Choice(vec![
+      Expression::NamedRule("factor"),
+      Expression::ZeroOrMore(Box::new(Expression::Sequence(vec![
+        Expression::NamedRule("factor"),
+        Expression::Char("*"),
+        Expression::NamedRule("term"),
+      ]))),
+    ]),
+  );
+  let arithmetic_expression = Rule::new(
+    "arithmetic_expression",
+    Expression::Choice(vec![
+      Expression::NamedRule("term"),
+      Expression::ZeroOrMore(Box::new(Expression::Sequence(vec![
+        Expression::NamedRule("term"),
+        Expression::Char("*"),
+        Expression::NamedRule("arithmetic_expression"),
+      ]))),
+    ]),
+  );
 
   let mut grammar = Grammar::new();
-  grammar.insert(Rule::new("expr", arithmetic_expression));
+  grammar.insert(factor);
+  grammar.insert(term);
+  grammar.insert(arithmetic_expression);
 
   let mut parser = Parser::new(grammar);
-  let (_, cst) = parser.parse(&mut "1+2*3", "expr").unwrap();
+  let (_, cst) = parser.parse(&mut "1+2*3", "arithmetic_expression").unwrap();
 
   match cst {
     Some(c) => println!("Parsed successfully: {:?}", c.pretty_print(Some(0))),
