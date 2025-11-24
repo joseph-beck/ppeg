@@ -57,8 +57,9 @@ fn main() {
   grammar.insert(arithmetic_expression);
 
   let mut parser = Parser::new(grammar);
-  let mut input = "1+(2*3)";
-  let (_, cst) = parser.parse(&mut input, "arithmetic_expression").unwrap();
+  let (_, cst) = parser
+    .parse(&mut "1+(2*3)", "arithmetic_expression")
+    .unwrap();
 
   match cst {
     Some(c) => {

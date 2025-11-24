@@ -10,6 +10,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "json"
+version = "0.1.0"
+dependencies = [
+ "ppeg-core",
+]
+
+[[package]]
 name = "ppeg-cli"
 version = "0.1.0"
 
