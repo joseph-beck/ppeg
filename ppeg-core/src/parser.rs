@@ -266,7 +266,7 @@ impl<'a> Default for Parser<'a> {
 }
 
 #[cfg(test)]
-mod tests {
+mod grammar_tests {
   use super::*;
 
   #[test]
@@ -290,5 +290,154 @@ mod tests {
 
     assert_eq!(grammar.get("e"), Some(Rule::new("e", Expression::Empty)));
     assert_eq!(grammar.get("b"), None);
+  }
+}
+
+#[cfg(test)]
+mod parser_tests {
+  use super::*;
+
+  #[test]
+  fn test_parser_parse_char_success() {
+    let mut grammar = Grammar::new();
+    grammar.insert(Rule::new("rule", Expression::Char("a")));
+
+    let mut parser = Parser::new(grammar);
+    let (remaining, cst) = parser.parse(&mut "a", "rule").unwrap();
+
+    assert!(remaining.is_empty());
+    match cst {
+      Some(mut node) => {
+        assert_eq!(node.get(), "rule");
+        assert_eq!(node.child(0).unwrap().get(), "a");
+      }
+      None => assert!(false),
+    }
+  }
+
+  #[test]
+  fn test_parser_parse_char_fail() {
+    let mut grammar = Grammar::new();
+    grammar.insert(Rule::new("a", Expression::Char("a")));
+
+    let mut parser = Parser::new(grammar);
+    let result = parser.parse(&mut "b", "a");
+
+    assert!(result.is_err());
+  }
+
+  #[test]
+  fn test_parser_parse_sequence_success() {
+    {
+      let mut grammar = Grammar::new();
+      grammar.insert(Rule::new(
+        "rule",
+        Expression::Sequence(vec![Expression::Char("a")]),
+      ));
+
+      let mut parser = Parser::new(grammar);
+      let (remaining, cst) = parser.parse(&mut "a", "rule").unwrap();
+
+      assert!(remaining.is_empty());
+      match cst {
+        Some(mut node) => {
+          node.pretty_print(Some(0));
+          assert_eq!(node.get(), "rule");
+          assert_eq!(node.child(0).unwrap().get(), "sequence");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
+        }
+        None => assert!(false),
+      }
+    }
+
+    {
+      let mut grammar = Grammar::new();
+      grammar.insert(Rule::new(
+        "rule",
+        Expression::Sequence(vec![Expression::Char("a"), Expression::Char("b")]),
+      ));
+
+      let mut parser = Parser::new(grammar);
+      let (remaining, cst) = parser.parse(&mut "ab", "rule").unwrap();
+
+      assert!(remaining.is_empty());
+      match cst {
+        Some(mut node) => {
+          node.pretty_print(Some(0));
+          assert_eq!(node.get(), "rule");
+          assert_eq!(node.child(0).unwrap().get(), "sequence");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(1).unwrap().get(), "b");
+        }
+        None => assert!(false),
+      }
+    }
+  }
+
+  #[test]
+  fn test_parser_parse_sequence_fail() {
+    let mut grammar = Grammar::new();
+    grammar.insert(Rule::new(
+      "rule",
+      Expression::Sequence(vec![Expression::Char("a")]),
+    ));
+
+    let mut parser = Parser::new(grammar);
+    let result = parser.parse(&mut "b", "rule");
+
+    assert!(result.is_err());
+  }
+
+  #[test]
+  fn test_parser_parse_choice_success() {
+    let mut grammar = Grammar::new();
+    grammar.insert(Rule::new(
+      "rule",
+      Expression::Choice(vec![Expression::Char("a"), Expression::Char("b")]),
+    ));
+
+    {
+      let mut parser = Parser::new(grammar.clone());
+      let (remaining, cst) = parser.parse(&mut "a", "rule").unwrap();
+
+      assert!(remaining.is_empty());
+      match cst {
+        Some(mut node) => {
+          assert_eq!(node.get(), "rule");
+          assert_eq!(node.child(0).unwrap().get(), "choice");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
+        }
+        None => assert!(false),
+      }
+    }
+
+    {
+      let mut parser = Parser::new(grammar.clone());
+      let (remaining, cst) = parser.parse(&mut "b", "rule").unwrap();
+
+      assert!(remaining.is_empty());
+      match cst {
+        Some(mut node) => {
+          assert_eq!(node.get(), "rule");
+          assert_eq!(node.child(0).unwrap().get(), "choice");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "b");
+        }
+        None => assert!(false),
+      }
+    }
+  }
+
+  #[test]
+  fn test_parser_parse_choice_fail() {
+    let mut grammar = Grammar::new();
+    grammar.insert(Rule::new(
+      "rule",
+      Expression::Choice(vec![Expression::Char("a"), Expression::Char("b")]),
+    ));
+
+    let mut parser = Parser::new(grammar);
+    let result = parser.parse(&mut "c", "rule");
+
+    assert!(result.is_err());
   }
 }
