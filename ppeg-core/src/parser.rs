@@ -302,16 +302,32 @@ mod parser_tests {
     let mut grammar = Grammar::new();
     grammar.insert(Rule::new("rule", Expression::Char("a")));
 
-    let mut parser = Parser::new(grammar);
-    let (remaining, cst) = parser.parse(&mut "a", "rule").unwrap();
+    {
+      let mut parser = Parser::new(grammar.clone());
+      let (remaining, cst) = parser.parse(&mut "a", "rule").unwrap();
 
-    assert!(remaining.is_empty());
-    match cst {
-      Some(mut node) => {
-        assert_eq!(node.get(), "rule");
-        assert_eq!(node.child(0).unwrap().get(), "a");
+      assert!(remaining.is_empty());
+      match cst {
+        Some(mut node) => {
+          assert_eq!(node.get(), "rule");
+          assert_eq!(node.child(0).unwrap().get(), "a");
+        }
+        None => assert!(false),
       }
-      None => assert!(false),
+    }
+
+    {
+      let mut parser = Parser::new(grammar.clone());
+      let (remaining, cst) = parser.parse(&mut "ab", "rule").unwrap();
+
+      assert_eq!(remaining, "b");
+      match cst {
+        Some(mut node) => {
+          assert_eq!(node.get(), "rule");
+          assert_eq!(node.child(0).unwrap().get(), "a");
+        }
+        None => assert!(false),
+      }
     }
   }
 
@@ -425,6 +441,21 @@ mod parser_tests {
         None => assert!(false),
       }
     }
+
+    {
+      let mut parser = Parser::new(grammar.clone());
+      let (remaining, cst) = parser.parse(&mut "ba", "rule").unwrap();
+
+      assert_eq!(remaining, "a");
+      match cst {
+        Some(mut node) => {
+          assert_eq!(node.get(), "rule");
+          assert_eq!(node.child(0).unwrap().get(), "choice");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "b");
+        }
+        None => assert!(false),
+      }
+    }
   }
 
   #[test]
@@ -439,5 +470,159 @@ mod parser_tests {
     let result = parser.parse(&mut "c", "rule");
 
     assert!(result.is_err());
+  }
+
+  #[test]
+  fn test_parser_parse_zero_or_more_success() {
+    let mut grammar = Grammar::new();
+    grammar.insert(Rule::new(
+      "rule",
+      Expression::ZeroOrMore(Box::new(Expression::Char("a"))),
+    ));
+
+    {
+      let mut parser = Parser::new(grammar.clone());
+      let (remaining, cst) = parser.parse(&mut "aaa", "rule").unwrap();
+
+      assert!(remaining.is_empty());
+      match cst {
+        Some(mut node) => {
+          assert_eq!(node.get(), "rule");
+          assert_eq!(node.child(0).unwrap().get(), "zero_or_more");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(1).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(2).unwrap().get(), "a");
+        }
+        None => assert!(false),
+      }
+    }
+
+    {
+      let mut parser = Parser::new(grammar.clone());
+      let (remaining, cst) = parser.parse(&mut "aaab", "rule").unwrap();
+
+      assert_eq!(remaining, "b");
+      match cst {
+        Some(mut node) => {
+          assert_eq!(node.get(), "rule");
+          assert_eq!(node.child(0).unwrap().get(), "zero_or_more");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(1).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(2).unwrap().get(), "a");
+        }
+        None => assert!(false),
+      }
+    }
+  }
+
+  #[test]
+  fn test_parser_parse_zero_or_more_fail() {
+    let mut grammar = Grammar::new();
+    grammar.insert(Rule::new(
+      "rule",
+      Expression::ZeroOrMore(Box::new(Expression::Char("a"))),
+    ));
+
+    let mut parser = Parser::new(grammar.clone());
+    let result = parser.parse(&mut "b", "rule");
+
+    // this doesn't fail as there is no requirement to match
+    assert!(result.is_ok());
+  }
+
+  #[test]
+  fn test_parser_parse_one_or_more_success() {
+    let mut grammar = Grammar::new();
+    grammar.insert(Rule::new(
+      "rule",
+      Expression::OneOrMore(Box::new(Expression::Char("a"))),
+    ));
+
+    {
+      let mut parser = Parser::new(grammar.clone());
+      let (remaining, cst) = parser.parse(&mut "aaa", "rule").unwrap();
+
+      assert!(remaining.is_empty());
+      match cst {
+        Some(mut node) => {
+          assert_eq!(node.get(), "rule");
+          // reuses zero_or_more logic for now
+          assert_eq!(node.child(0).unwrap().get(), "zero_or_more");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(1).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(2).unwrap().get(), "a");
+        }
+        None => assert!(false),
+      }
+    }
+
+    {
+      let mut parser = Parser::new(grammar.clone());
+      let (remaining, cst) = parser.parse(&mut "aaab", "rule").unwrap();
+
+      assert_eq!(remaining, "b");
+      match cst {
+        Some(mut node) => {
+          assert_eq!(node.get(), "rule");
+          // reuses zero_or_more logic for now
+          assert_eq!(node.child(0).unwrap().get(), "zero_or_more");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(1).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(2).unwrap().get(), "a");
+        }
+        None => assert!(false),
+      }
+    }
+  }
+
+  #[test]
+  fn test_parser_parse_one_or_more_fail() {
+    let mut grammar = Grammar::new();
+    grammar.insert(Rule::new(
+      "rule",
+      Expression::OneOrMore(Box::new(Expression::Char("a"))),
+    ));
+
+    let mut parser = Parser::new(grammar.clone());
+    let result = parser.parse(&mut "b", "rule");
+
+    assert!(result.is_err());
+  }
+
+  #[test]
+  fn test_parser_parse_named_rule_success() {
+    let mut grammar = Grammar::new();
+    grammar.insert(Rule::new("rule", Expression::Char("a")));
+    grammar.insert(Rule::new("named", Expression::NamedRule("rule")));
+
+    {
+      let mut parser = Parser::new(grammar.clone());
+      let (remaining, cst) = parser.parse(&mut "a", "named").unwrap();
+
+      assert!(remaining.is_empty());
+      match cst {
+        Some(mut node) => {
+          assert_eq!(node.get(), "named");
+          assert_eq!(node.child(0).unwrap().get(), "rule");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
+        }
+        None => assert!(false),
+      }
+    }
+
+    {
+      let mut parser = Parser::new(grammar.clone());
+      let (remaining, cst) = parser.parse(&mut "aa", "named").unwrap();
+
+      assert_eq!(remaining, "a");
+      match cst {
+        Some(mut node) => {
+          assert_eq!(node.get(), "named");
+          assert_eq!(node.child(0).unwrap().get(), "rule");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
+        }
+        None => assert!(false),
+      }
+    }
   }
 }
