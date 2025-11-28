@@ -1,0 +1,21 @@
+#!/bin/bash
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NO_COLOUR='\033[0m'
+
+# ---------------------------------------------------------
+# conventional commit check
+# ---------------------------------------------------------
+REGEX="^((Merge[ a-z-]* branch.*)|(Revert*)|((build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?!?: .*))"
+
+FILE=`cat $1`
+
+echo "Commit Message: ${FILE}"
+
+if ! [[ $FILE =~ $REGEX ]]; then
+	echo -e >&2 "${RED}FAIL: Commit aborted for not following the Conventional Commit standard.${NO_COLOUR}"
+	exit 1
+else
+	echo -e >&2 "${GREEN}PASS: valid commit message${NO_COLOUR}"
+fi

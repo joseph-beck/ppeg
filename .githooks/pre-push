@@ -1,0 +1,25 @@
+#!/bin/bash
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NO_COLOUR='\033[0m'
+
+# ---------------------------------------------------------
+# cargo build
+# ---------------------------------------------------------
+if cargo build; then
+    echo -e "${GREEN}PASS: cargo build pass${NO_COLOUR}"
+else
+    echo -e "${RED}FAIL: cargo build fail${NO_COLOUR}"
+    exit 1
+fi
+
+# ---------------------------------------------------------
+# cargo test
+# ---------------------------------------------------------
+if cargo test; then
+    echo -e "${GREEN}PASS: cargo test pass${NO_COLOUR}"
+else
+    echo -e "${RED}FAIL: cargo test fail${NO_COLOUR}"
+    exit 1
+fi

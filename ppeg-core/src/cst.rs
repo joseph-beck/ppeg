@@ -25,8 +25,11 @@ impl<'a> CST<'a> {
   }
 
   /// Add a child CST node to the current CST.
-  pub fn add(&mut self, child: CST<'a>) {
-    self.children.push(child);
+  pub fn add(&mut self, child: Option<CST<'a>>) {
+    match child {
+      None => (),
+      Some(c) => self.children.push(c),
+    }
   }
 
   pub fn child(&mut self, index: usize) -> Option<&mut CST<'a>> {
@@ -52,6 +55,10 @@ impl<'a> CST<'a> {
       Some(label) => label.hidden,
       None => false,
     }
+  }
+
+  pub fn is_leaf(&self) -> bool {
+    self.children.is_empty()
   }
 
   /// Pretty print the CST.
@@ -132,8 +139,8 @@ mod tests {
   fn test_cst_add() {
     let mut cst = CST::new("root", vec![], None);
 
-    cst.add(CST::new("child1", vec![], None));
-    cst.add(CST::new("child2", vec![], None));
+    cst.add(Some(CST::new("child1", vec![], None)));
+    cst.add(Some(CST::new("child2", vec![], None)));
 
     assert_eq!(cst.children.len(), 2);
     assert_eq!(cst.children[0].value, "child1");
@@ -144,7 +151,7 @@ mod tests {
   fn test_cst_child() {
     let mut cst = CST::new("root", vec![], None);
 
-    cst.add(CST::new("child1", vec![], None));
+    cst.add(Some(CST::new("child1", vec![], None)));
     let child1 = cst.child(0).unwrap();
 
     assert_eq!(child1.value, "child1");
@@ -165,6 +172,15 @@ mod tests {
     cst.update_label(Label::new(true, false));
 
     assert!(cst.is_productive());
+  }
+
+  #[test]
+  fn test_cst_is_leaf() {
+    let mut cst = CST::new("root", vec![], None);
+    assert!(cst.is_leaf());
+
+    cst.add(Some(CST::new("child", vec![], None)));
+    assert!(!cst.is_leaf());
   }
 
   #[test]

@@ -1,0 +1,45 @@
+#!/bin/bash
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NO_COLOUR='\033[0m'
+
+# ---------------------------------------------------------
+# cargo fmt (formatting)
+# ---------------------------------------------------------
+if cargo fmt --check; then
+    echo -e "${GREEN}PASS: cargo fmt pass${NO_COLOUR}"
+else
+    echo -e "${RED}FAIL: cargo fmt fail${NO_COLOUR}"
+    exit 1
+fi
+
+# ---------------------------------------------------------
+# cargo clippy (linting)
+# ---------------------------------------------------------
+if cargo clippy; then
+    echo -e "${GREEN}PASS: cargo clippy pass${NO_COLOUR}"
+else
+    echo -e "${RED}FAIL: cargo clippy fail${NO_COLOUR}"
+    exit 1
+fi
+
+# ---------------------------------------------------------
+# cargo audit
+# ---------------------------------------------------------
+if cargo audit; then
+    echo -e "${GREEN}PASS: cargo audit pass${NO_COLOUR}"
+else
+    echo -e "${RED}FAIL: cargo audit fail${NO_COLOUR}"
+    exit 1
+fi
+
+# ---------------------------------------------------------
+# cargo check
+# ---------------------------------------------------------
+if cargo check; then
+    echo -e "${GREEN}PASS: cargo check pass${NO_COLOUR}"
+else
+    echo -e "${RED}FAIL: cargo check fail${NO_COLOUR}"
+    exit 1
+fi
