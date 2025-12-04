@@ -51,14 +51,15 @@ impl<'a> Rule<'a> {
 
 #[derive(Clone, PartialEq)]
 pub struct Grammar<'a> {
-  /// Mapping of grammar values to their corresponding rules.
-  grammars: HashMap<&'a str, Rule<'a>>,
+  /// Stores all of the rules of a grammar.
+  /// Mapping of rule name to the rule data.
+  rules: HashMap<&'a str, Rule<'a>>,
 }
 
 impl Grammar<'_> {
   pub fn new() -> Self {
     Grammar {
-      grammars: HashMap::new(),
+      rules: HashMap::new(),
     }
   }
 }
@@ -71,7 +72,7 @@ impl Default for Grammar<'_> {
 
 impl std::fmt::Debug for Grammar<'_> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "Grammars: {:?}", self.grammars)
+    write!(f, "Grammars: {:?}", self.rules)
   }
 }
 
@@ -79,12 +80,12 @@ impl<'a> Grammar<'a> {
   /// Inserts a new grammar into the grammars lookup table.
   /// Breaks down the grammar into its value and rule components.
   pub fn insert(&mut self, rule: Rule<'a>) {
-    self.grammars.insert(rule.name, rule);
+    self.rules.insert(rule.name, rule);
   }
 
   /// Gets the the rule from the grammar lookup.
   pub fn get(&self, name: &'a str) -> Option<Rule<'a>> {
-    self.grammars.get(name).cloned()
+    self.rules.get(name).cloned()
   }
 }
 
@@ -275,18 +276,16 @@ mod grammar_tests {
     grammar.insert(Rule::new("e", Expression::Empty));
 
     assert_eq!(
-      grammar.grammars.get("e"),
+      grammar.rules.get("e"),
       Some(&Rule::new("e", Expression::Empty))
     );
-    assert_eq!(grammar.grammars.get("b"), None);
+    assert_eq!(grammar.rules.get("b"), None);
   }
 
   #[test]
   fn test_grammars_get() {
     let mut grammar = Grammar::new();
-    grammar
-      .grammars
-      .insert("e", Rule::new("e", Expression::Empty));
+    grammar.rules.insert("e", Rule::new("e", Expression::Empty));
 
     assert_eq!(grammar.get("e"), Some(Rule::new("e", Expression::Empty)));
     assert_eq!(grammar.get("b"), None);
