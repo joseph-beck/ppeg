@@ -2,7 +2,10 @@ stages:
   - check
   - build
   - test
+  - docs
 
+# rust images are out of data.
+# here the latest rust toolchain is installed manually.
 .rust:
   before_script:
     - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -11,6 +14,7 @@ stages:
     - rustc --version
     - cargo --version
 
+# adds sonar-scanner to path to be used in the check:sonar job.
 .sonar:
   before_script:
     - export SONAR_SCANNER_VERSION=7.2.0.5079
@@ -19,12 +23,14 @@ stages:
     - unzip -o $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
     - export PATH=$SONAR_SCANNER_HOME/bin:$PATH
 
+# sonar job, runs the sonar-scanner.
 check:sonar:
   extends: .sonar
   stage: check
   script:
     - sonar-scanner
 
+# linting with clippy.
 check:clippy:
   extends: .rust
   stage: check
@@ -36,6 +42,7 @@ check:clippy:
       --all-targets
       --all-features"
 
+# formatting check with rustfmt.
 check:fmt:
   extends: .rust
   stage: check
@@ -45,6 +52,7 @@ check:fmt:
       --check
       --verbose"
 
+# test build, verbosely, with cargo.
 build:build:
   extends: .rust
   stage: build
@@ -53,6 +61,7 @@ build:build:
       --color always
       --verbose"
 
+# test run, verbosely, with cargo.
 test:test:
   extends: .rust
   stage: test
@@ -62,3 +71,14 @@ test:test:
       --verbose
       --all-features
       --all-targets"
+
+# generate rustdoc, goes to target/doc.
+# stored as artifact for later.
+docs:docs:
+  extends: .rust
+  stage: docs
+  script:
+    - "cargo doc"
+  artifacts:
+    paths:
+      - target/doc

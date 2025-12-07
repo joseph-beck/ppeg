@@ -116,6 +116,9 @@ impl<'a> Parser<'a> {
     Parser { grammar }
   }
 
+  /// Parses a given input using the named rule as the starting rule.
+  /// Returns a result with the remaining input and a CST if parsing is successful.
+  /// Otherwise, returns a ParserError.
   pub fn parse(
     &mut self,
     input: &mut &'a str,
@@ -139,6 +142,8 @@ impl<'a> Parser<'a> {
     }
   }
 
+  /// Matches the given input against the provided expression.
+  /// Returns the remaining input and CST if successful, otherwise returns a ParserError.
   pub fn match_success(
     &mut self,
     input: &mut &'a str,

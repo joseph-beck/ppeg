@@ -32,6 +32,7 @@ impl<'a> CST<'a> {
     }
   }
 
+  /// Get a mutable child at the given index.
   pub fn child(&mut self, index: usize) -> Option<&mut CST<'a>> {
     self.children.get_mut(index)
   }
@@ -57,6 +58,8 @@ impl<'a> CST<'a> {
     }
   }
 
+  /// Is this CST node a leaf?
+  /// Is the children array empty?
   pub fn is_leaf(&self) -> bool {
     self.children.is_empty()
   }
