@@ -235,7 +235,10 @@ impl<'a> Parser<'a> {
           });
         }
 
-        Ok((remaining, cst))
+        let mut cst = cst.unwrap();
+        cst.set("one_or_more");
+
+        Ok((remaining, Some(cst)))
       }
       Expression::NamedRule(n) => {
         let rule = self.grammar.get(n);
@@ -551,7 +554,7 @@ mod parser_tests {
         Some(mut node) => {
           assert_eq!(node.get(), "rule");
           // reuses zero_or_more logic for now
-          assert_eq!(node.child(0).unwrap().get(), "zero_or_more");
+          assert_eq!(node.child(0).unwrap().get(), "one_or_more");
           assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
           assert_eq!(node.child(0).unwrap().child(1).unwrap().get(), "a");
           assert_eq!(node.child(0).unwrap().child(2).unwrap().get(), "a");
@@ -569,7 +572,7 @@ mod parser_tests {
         Some(mut node) => {
           assert_eq!(node.get(), "rule");
           // reuses zero_or_more logic for now
-          assert_eq!(node.child(0).unwrap().get(), "zero_or_more");
+          assert_eq!(node.child(0).unwrap().get(), "one_or_more");
           assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
           assert_eq!(node.child(0).unwrap().child(1).unwrap().get(), "a");
           assert_eq!(node.child(0).unwrap().child(2).unwrap().get(), "a");

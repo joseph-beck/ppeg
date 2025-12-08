@@ -24,6 +24,11 @@ impl<'a> CST<'a> {
     self.value
   }
 
+  /// Sets the value of this CST node.
+  pub fn set(&mut self, value: &'a str) {
+    self.value = value;
+  }
+
   /// Add a child CST node to the current CST.
   pub fn add(&mut self, child: Option<CST<'a>>) {
     match child {
