@@ -52,15 +52,6 @@ check:fmt:
       --check
       --verbose"
 
-# check deps for errors
-check:check:
-  extends: .rust
-  stage: check
-  script:
-    - "cargo check
-      --color always
-      --verbose"
-
 # test build, verbosely, with cargo.
 build:build:
   extends: .rust
