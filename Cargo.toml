@@ -1,5 +1,5 @@
 [workspace]
-members = [
+members = ["ppeg-api",
     "ppeg-cli",
     "ppeg-core",
     "ppeg-example/arithmetic-expression",
