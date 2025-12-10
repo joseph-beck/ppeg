@@ -6,6 +6,7 @@
     "packrat",
     "ppeg",
     "rustdoc",
-    "rustup"
+    "rustup",
+    "serde"
   ]
 }

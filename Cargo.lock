@@ -986,6 +986,7 @@ dependencies = [
  "actix-web",
  "env_logger",
  "ppeg-core",
+ "serde",
 ]
 
 [[package]]
