@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum ParserError<'a> {
   /// Occurs when an expression fails to match the given rule with the given input.
@@ -28,30 +30,40 @@ pub enum ParserError<'a> {
   Unknown,
 }
 
-impl ParserError<'_> {
-  pub fn to_string(&self) -> String {
+impl fmt::Display for ParserError<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      ParserError::FailedToMatch { position, input, name } => format!(
+      ParserError::FailedToMatch { position, input, name } => write!(
+        f,
         "Error: failed to match rule '{}' at position {}: remaining input '{}'",
         name, position, input
       ),
       ParserError::InvalidExpression { position, name } => {
-        format!("Error: invalid expression in rule '{}' at position {}", name, position)
+        write!(
+          f,
+          "Error: invalid expression in rule '{}' at position {}",
+          name, position
+        )
       }
       ParserError::EndOfInput { position, input } => match input {
-        Some(remaining) => format!(
+        Some(remaining) => write!(
+          f,
           "Error: end of input at position {}: remaining input '{}'",
           position, remaining
         ),
-        None => format!("Error: end of input at position {}", position),
+        None => write!(f, "Error: end of input at position {}", position),
       },
       ParserError::RuleNotFound { position, name } => {
-        format!("Error: rule '{}' not found in grammar at position {}", name, position)
+        write!(
+          f,
+          "Error: rule '{}' not found in grammar at position {}",
+          name, position
+        )
       }
       ParserError::Unexpected { position } => {
-        format!("Error: unexpected at position {}", position)
+        write!(f, "Error: unexpected at position {}", position)
       }
-      ParserError::Unknown => "Error: unknown".to_string(),
+      ParserError::Unknown => write!(f, "Error: unknown"),
     }
   }
 }
