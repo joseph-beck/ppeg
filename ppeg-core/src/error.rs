@@ -31,18 +31,13 @@ pub enum ParserError<'a> {
 impl ParserError<'_> {
   pub fn to_string(&self) -> String {
     match self {
-      ParserError::FailedToMatch {
-        position,
-        input,
-        name,
-      } => format!(
+      ParserError::FailedToMatch { position, input, name } => format!(
         "Error: failed to match rule '{}' at position {}: remaining input '{}'",
         name, position, input
       ),
-      ParserError::InvalidExpression { position, name } => format!(
-        "Error: invalid expression in rule '{}' at position {}",
-        name, position
-      ),
+      ParserError::InvalidExpression { position, name } => {
+        format!("Error: invalid expression in rule '{}' at position {}", name, position)
+      }
       ParserError::EndOfInput { position, input } => match input {
         Some(remaining) => format!(
           "Error: end of input at position {}: remaining input '{}'",
@@ -50,10 +45,9 @@ impl ParserError<'_> {
         ),
         None => format!("Error: end of input at position {}", position),
       },
-      ParserError::RuleNotFound { position, name } => format!(
-        "Error: rule '{}' not found in grammar at position {}",
-        name, position
-      ),
+      ParserError::RuleNotFound { position, name } => {
+        format!("Error: rule '{}' not found in grammar at position {}", name, position)
+      }
       ParserError::Unexpected { position } => {
         format!("Error: unexpected at position {}", position)
       }
