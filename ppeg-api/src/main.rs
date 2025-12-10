@@ -1,7 +1,7 @@
 use actix_web::{App, HttpServer, middleware::Logger};
 use env_logger::Env;
 
-mod model;
+pub mod model;
 mod service;
 
 #[actix_web::main]

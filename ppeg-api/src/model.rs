@@ -1,5 +1,7 @@
+use ppeg_core::{cst, parser};
 use serde::{Deserialize, Serialize};
 
+/// Duplicate of ppeg_core::parser::Expression but with owned Strings for serde.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Expression {
   Empty,
@@ -12,31 +14,24 @@ pub enum Expression {
 }
 
 impl Expression {
-  pub fn to_parser_expression(&self) -> ppeg_core::parser::Expression<'static> {
+  pub fn to_parser_expression(&self) -> parser::Expression<'static> {
     match self {
-      Expression::Empty => ppeg_core::parser::Expression::Empty,
-      Expression::Char(c) => {
-        ppeg_core::parser::Expression::Char(Box::leak(c.clone().into_boxed_str()))
+      Expression::Empty => parser::Expression::Empty,
+      Expression::Char(char) => parser::Expression::Char(Box::leak(char.clone().into_boxed_str())),
+      Expression::Sequence(exprs) => {
+        parser::Expression::Sequence(exprs.iter().map(|expr| expr.to_parser_expression()).collect())
       }
-      Expression::Sequence(exprs) => ppeg_core::parser::Expression::Sequence(
-        exprs.iter().map(|e| e.to_parser_expression()).collect(),
-      ),
-      Expression::Choice(exprs) => ppeg_core::parser::Expression::Choice(
-        exprs.iter().map(|e| e.to_parser_expression()).collect(),
-      ),
-      Expression::OneOrMore(e) => {
-        ppeg_core::parser::Expression::OneOrMore(Box::new(e.to_parser_expression()))
+      Expression::Choice(exprs) => {
+        parser::Expression::Choice(exprs.iter().map(|expr| expr.to_parser_expression()).collect())
       }
-      Expression::ZeroOrMore(e) => {
-        ppeg_core::parser::Expression::ZeroOrMore(Box::new(e.to_parser_expression()))
-      }
-      Expression::NamedRule(n) => {
-        ppeg_core::parser::Expression::NamedRule(Box::leak(n.clone().into_boxed_str()))
-      }
+      Expression::OneOrMore(expr) => parser::Expression::OneOrMore(Box::new(expr.to_parser_expression())),
+      Expression::ZeroOrMore(expr) => parser::Expression::ZeroOrMore(Box::new(expr.to_parser_expression())),
+      Expression::NamedRule(name) => parser::Expression::NamedRule(Box::leak(name.clone().into_boxed_str())),
     }
   }
 }
 
+/// Duplicate of ppeg_core::parser::Rule but with owned Strings for serde.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Rule {
   name: String,
@@ -48,14 +43,15 @@ impl Rule {
     Rule { name, expression }
   }
 
-  pub fn to_parser_rule(&self) -> ppeg_core::parser::Rule<'static> {
-    ppeg_core::parser::Rule {
+  pub fn to_parser_rule(&self) -> parser::Rule<'static> {
+    parser::Rule {
       name: Box::leak(self.name.clone().into_boxed_str()),
       expression: self.expression.to_parser_expression(),
     }
   }
 }
 
+/// Duplicate of ppeg_core::parser::Grammar but with owned Strings for serde.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Grammar {
   rules: Vec<Rule>,
@@ -64,17 +60,14 @@ pub struct Grammar {
 impl Grammar {
   pub fn new(rules: Option<Vec<Rule>>) -> Self {
     Grammar {
-      rules: rules.unwrap_or_else(Vec::new),
+      rules: rules.unwrap_or_default(),
     }
   }
 
-  pub fn to_parser_grammar(&self) -> ppeg_core::parser::Grammar<'static> {
-    let mut grammar = ppeg_core::parser::Grammar::new();
+  pub fn to_parser_grammar(&self) -> parser::Grammar<'static> {
+    let mut grammar = parser::Grammar::new();
 
-    self
-      .rules
-      .iter()
-      .for_each(|rule| grammar.insert(rule.to_parser_rule()));
+    self.rules.iter().for_each(|rule| grammar.insert(rule.to_parser_rule()));
 
     grammar
   }
@@ -101,8 +94,8 @@ impl Parse {
   pub fn new(grammar: Option<Grammar>, input: Option<String>, rule: Option<String>) -> Self {
     Parse {
       grammar: grammar.unwrap_or_else(|| Grammar::new(None)),
-      input: input.unwrap_or_else(String::new),
-      rule: rule.unwrap_or_else(String::new),
+      input: input.unwrap_or_default(),
+      rule: rule.unwrap_or_default(),
     }
   }
 
@@ -119,8 +112,65 @@ impl Parse {
   }
 }
 
+/// Duplicate of ppeg_core::cst::CST but with owned Strings for serde.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default)]
+pub struct CST {
+  value: String,
+  children: Vec<CST>,
+  label: Option<Label>,
+}
+
+impl CST {
+  pub fn new(value: String, children: Vec<CST>, label: Option<Label>) -> Self {
+    CST { value, children, label }
+  }
+
+  pub fn from_parser_cst(parser_cst: &cst::CST<'static>) -> CST {
+    let children = parser_cst.children().iter().map(CST::from_parser_cst).collect();
+
+    CST {
+      value: parser_cst.get().to_string(),
+      children,
+      label: Label::from_parser_label(parser_cst.label()),
+    }
+  }
+}
+
+/// Duplicate of ppeg_core::cst::Label but with owned Strings for serde.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct Label {
+  hidden: bool,
+  productive: bool,
+}
+
+impl Label {
+  pub fn new(productive: bool, hidden: bool) -> Self {
+    Label { productive, hidden }
+  }
+
+  pub fn from_parser_label(parser_label: Option<&cst::Label>) -> Option<Label> {
+    parser_label.map(|label| Label {
+      hidden: label.hidden(),
+      productive: label.productive(),
+    })
+  }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct Output {
+  remaining: String,
+  cst: Option<CST>,
+}
+
+impl Output {
+  pub fn new(remaining: String, cst: Option<CST>) -> Self {
+    Output { remaining, cst }
+  }
+}
+
 #[cfg(test)]
 mod tests {
+
   use super::*;
 
   #[test]
@@ -129,7 +179,7 @@ mod tests {
 
     let parser_expression = expression.to_parser_expression();
 
-    assert_eq!(parser_expression, ppeg_core::parser::Expression::Char("x"));
+    assert_eq!(parser_expression, parser::Expression::Char("x"));
   }
 
   #[test]
@@ -142,10 +192,7 @@ mod tests {
     let parser_rule = rule.to_parser_rule();
 
     assert_eq!(parser_rule.name, "test_rule");
-    assert_eq!(
-      parser_rule.expression,
-      ppeg_core::parser::Expression::Char("x")
-    );
+    assert_eq!(parser_rule.expression, parser::Expression::Char("x"));
   }
 
   #[test]
@@ -162,9 +209,17 @@ mod tests {
     let retrieved_rule = parser_grammar.get("test_rule").unwrap();
 
     assert_eq!(retrieved_rule.name, "test_rule");
-    assert_eq!(
-      retrieved_rule.expression,
-      ppeg_core::parser::Expression::Char("x")
-    );
+    assert_eq!(retrieved_rule.expression, parser::Expression::Char("x"));
+  }
+
+  #[test]
+  fn test_cst_from_parser_cst() {
+    let parser_cst = cst::CST::new("root", vec![cst::CST::new("child", vec![], None)], None);
+
+    let cst = CST::from_parser_cst(&parser_cst);
+
+    assert_eq!(cst.value, "root");
+    assert_eq!(cst.children.len(), 1);
+    assert_eq!(cst.children[0].value, "child");
   }
 }
