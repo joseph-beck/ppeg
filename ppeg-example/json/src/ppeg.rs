@@ -52,11 +52,7 @@ pub fn parse() {
     Expression::Char("z"),
   ]);
   let string_inner = Expression::OneOrMore(Box::new(letter.clone()));
-  let string_expr = Expression::Sequence(vec![
-    Expression::Char("\""),
-    string_inner,
-    Expression::Char("\""),
-  ]);
+  let string_expr = Expression::Sequence(vec![Expression::Char("\""), string_inner, Expression::Char("\"")]);
   let string = Rule::new("string", string_expr);
 
   let value_expr = Expression::Choice(vec![
