@@ -34,4 +34,4 @@ interface NamedRule {
 
 type Expression = Empty | Char | Sequence | Choice | ZeroOrMore | OneOrMore | NamedRule
 
-export type { Char, Choice, Empty, Expression, NamedRule,OneOrMore, Sequence, ZeroOrMore }
+export type { Char, Choice, Empty, Expression, NamedRule, OneOrMore, Sequence, ZeroOrMore }

@@ -23,3 +23,23 @@ else
     echo -e "${RED}FAIL: cargo test fail${NO_COLOUR}"
     exit 1
 fi
+
+# ---------------------------------------------------------
+# pnpm build
+# ---------------------------------------------------------
+if cd ppeg-ui && pnpm run build && cd ..; then
+    echo -e "${GREEN}PASS: pnpm build pass${NO_COLOUR}"
+else
+    echo -e "${RED}FAIL: pnpm build fail${NO_COLOUR}"
+    exit 1
+fi
+
+# ---------------------------------------------------------
+# pnpm test
+# ---------------------------------------------------------
+if cd ppeg-ui && pnpm test && cd ..; then
+    echo -e "${GREEN}PASS: pnpm test pass${NO_COLOUR}"
+else
+    echo -e "${RED}FAIL: pnpm test fail${NO_COLOUR}"
+    exit 1
+fi
