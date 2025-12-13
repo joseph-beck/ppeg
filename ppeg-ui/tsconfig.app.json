@@ -24,7 +24,8 @@
 
     /* Paths */
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@shadcn/*": ["./src/ui/shadcn/*"]
     }
   },
   "include": ["src"]
