@@ -2,7 +2,7 @@
 
 ## Getting started
 
-### Usage
+### PPEG Library Usage
 
 Ensure [Rust](https://rust-lang.org/learn/get-started/) is installed.
 
@@ -21,6 +21,27 @@ cargo test
 
 # 5. create rustdoc
 cargo doc
+```
+
+### PPEG UI & API Usage
+
+```sh
+# 1. clone the repository
+git clone https://gitlab.cim.rhul.ac.uk/zlac272/productive-peg.git
+
+# 2. run api
+cargo run --bin ppeg-api
+# or run
+make api
+
+# 3. install ui dependencies
+cd ppeg-ui
+pnpm i
+
+# 4. run ui
+pnpm run dev
+# or run in at project root
+make ui
 ```
 
 ### Hooks
