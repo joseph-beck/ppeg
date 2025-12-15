@@ -1,6 +1,13 @@
-import { Rule } from './rule'
+import * as z from 'zod'
 
-interface Grammar {
-  rules: Rule[]
-}
+import { rule } from './rule'
+
+const grammar = z.object({
+  rules: z.array(rule),
+})
+
+type Grammar = z.infer<typeof grammar>
+
 export type { Grammar }
+
+export { grammar }

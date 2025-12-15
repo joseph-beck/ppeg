@@ -1,9 +1,15 @@
-import { Grammar } from './grammar'
+import * as z from 'zod'
 
-interface Parse {
-  grammar: Grammar
-  input: string
-  rule: string
-}
+import { grammar } from './grammar'
+
+const parse = z.object({
+  grammar: grammar,
+  input: z.string(),
+  rule: z.string(),
+})
+
+type Parse = z.infer<typeof parse>
 
 export type { Parse }
+
+export { parse }

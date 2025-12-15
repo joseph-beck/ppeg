@@ -1,6 +1,12 @@
-interface Label {
-  hidden: boolean
-  productive: boolean
-}
+import * as z from 'zod'
 
-export type { Label }
+const label = z.object({
+  hidden: z.boolean(),
+  productive: z.boolean(),
+})
+
+type Label = z.infer<typeof label>
+
+export type { Label as LabelType }
+
+export { label }
