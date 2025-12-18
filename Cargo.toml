@@ -1,8 +1,10 @@
 [workspace]
-members = ["ppeg-api",
+members = [
+    "ppeg-api",
     "ppeg-cli",
     "ppeg-core",
     "ppeg-example/arithmetic-expression",
+    "ppeg-example/demo",
     "ppeg-example/json",
 ]
 resolver = "1"
