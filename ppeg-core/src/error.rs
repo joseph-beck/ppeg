@@ -1,4 +1,4 @@
-use crate::parser::Expression;
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ParserError<'a> {
@@ -6,11 +6,64 @@ pub enum ParserError<'a> {
   FailedToMatch {
     position: usize,
     input: &'a str,
-    expression: Expression,
+    name: &'a str,
+  },
+  InvalidExpression {
+    position: usize,
+    name: &'a str,
   },
   /// Occurs when trying to consume when at the end of the input.
   EndOfInput {
     position: usize,
     input: Option<&'a str>,
   },
+  /// Occurs when trying to access a rule that does not exist in the grammar.
+  RuleNotFound {
+    position: usize,
+    name: &'a str,
+  },
+  /// Occurs when something unexpected happens.
+  Unexpected {
+    position: usize,
+  },
+  /// Catch all unknown error.
+  Unknown,
+}
+
+impl fmt::Display for ParserError<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      ParserError::FailedToMatch { position, input, name } => write!(
+        f,
+        "Error: failed to match rule '{}' at position {}: remaining input '{}'",
+        name, position, input
+      ),
+      ParserError::InvalidExpression { position, name } => {
+        write!(
+          f,
+          "Error: invalid expression in rule '{}' at position {}",
+          name, position
+        )
+      }
+      ParserError::EndOfInput { position, input } => match input {
+        Some(remaining) => write!(
+          f,
+          "Error: end of input at position {}: remaining input '{}'",
+          position, remaining
+        ),
+        None => write!(f, "Error: end of input at position {}", position),
+      },
+      ParserError::RuleNotFound { position, name } => {
+        write!(
+          f,
+          "Error: rule '{}' not found in grammar at position {}",
+          name, position
+        )
+      }
+      ParserError::Unexpected { position } => {
+        write!(f, "Error: unexpected at position {}", position)
+      }
+      ParserError::Unknown => write!(f, "Error: unknown"),
+    }
+  }
 }

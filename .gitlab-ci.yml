@@ -2,7 +2,10 @@ stages:
   - check
   - build
   - test
+  - docs
 
+# rust images are out of date.
+# here the latest rust toolchain is installed manually.
 .rust:
   before_script:
     - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -11,6 +14,16 @@ stages:
     - rustc --version
     - cargo --version
 
+# install pnpm package manager.
+.pnpm:
+  image: node:20
+  before_script:
+    - curl -fsSL https://get.pnpm.io/install.sh | sh -
+    - export PNPM_HOME=/opt/gitlab-runner/.local/share/pnpm
+    - export PATH=$PNPM_HOME:$PATH
+    - pnpm --version
+
+# adds sonar-scanner to path to be used in the check:sonar job.
 .sonar:
   before_script:
     - export SONAR_SCANNER_VERSION=7.2.0.5079
@@ -19,13 +32,15 @@ stages:
     - unzip -o $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
     - export PATH=$SONAR_SCANNER_HOME/bin:$PATH
 
+# sonar job, runs the sonar-scanner.
 check:sonar:
   extends: .sonar
   stage: check
   script:
     - sonar-scanner
 
-check:clippy:
+# linting with clippy.
+check:lint-rs:
   extends: .rust
   stage: check
   script:
@@ -36,7 +51,8 @@ check:clippy:
       --all-targets
       --all-features"
 
-check:fmt:
+# formatting check with rustfmt.
+check:fmt-rs:
   extends: .rust
   stage: check
   script:
@@ -45,7 +61,26 @@ check:fmt:
       --check
       --verbose"
 
-build:build:
+# lint the ui with eslint.
+check:lint-ui:
+  extends: .pnpm
+  stage: check
+  script:
+    - cd ppeg-ui
+    - pnpm install
+    - pnpm run lint
+
+# formatting check with prettier.
+check:fmt-ui:
+  extends: .pnpm
+  stage: check
+  script:
+    - cd ppeg-ui
+    - pnpm install
+    - pnpm run fmt
+
+# test build, verbosely, with cargo.
+build:build-rs:
   extends: .rust
   stage: build
   script:
@@ -53,7 +88,17 @@ build:build:
       --color always
       --verbose"
 
-test:test:
+# build the ui.
+build:build-ui:
+  extends: .pnpm
+  stage: build
+  script:
+    - cd ppeg-ui
+    - pnpm install
+    - pnpm run build
+
+# test run, verbosely, with cargo.
+test:test-rs:
   extends: .rust
   stage: test
   script:
@@ -62,3 +107,23 @@ test:test:
       --verbose
       --all-features
       --all-targets"
+
+# test the ui.
+test:test-ui:
+  extends: .pnpm
+  stage: test
+  script:
+    - cd ppeg-ui
+    - pnpm install
+    - pnpm run test
+
+# generate rustdoc, goes to target/doc.
+# stored as artifact for later.
+docs:docs:
+  extends: .rust
+  stage: docs
+  script:
+    - "cargo doc"
+  artifacts:
+    paths:
+      - target/doc

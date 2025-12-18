@@ -1,12 +1,16 @@
 #!/bin/bash
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NO_COLOUR='\033[0m'
+
 # ---------------------------------------------------------
 # cargo build
 # ---------------------------------------------------------
 if cargo build; then
-    echo "cargo build pass"
+    echo -e "${GREEN}PASS: cargo build pass${NO_COLOUR}"
 else
-    echo "cargo build fail"
+    echo -e "${RED}FAIL: cargo build fail${NO_COLOUR}"
     exit 1
 fi
 
@@ -14,8 +18,28 @@ fi
 # cargo test
 # ---------------------------------------------------------
 if cargo test; then
-    echo "cargo test pass"
+    echo -e "${GREEN}PASS: cargo test pass${NO_COLOUR}"
 else
-    echo "cargo test fail"
+    echo -e "${RED}FAIL: cargo test fail${NO_COLOUR}"
+    exit 1
+fi
+
+# ---------------------------------------------------------
+# pnpm build
+# ---------------------------------------------------------
+if cd ppeg-ui && pnpm run build && cd ..; then
+    echo -e "${GREEN}PASS: pnpm build pass${NO_COLOUR}"
+else
+    echo -e "${RED}FAIL: pnpm build fail${NO_COLOUR}"
+    exit 1
+fi
+
+# ---------------------------------------------------------
+# pnpm test
+# ---------------------------------------------------------
+if cd ppeg-ui && pnpm test && cd ..; then
+    echo -e "${GREEN}PASS: pnpm test pass${NO_COLOUR}"
+else
+    echo -e "${RED}FAIL: pnpm test fail${NO_COLOUR}"
     exit 1
 fi

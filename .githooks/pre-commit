@@ -1,12 +1,16 @@
 #!/bin/bash
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NO_COLOUR='\033[0m'
+
 # ---------------------------------------------------------
 # cargo fmt (formatting)
 # ---------------------------------------------------------
 if cargo fmt --check; then
-    echo "cargo fmt pass"
+    echo -e "${GREEN}PASS: cargo fmt pass${NO_COLOUR}"
 else
-    echo "cargo fmt fail"
+    echo -e "${RED}FAIL: cargo fmt fail${NO_COLOUR}"
     exit 1
 fi
 
@@ -14,9 +18,9 @@ fi
 # cargo clippy (linting)
 # ---------------------------------------------------------
 if cargo clippy; then
-    echo "cargo clippy pass"
+    echo -e "${GREEN}PASS: cargo clippy pass${NO_COLOUR}"
 else
-    echo "cargo clippy fail"
+    echo -e "${RED}FAIL: cargo clippy fail${NO_COLOUR}"
     exit 1
 fi
 
@@ -24,9 +28,9 @@ fi
 # cargo audit
 # ---------------------------------------------------------
 if cargo audit; then
-    echo "cargo audit pass"
+    echo -e "${GREEN}PASS: cargo audit pass${NO_COLOUR}"
 else
-    echo "cargo audit fail"
+    echo -e "${RED}FAIL: cargo audit fail${NO_COLOUR}"
     exit 1
 fi
 
@@ -34,8 +38,28 @@ fi
 # cargo check
 # ---------------------------------------------------------
 if cargo check; then
-    echo "cargo check pass"
+    echo -e "${GREEN}PASS: cargo check pass${NO_COLOUR}"
 else
-    echo "cargo check fail"
+    echo -e "${RED}FAIL: cargo check fail${NO_COLOUR}"
+    exit 1
+fi
+
+# ---------------------------------------------------------
+# pnpm fmt (formatting)
+# ---------------------------------------------------------
+if cd ppeg-ui && pnpm fmt && cd ..; then
+    echo -e "${GREEN}PASS: pnpm fmt pass${NO_COLOUR}"
+else
+    echo -e "${RED}FAIL: pnpm fmt fail${NO_COLOUR}"
+    exit 1
+fi
+
+# ---------------------------------------------------------
+# pnpm lint (linting)
+# ---------------------------------------------------------
+if cd ppeg-ui && pnpm lint && cd ..; then
+    echo -e "${GREEN}PASS: pnpm lint pass${NO_COLOUR}"
+else
+    echo -e "${RED}FAIL: pnpm lint fail${NO_COLOUR}"
     exit 1
 fi
