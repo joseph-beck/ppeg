@@ -1,3 +1,13 @@
 {
-  "cSpell.words": ["clippy", "COLOUR", "packrat", "ppeg", "rustdoc", "rustup"]
+  "cSpell.words": [
+    "actix",
+    "clippy",
+    "COLOUR",
+    "packrat",
+    "ppeg",
+    "rustdoc",
+    "rustup",
+    "serde",
+    "shadcn"
+  ]
 }

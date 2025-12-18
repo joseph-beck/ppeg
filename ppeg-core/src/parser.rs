@@ -58,9 +58,7 @@ pub struct Grammar<'a> {
 
 impl Grammar<'_> {
   pub fn new() -> Self {
-    Grammar {
-      rules: HashMap::new(),
-    }
+    Grammar { rules: HashMap::new() }
   }
 }
 
@@ -124,13 +122,10 @@ impl<'a> Parser<'a> {
     input: &mut &'a str,
     rule_name: &'a str,
   ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
-    let rule = self
-      .grammar
-      .get(rule_name)
-      .ok_or(ParserError::RuleNotFound {
-        position: 0,
-        name: rule_name,
-      })?;
+    let rule = self.grammar.get(rule_name).ok_or(ParserError::RuleNotFound {
+      position: 0,
+      name: rule_name,
+    })?;
 
     let (remaining, cst) = self.match_success(input, &rule.expression)?;
     if let Some(node) = cst {
@@ -152,11 +147,12 @@ impl<'a> Parser<'a> {
     match expression {
       Expression::Empty => Ok((input, None)),
       Expression::Char(char) => {
+        let mut cst = CST::new("char", vec![], None);
         if input.starts_with(char) {
           let remaining = &input[char.len()..];
-          let node = CST::new(char, vec![], None);
+          cst.add(Some(CST::new(char, vec![], None)));
           *input = remaining;
-          Ok((remaining, Some(node)))
+          Ok((remaining, Some(cst)))
         } else {
           Err(ParserError::Unknown)
         }
@@ -253,10 +249,7 @@ impl<'a> Parser<'a> {
               None => Ok((remaining, Some(CST::new(n, vec![], None)))),
             }
           }
-          None => Err(ParserError::RuleNotFound {
-            position: 0,
-            name: n,
-          }),
+          None => Err(ParserError::RuleNotFound { position: 0, name: n }),
         }
       }
     }
@@ -283,10 +276,7 @@ mod grammar_tests {
     let mut grammar = Grammar::new();
     grammar.insert(Rule::new("e", Expression::Empty));
 
-    assert_eq!(
-      grammar.rules.get("e"),
-      Some(&Rule::new("e", Expression::Empty))
-    );
+    assert_eq!(grammar.rules.get("e"), Some(&Rule::new("e", Expression::Empty)));
     assert_eq!(grammar.rules.get("b"), None);
   }
 
@@ -317,7 +307,8 @@ mod parser_tests {
       match cst {
         Some(mut node) => {
           assert_eq!(node.get(), "rule");
-          assert_eq!(node.child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
         }
         None => assert!(false),
       }
@@ -331,7 +322,8 @@ mod parser_tests {
       match cst {
         Some(mut node) => {
           assert_eq!(node.get(), "rule");
-          assert_eq!(node.child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
         }
         None => assert!(false),
       }
@@ -353,10 +345,7 @@ mod parser_tests {
   fn test_parser_parse_sequence_success() {
     {
       let mut grammar = Grammar::new();
-      grammar.insert(Rule::new(
-        "rule",
-        Expression::Sequence(vec![Expression::Char("a")]),
-      ));
+      grammar.insert(Rule::new("rule", Expression::Sequence(vec![Expression::Char("a")])));
 
       let mut parser = Parser::new(grammar);
       let (remaining, cst) = parser.parse(&mut "a", "rule").unwrap();
@@ -367,7 +356,8 @@ mod parser_tests {
           node.pretty_print(Some(0));
           assert_eq!(node.get(), "rule");
           assert_eq!(node.child(0).unwrap().get(), "sequence");
-          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().child(0).unwrap().get(), "a");
         }
         None => assert!(false),
       }
@@ -389,8 +379,10 @@ mod parser_tests {
           node.pretty_print(Some(0));
           assert_eq!(node.get(), "rule");
           assert_eq!(node.child(0).unwrap().get(), "sequence");
-          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
-          assert_eq!(node.child(0).unwrap().child(1).unwrap().get(), "b");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(1).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(1).unwrap().child(0).unwrap().get(), "b");
         }
         None => assert!(false),
       }
@@ -400,10 +392,7 @@ mod parser_tests {
   #[test]
   fn test_parser_parse_sequence_fail() {
     let mut grammar = Grammar::new();
-    grammar.insert(Rule::new(
-      "rule",
-      Expression::Sequence(vec![Expression::Char("a")]),
-    ));
+    grammar.insert(Rule::new("rule", Expression::Sequence(vec![Expression::Char("a")])));
 
     let mut parser = Parser::new(grammar);
     let result = parser.parse(&mut "b", "rule");
@@ -428,7 +417,8 @@ mod parser_tests {
         Some(mut node) => {
           assert_eq!(node.get(), "rule");
           assert_eq!(node.child(0).unwrap().get(), "choice");
-          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().child(0).unwrap().get(), "a");
         }
         None => assert!(false),
       }
@@ -443,7 +433,8 @@ mod parser_tests {
         Some(mut node) => {
           assert_eq!(node.get(), "rule");
           assert_eq!(node.child(0).unwrap().get(), "choice");
-          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "b");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().child(0).unwrap().get(), "b");
         }
         None => assert!(false),
       }
@@ -458,7 +449,8 @@ mod parser_tests {
         Some(mut node) => {
           assert_eq!(node.get(), "rule");
           assert_eq!(node.child(0).unwrap().get(), "choice");
-          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "b");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().child(0).unwrap().get(), "b");
         }
         None => assert!(false),
       }
@@ -496,9 +488,10 @@ mod parser_tests {
         Some(mut node) => {
           assert_eq!(node.get(), "rule");
           assert_eq!(node.child(0).unwrap().get(), "zero_or_more");
-          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
-          assert_eq!(node.child(0).unwrap().child(1).unwrap().get(), "a");
-          assert_eq!(node.child(0).unwrap().child(2).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(1).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(2).unwrap().child(0).unwrap().get(), "a");
         }
         None => assert!(false),
       }
@@ -513,9 +506,10 @@ mod parser_tests {
         Some(mut node) => {
           assert_eq!(node.get(), "rule");
           assert_eq!(node.child(0).unwrap().get(), "zero_or_more");
-          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
-          assert_eq!(node.child(0).unwrap().child(1).unwrap().get(), "a");
-          assert_eq!(node.child(0).unwrap().child(2).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(1).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(2).unwrap().child(0).unwrap().get(), "a");
         }
         None => assert!(false),
       }
@@ -553,11 +547,13 @@ mod parser_tests {
       match cst {
         Some(mut node) => {
           assert_eq!(node.get(), "rule");
-          // reuses zero_or_more logic for now
           assert_eq!(node.child(0).unwrap().get(), "one_or_more");
-          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
-          assert_eq!(node.child(0).unwrap().child(1).unwrap().get(), "a");
-          assert_eq!(node.child(0).unwrap().child(2).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(1).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(1).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(2).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(2).unwrap().child(0).unwrap().get(), "a");
         }
         None => assert!(false),
       }
@@ -571,11 +567,13 @@ mod parser_tests {
       match cst {
         Some(mut node) => {
           assert_eq!(node.get(), "rule");
-          // reuses zero_or_more logic for now
           assert_eq!(node.child(0).unwrap().get(), "one_or_more");
-          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
-          assert_eq!(node.child(0).unwrap().child(1).unwrap().get(), "a");
-          assert_eq!(node.child(0).unwrap().child(2).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(1).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(1).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(2).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(2).unwrap().child(0).unwrap().get(), "a");
         }
         None => assert!(false),
       }
@@ -611,7 +609,8 @@ mod parser_tests {
         Some(mut node) => {
           assert_eq!(node.get(), "named");
           assert_eq!(node.child(0).unwrap().get(), "rule");
-          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().child(0).unwrap().get(), "a");
         }
         None => assert!(false),
       }
@@ -626,7 +625,8 @@ mod parser_tests {
         Some(mut node) => {
           assert_eq!(node.get(), "named");
           assert_eq!(node.child(0).unwrap().get(), "rule");
-          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "a");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().get(), "char");
+          assert_eq!(node.child(0).unwrap().child(0).unwrap().child(0).unwrap().get(), "a");
         }
         None => assert!(false),
       }

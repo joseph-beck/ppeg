@@ -12,11 +12,7 @@ pub struct CST<'a> {
 
 impl<'a> CST<'a> {
   pub fn new(value: &'a str, children: Vec<CST<'a>>, label: Option<Label>) -> Self {
-    CST {
-      value,
-      children,
-      label,
-    }
+    CST { value, children, label }
   }
 
   /// Gets the value of this CST node.
@@ -40,6 +36,16 @@ impl<'a> CST<'a> {
   /// Get a mutable child at the given index.
   pub fn child(&mut self, index: usize) -> Option<&mut CST<'a>> {
     self.children.get_mut(index)
+  }
+
+  /// Get all children of this CST.
+  pub fn children(&self) -> &Vec<CST<'a>> {
+    &self.children
+  }
+
+  /// Get the label of this CST.
+  pub fn label(&self) -> Option<&Label> {
+    self.label.as_ref()
   }
 
   /// Update the label of this CST node.
@@ -114,6 +120,16 @@ pub struct Label {
 impl Label {
   pub fn new(productive: bool, hidden: bool) -> Self {
     Label { productive, hidden }
+  }
+
+  /// Is this label marked as productive?
+  pub fn productive(&self) -> bool {
+    self.productive
+  }
+
+  /// Is this label marked as hidden?
+  pub fn hidden(&self) -> bool {
+    self.hidden
   }
 }
 

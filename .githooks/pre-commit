@@ -43,3 +43,23 @@ else
     echo -e "${RED}FAIL: cargo check fail${NO_COLOUR}"
     exit 1
 fi
+
+# ---------------------------------------------------------
+# pnpm fmt (formatting)
+# ---------------------------------------------------------
+if cd ppeg-ui && pnpm fmt && cd ..; then
+    echo -e "${GREEN}PASS: pnpm fmt pass${NO_COLOUR}"
+else
+    echo -e "${RED}FAIL: pnpm fmt fail${NO_COLOUR}"
+    exit 1
+fi
+
+# ---------------------------------------------------------
+# pnpm lint (linting)
+# ---------------------------------------------------------
+if cd ppeg-ui && pnpm lint && cd ..; then
+    echo -e "${GREEN}PASS: pnpm lint pass${NO_COLOUR}"
+else
+    echo -e "${RED}FAIL: pnpm lint fail${NO_COLOUR}"
+    exit 1
+fi
