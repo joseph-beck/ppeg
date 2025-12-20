@@ -10,4 +10,8 @@ describe('defaultParserFormOpts', () => {
   it('should have the correct default input value', () => {
     expect(defaultParserFormOpts.defaultValues.input).toBe('input')
   })
+
+  it('should have the correct default rule value', () => {
+    expect(defaultParserFormOpts.defaultValues.rule).toBe('')
+  })
 })

@@ -8,6 +8,7 @@ import {
   FieldLegend,
   FieldSet,
 } from '@shadcn/field'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@shadcn/select'
 import { Textarea } from '@shadcn/textarea'
 import { ReactElement } from 'react'
 
@@ -44,6 +45,33 @@ const ParserInputForm = (props: ParserInputFormProps): ReactElement => {
                     <FieldDescription>What do you want to parse?</FieldDescription>
                     <FieldError>Validation message</FieldError>
                   </>
+                )}
+              />
+            </FieldContent>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="parse-rule">Rule</FieldLabel>
+            <FieldContent>
+              <form.Field
+                name="rule"
+                children={(field) => (
+                  <Select
+                    value={field.state.value ?? ''}
+                    onValueChange={field.handleChange}
+                    onOpenChange={(open) => {
+                      if (!open) field.handleBlur()
+                    }}
+                  >
+                    <SelectTrigger id="parse-rule">
+                      <SelectValue placeholder="Rule" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Rules</SelectLabel>
+                        <SelectItem value="rule">rule</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                 )}
               />
             </FieldContent>
