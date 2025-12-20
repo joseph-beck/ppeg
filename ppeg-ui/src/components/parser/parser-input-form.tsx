@@ -24,7 +24,7 @@ const ParserInputForm = (props: ParserInputFormProps): ReactElement => {
   const form = useParserForm()
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-md mb-12">
       <FieldGroup>
         <FieldLegend>Parser</FieldLegend>
         <FieldDescription>Generate a parse tree</FieldDescription>
