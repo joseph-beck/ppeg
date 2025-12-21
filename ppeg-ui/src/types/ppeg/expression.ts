@@ -11,27 +11,27 @@ const char = z.object({
 
 const sequence = z.object({
   type: z.literal('Sequence'),
-  expressions: z.lazy(() => z.array(expression)),
+  value: z.lazy(() => z.array(expression)),
 })
 
 const choice = z.object({
   type: z.literal('Choice'),
-  expressions: z.lazy(() => z.array(expression)),
+  value: z.lazy(() => z.array(expression)),
 })
 
 const zeroOrMore = z.object({
   type: z.literal('ZeroOrMore'),
-  expression: z.lazy(() => expression),
+  value: z.lazy(() => expression),
 })
 
 const oneOrMore = z.object({
   type: z.literal('OneOrMore'),
-  expression: z.lazy(() => expression),
+  value: z.lazy(() => expression),
 })
 
 const namedRule = z.object({
   type: z.literal('NamedRule'),
-  name: z.string(),
+  value: z.string(),
 })
 
 const expression: z.ZodType<Expression> = z.discriminatedUnion('type', [
@@ -47,10 +47,10 @@ const expression: z.ZodType<Expression> = z.discriminatedUnion('type', [
 type Expression =
   | z.infer<typeof empty>
   | z.infer<typeof char>
-  | { type: 'Sequence'; expressions: Expression[] }
-  | { type: 'Choice'; expressions: Expression[] }
-  | { type: 'ZeroOrMore'; expression: Expression }
-  | { type: 'OneOrMore'; expression: Expression }
+  | { type: 'Sequence'; value: Expression[] }
+  | { type: 'Choice'; value: Expression[] }
+  | { type: 'ZeroOrMore'; value: Expression }
+  | { type: 'OneOrMore'; value: Expression }
   | z.infer<typeof namedRule>
 
 type Empty = z.infer<typeof empty>
