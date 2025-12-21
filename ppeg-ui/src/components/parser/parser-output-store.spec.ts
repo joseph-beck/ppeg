@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { parserStore } from './parser-store'
+import { parserOutputStore } from './parser-output-store'
 
 describe('parserStore', () => {
   it('should be defined', () => {
-    expect(parserStore).toBeDefined()
+    expect(parserOutputStore).toBeDefined()
   })
 })

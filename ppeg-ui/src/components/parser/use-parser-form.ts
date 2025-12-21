@@ -1,10 +1,11 @@
 import { useForm } from '@tanstack/react-form'
 
-import { parse } from '@/types/ppeg/parse'
+import { parserSchemaTransform } from '@/lib/parser/parser-schema-transform'
+import { schema } from '@/types/ppeg/schema'
 
 import { defaultParserFormOpts } from './default-parser-form-opts'
 import { defaultParserFormMeta, ParserFormMeta } from './parser-form-meta'
-import { parserStore } from './parser-store'
+import { parserOutputStore } from './parser-output-store'
 import { useParserMutation } from './use-parser-mutation'
 
 const useParserForm = () => {
@@ -17,9 +18,11 @@ const useParserForm = () => {
     onSubmit: async ({ value, meta }) => {
       void meta
 
-      const result = await mutation.mutateAsync(value)
+      const data = parserSchemaTransform(value)
 
-      parserStore.setState((state) => {
+      const result = await mutation.mutateAsync(data)
+
+      parserOutputStore.setState((state) => {
         return {
           ...state,
           remaining: result?.remaining ?? '',
@@ -32,9 +35,10 @@ const useParserForm = () => {
     },
     validators: {
       onChange: ({ value }) => {
-        const result = parse.safeParse(value)
+        const result = schema.safeParse(value)
 
         if (!result.success) {
+          console.error('Form is invalid', result.error)
           return result.error.issues.map((issue) => ({
             path: issue.path,
             message: issue.message,

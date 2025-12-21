@@ -2,7 +2,7 @@ import { InputGroup, InputGroupAddon, InputGroupText } from '@shadcn/input-group
 import { ReactElement } from 'react'
 
 import { ParserInputCopy } from './parser-input-copy'
-import { ParserInputGroupTextarea } from './parser-input-group-textarea'
+import { ParserInputGroupInputTextarea } from './parser-input-group-input-textarea'
 import { ParserInputRuleSelect } from './parser-input-rule-select'
 import { ParserInputValidation } from './parser-input-validation'
 import { ParserOutputGroupTextarea } from './parser-output-group-textarea'
@@ -30,7 +30,7 @@ const ParserInputForm = ({ nil }: ParserInputFormProps): ReactElement => {
             <InputGroupText className="font-mono font-medium">editor</InputGroupText>
             <ParserInputCopy form={form} />
           </InputGroupAddon>
-          <ParserInputGroupTextarea form={form} />
+          <ParserInputGroupInputTextarea form={form} />
           <InputGroupAddon align="block-end" className="border-t">
             <ParserInputValidation />
             <ParserInputRuleSelect form={form} />

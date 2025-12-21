@@ -3,18 +3,19 @@ import { ReactElement } from 'react'
 
 import { useParserForm } from './use-parser-form'
 
-interface ParserInputGroupTextareaProps {
+interface ParserInputGroupInputTextareaProps {
   form: ReturnType<typeof useParserForm>
 }
 
-const ParserInputGroupTextarea = ({ form }: ParserInputGroupTextareaProps): ReactElement => {
+const ParserInputGroupInputTextarea = ({ form }: ParserInputGroupInputTextareaProps): ReactElement => {
   return (
     <form.Field
       name="input"
       children={(field) => (
         <InputGroupTextarea
           id="parse-input"
-          className="min-h-50"
+          className="min-h-50 p-3 font-mono"
+          placeholder="input"
           value={String(field.state.value)}
           onBlur={field.handleBlur}
           onChange={(e) => {
@@ -26,6 +27,6 @@ const ParserInputGroupTextarea = ({ form }: ParserInputGroupTextareaProps): Reac
   )
 }
 
-export type { ParserInputGroupTextareaProps }
+export type { ParserInputGroupInputTextareaProps }
 
-export { ParserInputGroupTextarea }
+export { ParserInputGroupInputTextarea }
