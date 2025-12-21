@@ -3,9 +3,11 @@ import { ReactElement } from 'react'
 
 import { useParserForm } from './use-parser-form'
 
-const ParserInputGroupTextarea = (): ReactElement => {
-  const form = useParserForm()
+interface ParserInputGroupTextareaProps {
+  form: ReturnType<typeof useParserForm>
+}
 
+const ParserInputGroupTextarea = ({ form }: ParserInputGroupTextareaProps): ReactElement => {
   return (
     <form.Field
       name="input"
@@ -15,11 +17,15 @@ const ParserInputGroupTextarea = (): ReactElement => {
           className="min-h-50"
           value={String(field.state.value)}
           onBlur={field.handleBlur}
-          onChange={(e) => field.handleChange(e.target.value)}
+          onChange={(e) => {
+            field.handleChange(e.target.value)
+          }}
         />
       )}
     />
   )
 }
+
+export type { ParserInputGroupTextareaProps }
 
 export { ParserInputGroupTextarea }

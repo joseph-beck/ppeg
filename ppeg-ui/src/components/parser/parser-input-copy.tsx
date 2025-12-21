@@ -2,12 +2,17 @@ import { InputGroupButton } from '@shadcn/input-group'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shadcn/tooltip'
 import { P } from '@shadcn/typography'
 import { IconCheck, IconCopy } from '@tabler/icons-react'
+import { useStore } from '@tanstack/react-form'
 import { ReactElement, useState } from 'react'
 
 import { useParserForm } from './use-parser-form'
 
-const ParserInputCopy = (): ReactElement => {
-  const form = useParserForm()
+interface ParserInputCopyProps {
+  form: ReturnType<typeof useParserForm>
+}
+
+const ParserInputCopy = ({ form }: ParserInputCopyProps): ReactElement => {
+  const input = useStore(form.store, (state) => state.values.input)
 
   const [copied, setCopied] = useState<boolean>(false)
 
@@ -18,7 +23,7 @@ const ParserInputCopy = (): ReactElement => {
           className="ml-auto"
           size="icon-xs"
           onClick={() => {
-            navigator.clipboard.writeText(form.getFieldValue('input'))
+            navigator.clipboard.writeText(input)
 
             setCopied(true)
 
@@ -36,5 +41,7 @@ const ParserInputCopy = (): ReactElement => {
     </Tooltip>
   )
 }
+
+export type { ParserInputCopyProps }
 
 export { ParserInputCopy }

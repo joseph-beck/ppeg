@@ -3,9 +3,11 @@ import { ReactElement } from 'react'
 
 import { useParserForm } from './use-parser-form'
 
-const ParserInputRuleSelect = (): ReactElement => {
-  const form = useParserForm()
+interface ParserInputRuleSelectProps {
+  form: ReturnType<typeof useParserForm>
+}
 
+const ParserInputRuleSelect = ({ form }: ParserInputRuleSelectProps): ReactElement => {
   return (
     <div className="ml-auto">
       <form.Field
@@ -33,5 +35,7 @@ const ParserInputRuleSelect = (): ReactElement => {
     </div>
   )
 }
+
+export type { ParserInputRuleSelectProps }
 
 export { ParserInputRuleSelect }

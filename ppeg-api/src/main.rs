@@ -1,4 +1,5 @@
-use actix_web::{App, HttpServer, middleware::Logger};
+use actix_cors::Cors;
+use actix_web::{App, HttpServer, http, middleware::Logger};
 use env_logger::Env;
 
 pub mod model;
@@ -10,9 +11,18 @@ async fn main() -> std::io::Result<()> {
 
   HttpServer::new(|| {
     App::new()
-      .service(service::health)
+      .wrap(
+        Cors::default()
+          .allowed_origin("http://localhost:5173")
+          .allowed_methods(vec!["GET", "POST", "OPTIONS"])
+          .allowed_headers(vec![http::header::AUTHORIZATION, http::header::CONTENT_TYPE])
+          .supports_credentials()
+          .max_age(3600),
+      )
       .wrap(Logger::default())
       .wrap(Logger::new("%a %{User-Agent}i"))
+      .service(service::health)
+      .service(service::parse)
   })
   .bind(("127.0.0.1", 8080))?
   .run()
