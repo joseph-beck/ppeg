@@ -1,18 +1,11 @@
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from '@shadcn/field'
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@shadcn/select'
-import { Textarea } from '@shadcn/textarea'
+import { InputGroup, InputGroupAddon, InputGroupText } from '@shadcn/input-group'
 import { ReactElement } from 'react'
 
-import { useParserForm } from './use-parser-form'
+import { ParserOutputGroupTextarea } from '../output/parse-output-group-textarea'
+import { ParserInputGroupTextarea } from './parse-input-group-textarea'
+import { ParserInputRuleSelect } from './parse-input-rule-select'
+import { ParserInputCopy } from './parser-input-copy'
+import { ParserInputValidation } from './parser-input-validation'
 
 interface ParserInputFormProps {
   _?: never
@@ -21,63 +14,22 @@ interface ParserInputFormProps {
 const ParserInputForm = (props: ParserInputFormProps): ReactElement => {
   void props
 
-  const form = useParserForm()
-
   return (
-    <div className="w-full max-w-md mb-12">
-      <FieldGroup>
-        <FieldLegend>Parser</FieldLegend>
-        <FieldDescription>Generate a parse tree</FieldDescription>
-        <FieldSet>
-          <Field>
-            <FieldLabel htmlFor="parse-input">Input</FieldLabel>
-            <FieldContent>
-              <form.Field
-                name="input"
-                children={(field) => (
-                  <>
-                    <Textarea
-                      id="parse-input"
-                      value={String(field.state.value)}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                    />
-                    <FieldDescription>What do you want to parse?</FieldDescription>
-                    <FieldError>Validation message</FieldError>
-                  </>
-                )}
-              />
-            </FieldContent>
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="parse-rule">Rule</FieldLabel>
-            <FieldContent>
-              <form.Field
-                name="rule"
-                children={(field) => (
-                  <Select
-                    value={field.state.value ?? ''}
-                    onValueChange={field.handleChange}
-                    onOpenChange={(open) => {
-                      if (!open) field.handleBlur()
-                    }}
-                  >
-                    <SelectTrigger id="parse-rule">
-                      <SelectValue placeholder="Rule" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Rules</SelectLabel>
-                        <SelectItem value="rule">rule</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </FieldContent>
-          </Field>
-        </FieldSet>
-      </FieldGroup>
+    <div className="w-full max-w-md mb-6">
+      <InputGroup>
+        <InputGroupAddon align="block-start" className="border-b">
+          <InputGroupText className="font-mono font-medium">editor</InputGroupText>
+          <ParserInputCopy />
+        </InputGroupAddon>
+        <ParserInputGroupTextarea />
+        <InputGroupAddon align="block-end" className="border-t">
+          <ParserInputValidation />
+          <ParserInputRuleSelect />
+        </InputGroupAddon>
+        <InputGroupAddon align="block-end" className="border-t">
+          <ParserOutputGroupTextarea />
+        </InputGroupAddon>
+      </InputGroup>
     </div>
   )
 }

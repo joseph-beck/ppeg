@@ -8,6 +8,7 @@
     "rustdoc",
     "rustup",
     "serde",
-    "shadcn"
+    "shadcn",
+    "tabler"
   ]
 }
