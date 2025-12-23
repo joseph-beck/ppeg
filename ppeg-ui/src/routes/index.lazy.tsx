@@ -1,8 +1,8 @@
-import { H1 } from '@shadcn/typography'
 import { createLazyFileRoute } from '@tanstack/react-router'
 
 import { ParserInputForm } from '@/components/parser/parser-input-form'
 import { ParserOutput } from '@/components/parser/parser-output'
+import { PPEGTitle } from '@/components/shared/ppeg-title'
 
 const Route = createLazyFileRoute('/')({
   component: Page,
@@ -11,7 +11,7 @@ const Route = createLazyFileRoute('/')({
 function Page() {
   return (
     <div className="p-2 flex flex-col items-center ">
-      <H1 className="mt-24 mb-12">ppeg</H1>
+      <PPEGTitle />
       <div
         className="
           w-full
