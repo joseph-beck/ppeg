@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { parserInputRuleCharMock } from '@/mocks/parser-input-rule-char-mock'
+
 import { defaultParserFormOpts } from './default-parser-form-opts'
 
 describe('defaultParserFormOpts', () => {
@@ -16,6 +18,6 @@ describe('defaultParserFormOpts', () => {
   })
 
   it('should have the correct default grammar value', () => {
-    expect(defaultParserFormOpts.defaultValues.grammar).toBe('{"rules":[]}')
+    expect(defaultParserFormOpts.defaultValues.grammar).toBe(JSON.stringify(parserInputRuleCharMock.grammar, null, 2))
   })
 })
