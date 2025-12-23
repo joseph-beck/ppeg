@@ -11,7 +11,7 @@ const ParserOutputGroupTextarea = (): ReactElement => {
     <InputGroupTextarea
       readOnly
       id="parser-output"
-      placeholder="output"
+      placeholder="{...}"
       className="min-h-50 p-3 font-mono"
       value={JSON.stringify(store.cst, null, 2)}
     />
