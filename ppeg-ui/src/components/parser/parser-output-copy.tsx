@@ -1,10 +1,7 @@
-import { InputGroupButton } from '@shadcn/input-group'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@shadcn/tooltip'
-import { P } from '@shadcn/typography'
-import { IconCheck, IconCopy } from '@tabler/icons-react'
 import { useStore } from '@tanstack/react-form'
-import { ReactElement, useState } from 'react'
+import { ReactElement } from 'react'
 
+import { CopyGroup } from '../shared/copy-group'
 import { parserOutputStore } from './parser-output-store'
 
 interface ParserOutputCopyProps {
@@ -14,32 +11,7 @@ interface ParserOutputCopyProps {
 const ParserOutputCopy = ({ nil: _nil }: ParserOutputCopyProps): ReactElement => {
   const store = useStore(parserOutputStore)
 
-  const [copied, setCopied] = useState<boolean>(false)
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <InputGroupButton
-          className="ml-auto"
-          size="icon-xs"
-          onClick={() => {
-            navigator.clipboard.writeText(JSON.stringify(store.cst))
-
-            setCopied(true)
-
-            setTimeout(() => {
-              setCopied(false)
-            }, 1000)
-          }}
-        >
-          {copied ? <IconCheck /> : <IconCopy />}
-        </InputGroupButton>
-      </TooltipTrigger>
-      <TooltipContent>
-        <P>Copy to Clipboard</P>
-      </TooltipContent>
-    </Tooltip>
-  )
+  return <CopyGroup input={JSON.stringify(store.cst, null, 2)} />
 }
 
 export type { ParserOutputCopyProps }
