@@ -30,7 +30,7 @@ describe('parserSchemaTransform', () => {
       rule: 'start',
     }
 
-    expect(() => parserSchemaTransform(schema)).toThrowError()
+    expect(parserSchemaTransform(schema)).toBeUndefined()
   })
 
   it('should throw an error for mismatch grammar JSON', () => {
@@ -40,6 +40,6 @@ describe('parserSchemaTransform', () => {
       rule: 'start',
     }
 
-    expect(() => parserSchemaTransform(schema)).toThrowError()
+    expect(parserSchemaTransform(schema)).toBeUndefined()
   })
 })

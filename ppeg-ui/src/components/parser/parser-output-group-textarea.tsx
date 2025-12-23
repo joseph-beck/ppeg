@@ -13,7 +13,7 @@ const ParserOutputGroupTextarea = (): ReactElement => {
       id="parser-output"
       placeholder="output"
       className="min-h-50 p-3 font-mono"
-      value={JSON.stringify(store.cst)}
+      value={JSON.stringify(store.cst, null, 2)}
     />
   )
 }

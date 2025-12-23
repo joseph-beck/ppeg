@@ -6,6 +6,7 @@ import { schema } from '@/types/ppeg/schema'
 import { defaultParserFormOpts } from './default-parser-form-opts'
 import { defaultParserFormMeta, ParserFormMeta } from './parser-form-meta'
 import { parserOutputStore } from './parser-output-store'
+import { parserRuleStore } from './parser-rule-store'
 import { useParserMutation } from './use-parser-mutation'
 
 const useParserForm = () => {
@@ -19,6 +20,17 @@ const useParserForm = () => {
       void meta
 
       const data = parserSchemaTransform(value)
+
+      if (data?.grammar.rules) {
+        parserRuleStore.setState(() => {
+          return [...data.grammar.rules]
+        })
+      }
+
+      // until we have some data no transformations should occur in the mutation or parser output store
+      if (!data || !data.rule || data.input === '') {
+        return
+      }
 
       const result = await mutation.mutateAsync(data)
 
