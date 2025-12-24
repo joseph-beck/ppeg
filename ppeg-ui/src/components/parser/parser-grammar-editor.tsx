@@ -3,11 +3,11 @@ import { ReactElement } from 'react'
 import { JsonEditor } from '../shared/json-editor'
 import { useParserForm } from './use-parser-form'
 
-interface ParserInputGroupGrammarTextareaProps {
+interface ParserGrammarEditorProps {
   form: ReturnType<typeof useParserForm>
 }
 
-const ParserInputGroupGrammarTextarea = ({ form }: ParserInputGroupGrammarTextareaProps): ReactElement => {
+const ParserGrammarEditor = ({ form }: ParserGrammarEditorProps): ReactElement => {
   return (
     <form.Field
       name="grammar"
@@ -22,6 +22,6 @@ const ParserInputGroupGrammarTextarea = ({ form }: ParserInputGroupGrammarTextar
   )
 }
 
-export type { ParserInputGroupGrammarTextareaProps }
+export type { ParserGrammarEditorProps }
 
-export { ParserInputGroupGrammarTextarea }
+export { ParserGrammarEditor }

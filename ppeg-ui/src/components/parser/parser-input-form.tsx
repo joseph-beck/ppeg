@@ -1,9 +1,10 @@
 import { InputGroup, InputGroupAddon, InputGroupText } from '@shadcn/input-group'
 import { ReactElement } from 'react'
 
+import { ParserGrammarCopy } from './parser-grammar-copy'
+import { ParserGrammarEditor } from './parser-grammar-editor'
 import { ParserInputCopy } from './parser-input-copy'
-import { ParserInputGroupGrammarTextarea } from './parser-input-group-grammar-textarea'
-import { ParserInputGroupInputTextarea } from './parser-input-group-input-textarea'
+import { ParserInputEditor } from './parser-input-editor'
 import { ParserInputRuleSelect } from './parser-input-rule-select'
 import { ParserInputValidation } from './parser-input-validation'
 import { useParserForm } from './use-parser-form'
@@ -22,19 +23,27 @@ const ParserInputForm = ({ nil: _nil }: ParserInputFormProps): ReactElement => {
           e.preventDefault()
           e.stopPropagation()
         }}
+        className=""
       >
-        <InputGroup>
+        <InputGroup className="mb-4">
           <InputGroupAddon align="block-start" className="border-b">
             <InputGroupText className="font-mono font-medium">editor</InputGroupText>
-            <ParserInputCopy form={form} />
+            <ParserGrammarCopy form={form} />
           </InputGroupAddon>
-          <ParserInputGroupGrammarTextarea form={form} />
+          <ParserGrammarEditor form={form} />
           <InputGroupAddon align="block-end" className="border-t">
             <ParserInputValidation />
             <ParserInputRuleSelect form={form} />
           </InputGroupAddon>
+        </InputGroup>
+        <InputGroup>
+          <InputGroupAddon align="block-start" className="border-b">
+            <InputGroupText className="font-mono font-medium">input</InputGroupText>
+            <ParserInputCopy form={form} />
+          </InputGroupAddon>
+          <ParserInputEditor form={form} />
           <InputGroupAddon align="block-end" className="border-t">
-            <ParserInputGroupInputTextarea form={form} />
+            <InputGroupText className="font-mono font-medium">input</InputGroupText>
           </InputGroupAddon>
         </InputGroup>
       </form>

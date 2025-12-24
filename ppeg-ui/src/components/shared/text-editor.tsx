@@ -1,10 +1,9 @@
-import { json } from '@codemirror/lang-json'
 import { xcodeDark } from '@uiw/codemirror-theme-xcode'
 import ControlledEditor from '@uiw/react-codemirror'
 import { basicSetup } from 'codemirror'
 import { ReactElement, useEffect, useState } from 'react'
 
-interface JsonEditorProps {
+interface TextEditorProps {
   id?: string
   heightPercent?: number
   miniumHeightPx?: number
@@ -13,7 +12,7 @@ interface JsonEditorProps {
   readonly?: boolean
 }
 
-const JsonEditor = ({ heightPercent = 0.55, miniumHeightPx = 300, ...props }: JsonEditorProps): ReactElement => {
+const TextEditor = ({ heightPercent = 0.55, miniumHeightPx = 300, ...props }: TextEditorProps): ReactElement => {
   const [height, setHeight] = useState(`${miniumHeightPx}px`)
 
   useEffect(() => {
@@ -35,14 +34,14 @@ const JsonEditor = ({ heightPercent = 0.55, miniumHeightPx = 300, ...props }: Js
     <ControlledEditor
       {...props}
       className="w-full overflow-auto"
-      extensions={[basicSetup, json()]}
-      lang="json"
+      extensions={[basicSetup]}
+      lang="txt"
       height={height}
       theme={xcodeDark}
     />
   )
 }
 
-export type { JsonEditorProps }
+export type { TextEditorProps }
 
-export { JsonEditor }
+export { TextEditor }
