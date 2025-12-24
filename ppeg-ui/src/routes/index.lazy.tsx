@@ -1,7 +1,7 @@
 import { createLazyFileRoute } from '@tanstack/react-router'
 
 import { ParserInputForm } from '@/components/parser/parser-input-form'
-import { ParserOutput } from '@/components/parser/parser-output'
+import { ParserOutput } from '@/components/parser/parser-output-form'
 import { PPEGTitle } from '@/components/shared/ppeg-title'
 
 const Route = createLazyFileRoute('/')({

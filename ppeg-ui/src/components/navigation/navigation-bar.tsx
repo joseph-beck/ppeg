@@ -7,9 +7,6 @@ const NavigationBar = (): ReactElement => {
       <Link to="/" className="[&.active]:font-bold">
         Home
       </Link>{' '}
-      <Link to="/about" className="[&.active]:font-bold">
-        About
-      </Link>
       <Link to="/docs" className="[&.active]:font-bold">
         Docs
       </Link>

@@ -1,6 +1,6 @@
-import { InputGroupTextarea } from '@shadcn/input-group'
 import { ReactElement } from 'react'
 
+import { JsonEditor } from '../shared/json-editor'
 import { useParserForm } from './use-parser-form'
 
 interface ParserInputGroupGrammarTextareaProps {
@@ -12,13 +12,10 @@ const ParserInputGroupGrammarTextarea = ({ form }: ParserInputGroupGrammarTextar
     <form.Field
       name="grammar"
       children={(field) => (
-        <InputGroupTextarea
+        <JsonEditor
           id="parse-grammar"
-          className="min-h-50 p-3 font-mono"
-          placeholder="input"
           value={String(field.state.value)}
-          onBlur={field.handleBlur}
-          onChange={(e) => field.handleChange(e.target.value)}
+          onChange={(value) => field.handleChange(value)}
         />
       )}
     />

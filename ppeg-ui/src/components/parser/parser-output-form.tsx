@@ -2,7 +2,7 @@ import { InputGroup, InputGroupAddon, InputGroupText } from '@shadcn/input-group
 import { ReactElement } from 'react'
 
 import { ParserOutputCopy } from './parser-output-copy'
-import { ParserOutputGroupTextarea } from './parser-output-group-textarea'
+import { ParserOutputEditor } from './parser-output-editor'
 
 const ParserOutput = (): ReactElement => {
   return (
@@ -12,7 +12,10 @@ const ParserOutput = (): ReactElement => {
           <InputGroupText className="font-mono font-medium">output</InputGroupText>
           <ParserOutputCopy />
         </InputGroupAddon>
-        <ParserOutputGroupTextarea />
+        <ParserOutputEditor />
+        <InputGroupAddon align="block-end" className="border-t">
+          <InputGroupText className="font-mono font-medium">output</InputGroupText>
+        </InputGroupAddon>
       </InputGroup>
     </div>
   )
