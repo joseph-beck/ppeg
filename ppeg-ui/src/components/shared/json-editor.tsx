@@ -10,7 +10,7 @@ interface JsonEditorProps {
   miniumHeightPx?: number
   value: string
   onChange?: (value: string) => void
-  readonly?: boolean
+  readOnly?: boolean
 }
 
 const JsonEditor = ({ heightPercent = 0.55, miniumHeightPx = 300, ...props }: JsonEditorProps): ReactElement => {
