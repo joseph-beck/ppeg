@@ -5,7 +5,7 @@ import { ThemeProvider } from '@/components/theme/theme-provider'
 
 const Route = createRootRoute({
   component: () => (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <Outlet />
       <TanStackRouterDevtools />
     </ThemeProvider>
