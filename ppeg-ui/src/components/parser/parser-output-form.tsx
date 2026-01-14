@@ -14,7 +14,7 @@ const ParserOutput = (): ReactElement => {
         </InputGroupAddon>
         <ParserOutputEditor />
         <InputGroupAddon align="block-end" className="border-t">
-          <InputGroupText className="font-mono font-medium">output</InputGroupText>
+          <InputGroupText className="font-mono font-medium"></InputGroupText>
         </InputGroupAddon>
       </InputGroup>
     </div>

@@ -1,7 +1,9 @@
-import { xcodeDark } from '@uiw/codemirror-theme-xcode'
+import { xcodeDark, xcodeLight } from '@uiw/codemirror-theme-xcode'
 import ControlledEditor from '@uiw/react-codemirror'
 import { basicSetup } from 'codemirror'
 import { ReactElement, useEffect, useState } from 'react'
+
+import { useTheme } from '../theme/use-theme'
 
 interface TextEditorProps {
   id?: string
@@ -13,6 +15,10 @@ interface TextEditorProps {
 }
 
 const TextEditor = ({ heightPercent = 0.55, miniumHeightPx = 300, ...props }: TextEditorProps): ReactElement => {
+  const { theme } = useTheme()
+
+  const editorTheme = theme === 'dark' ? xcodeDark : xcodeLight
+
   const [height, setHeight] = useState(`${miniumHeightPx}px`)
 
   useEffect(() => {
@@ -37,7 +43,7 @@ const TextEditor = ({ heightPercent = 0.55, miniumHeightPx = 300, ...props }: Te
       extensions={[basicSetup]}
       lang="txt"
       height={height}
-      theme={xcodeDark}
+      theme={editorTheme}
     />
   )
 }

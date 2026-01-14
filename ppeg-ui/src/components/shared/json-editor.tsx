@@ -1,8 +1,10 @@
 import { json } from '@codemirror/lang-json'
-import { xcodeDark } from '@uiw/codemirror-theme-xcode'
+import { xcodeDark, xcodeLight } from '@uiw/codemirror-theme-xcode'
 import ControlledEditor from '@uiw/react-codemirror'
 import { basicSetup } from 'codemirror'
 import { ReactElement, useEffect, useState } from 'react'
+
+import { useTheme } from '../theme/use-theme'
 
 interface JsonEditorProps {
   id?: string
@@ -14,6 +16,10 @@ interface JsonEditorProps {
 }
 
 const JsonEditor = ({ heightPercent = 0.55, miniumHeightPx = 300, ...props }: JsonEditorProps): ReactElement => {
+  const { theme } = useTheme()
+
+  const editorTheme = theme === 'dark' ? xcodeDark : xcodeLight
+
   const [height, setHeight] = useState(`${miniumHeightPx}px`)
 
   useEffect(() => {
@@ -38,7 +44,7 @@ const JsonEditor = ({ heightPercent = 0.55, miniumHeightPx = 300, ...props }: Js
       extensions={[basicSetup, json()]}
       lang="json"
       height={height}
-      theme={xcodeDark}
+      theme={editorTheme}
     />
   )
 }

@@ -43,7 +43,7 @@ const ParserInputForm = ({ nil: _nil }: ParserInputFormProps): ReactElement => {
           </InputGroupAddon>
           <ParserInputEditor form={form} />
           <InputGroupAddon align="block-end" className="border-t">
-            <InputGroupText className="font-mono font-medium">input</InputGroupText>
+            <InputGroupText className="font-mono font-medium"></InputGroupText>
           </InputGroupAddon>
         </InputGroup>
       </form>
