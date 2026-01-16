@@ -1,9 +1,9 @@
 import { Edge, Node } from '@xyflow/react'
 
+import { isLeaf } from '@/lib/cst/is-leaf'
+import { isRoot } from '@/lib/cst/is-root'
 import { CST } from '@/types/ppeg/cst'
 
-import { isLeaf } from '../../lib/cst/is-leaf'
-import { isRoot } from '../../lib/cst/is-root'
 import { defaultNodePosition } from './default-node-position'
 
 interface GetOutputElementsResult {

@@ -1,9 +1,10 @@
 import dagre from '@dagrejs/dagre'
 
-const layout = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}))
-
 const getDagreLayout = (): dagre.graphlib.Graph => {
-  return layout
+  const graph = new dagre.graphlib.Graph()
+  graph.setDefaultEdgeLabel(() => ({}))
+
+  return graph
 }
 
 export { getDagreLayout }

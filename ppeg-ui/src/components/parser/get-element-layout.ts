@@ -16,7 +16,7 @@ interface GetElementLayoutResult {
   edges: Edge[]
 }
 
-const getElementLayout = (nodes: Node[], edges: Edge[], direction: Direction = 'TB'): GetElementLayoutResult => {
+const getElementLayout = (nodes: Node[], edges: Edge[], direction: Direction = 'LR'): GetElementLayoutResult => {
   const layout = getDagreLayout()
 
   const isHorizontal = direction === 'LR'

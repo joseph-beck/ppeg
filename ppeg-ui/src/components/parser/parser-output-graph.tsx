@@ -15,14 +15,14 @@ const ParserOutputGraph = (): ReactElement => {
 
   const elements = useMemo(() => getOutputElements(store.cst), [store.cst])
 
-  const initialLayout = useMemo(() => getElementLayout(elements.nodes, elements.edges, 'TB'), [elements])
+  const initialLayout = useMemo(() => getElementLayout(elements.nodes, elements.edges, 'LR'), [elements])
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialLayout.nodes)
 
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialLayout.edges)
 
   useEffect(() => {
-    const layout = getElementLayout(elements.nodes, elements.edges, 'TB')
+    const layout = getElementLayout(elements.nodes, elements.edges, 'LR')
 
     setNodes(layout.nodes)
 
