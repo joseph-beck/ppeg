@@ -1,8 +1,19 @@
-import { InputGroup, InputGroupAddon, InputGroupText } from '@shadcn/input-group'
+import { Button } from '@shadcn/button'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@shadcn/dialog'
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupText } from '@shadcn/input-group'
 import { ReactElement } from 'react'
 
 import { ParserOutputCopy } from './parser-output-copy'
 import { ParserOutputEditor } from './parser-output-editor'
+import { ParserOutputGraph } from './parser-output-graph'
 
 const ParserOutput = (): ReactElement => {
   return (
@@ -13,8 +24,25 @@ const ParserOutput = (): ReactElement => {
           <ParserOutputCopy />
         </InputGroupAddon>
         <ParserOutputEditor />
-        <InputGroupAddon align="block-end" className="border-t">
-          <InputGroupText className="font-mono font-medium"></InputGroupText>
+        <InputGroupAddon align="block-end" className="border-t justify-end">
+          <Dialog>
+            <DialogTrigger asChild>
+              <InputGroupButton variant="default">view graph</InputGroupButton>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-3/4">
+              <DialogHeader>
+                <DialogTitle>parse tree</DialogTitle>
+              </DialogHeader>
+              <div className="w-full h-full">
+                <ParserOutputGraph />
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="default">close</Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </InputGroupAddon>
       </InputGroup>
     </div>

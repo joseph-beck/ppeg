@@ -4,18 +4,18 @@ import { Button } from '@shadcn/button'
 import { P } from '@shadcn/typography'
 import { useStore } from '@tanstack/react-store'
 import { Background, ConnectionLineType, Panel, ReactFlow, useEdgesState, useNodesState } from '@xyflow/react'
-import { ReactElement, useCallback, useEffect } from 'react'
+import { ReactElement, useCallback, useEffect, useMemo } from 'react'
 
 import { Direction, getElementLayout } from './get-element-layout'
 import { getOutputElements } from './get-output-elements'
 import { parserOutputStore } from './parser-output-store'
 
-const ParserGraphOutput = (): ReactElement => {
+const ParserOutputGraph = (): ReactElement => {
   const store = useStore(parserOutputStore)
 
-  const elements = getOutputElements(store.cst)
+  const elements = useMemo(() => getOutputElements(store.cst), [store.cst])
 
-  const initialLayout = getElementLayout(elements.nodes, elements.edges, 'TB')
+  const initialLayout = useMemo(() => getElementLayout(elements.nodes, elements.edges, 'TB'), [elements])
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialLayout.nodes)
 
@@ -27,7 +27,7 @@ const ParserGraphOutput = (): ReactElement => {
     setNodes(layout.nodes)
 
     setEdges(layout.edges)
-  }, [elements, setNodes, setEdges])
+  }, [store.cst, elements, setEdges, setNodes])
 
   const onLayout = useCallback(
     (direction: Direction) => {
@@ -42,14 +42,14 @@ const ParserGraphOutput = (): ReactElement => {
 
   if (!store.cst) {
     return (
-      <div className="w-full max-w-7xl h-150 mt-6 flex items-center justify-center border rounded-lg bg-muted/20">
+      <div className="w-full h-full lg:min-h-200 md:min-h-150 sm:min-h-100 flex items-center justify-center border rounded-lg bg-muted/20">
         <P>parse an input to view a parse tree...</P>
       </div>
     )
   }
 
   return (
-    <div className="w-full max-w-7xl h-150 mt-6 flex items-center justify-center border rounded-lg bg-muted/20">
+    <div className="w-full h-full lg:min-h-200 md:min-h-150 sm:min-h-100 flex items-center justify-center border rounded-lg bg-muted/20">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -72,4 +72,4 @@ const ParserGraphOutput = (): ReactElement => {
   )
 }
 
-export { ParserGraphOutput }
+export { ParserOutputGraph }
