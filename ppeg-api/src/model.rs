@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 /// Duplicate of ppeg_core::parser::Expression but with owned Strings for serde.
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(tag = "type", content = "value")]
 pub enum Expression {
   Empty,
   Char(String),

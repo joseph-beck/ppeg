@@ -7,7 +7,7 @@ const cst = z.object({
   get children() {
     return z.array(cst)
   },
-  label: label,
+  label: label.optional(),
 })
 
 type CST = z.infer<typeof cst>

@@ -1,55 +1,52 @@
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from '@shadcn/field'
-import { Textarea } from '@shadcn/textarea'
+import { InputGroup, InputGroupAddon, InputGroupText } from '@shadcn/input-group'
 import { ReactElement } from 'react'
 
+import { ParserGrammarCopy } from './parser-grammar-copy'
+import { ParserGrammarEditor } from './parser-grammar-editor'
+import { ParserInputCopy } from './parser-input-copy'
+import { ParserInputEditor } from './parser-input-editor'
+import { ParserInputRuleSelect } from './parser-input-rule-select'
+import { ParserInputValidation } from './parser-input-validation'
 import { useParserForm } from './use-parser-form'
 
 interface ParserInputFormProps {
-  _?: never
+  nil?: never
 }
 
-const ParserInputForm = (props: ParserInputFormProps): ReactElement => {
-  void props
-
+const ParserInputForm = ({ nil: _nil }: ParserInputFormProps): ReactElement => {
   const form = useParserForm()
 
   return (
-    <div className="w-full max-w-md">
-      <FieldGroup>
-        <FieldLegend>Parser</FieldLegend>
-        <FieldDescription>Generate a parse tree</FieldDescription>
-        <FieldSet>
-          <Field>
-            <FieldLabel htmlFor="parse-input">Input</FieldLabel>
-            <FieldContent>
-              <form.Field
-                name="input"
-                children={(field) => (
-                  <>
-                    <Textarea
-                      id="parse-input"
-                      value={String(field.state.value)}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                    />
-                    <FieldDescription>What do you want to parse?</FieldDescription>
-                    <FieldError>Validation message</FieldError>
-                  </>
-                )}
-              />
-            </FieldContent>
-          </Field>
-        </FieldSet>
-      </FieldGroup>
+    <div className="sm:min-w-4/5 md:min-w-2/3 lg:min-w-1/2 mb-12">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+        }}
+        className=""
+      >
+        <InputGroup className="mb-4">
+          <InputGroupAddon align="block-start" className="border-b">
+            <InputGroupText className="font-mono font-medium">editor</InputGroupText>
+            <ParserGrammarCopy form={form} />
+          </InputGroupAddon>
+          <ParserGrammarEditor form={form} />
+          <InputGroupAddon align="block-end" className="border-t">
+            <ParserInputValidation />
+            <ParserInputRuleSelect form={form} />
+          </InputGroupAddon>
+        </InputGroup>
+        <InputGroup>
+          <InputGroupAddon align="block-start" className="border-b">
+            <InputGroupText className="font-mono font-medium">input</InputGroupText>
+            <ParserInputCopy form={form} />
+          </InputGroupAddon>
+          <ParserInputEditor form={form} />
+          <InputGroupAddon align="block-end" className="border-t">
+            <InputGroupText className="font-mono font-medium"></InputGroupText>
+          </InputGroupAddon>
+        </InputGroup>
+      </form>
     </div>
   )
 }

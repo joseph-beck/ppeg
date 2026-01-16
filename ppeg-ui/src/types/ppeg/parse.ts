@@ -4,8 +4,8 @@ import { grammar } from './grammar'
 
 const parse = z.object({
   grammar: grammar,
-  input: z.string(),
-  rule: z.string(),
+  input: z.string().default(''),
+  rule: z.string().optional(),
 })
 
 type Parse = z.infer<typeof parse>

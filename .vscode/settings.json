@@ -3,11 +3,18 @@
     "actix",
     "clippy",
     "COLOUR",
+    "Dagre",
+    "dagrejs",
+    "graphlib",
     "packrat",
     "ppeg",
+    "rankdir",
+    "reactflow",
     "rustdoc",
     "rustup",
     "serde",
-    "shadcn"
+    "shadcn",
+    "tabler",
+    "xyflow"
   ]
 }

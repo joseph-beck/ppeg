@@ -12,6 +12,7 @@ import { routeTree } from './routeTree.gen'
 // Create a new router instance
 const router = createRouter({ routeTree })
 
+// Create a query client instance
 const queryClient = new QueryClient()
 
 // Register the router instance for type safety
