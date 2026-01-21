@@ -291,6 +291,7 @@ impl<'a> Parser<'a> {
   /// If the rule is not found, returns a `ParserError::RuleNotFound`.
   fn named_rule(&mut self, input: &mut &'a str, name: &'a str) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
     let key = (name, *input);
+    let original_input = *input;
 
     // Check if the result has already been parsed and what the memo state is.
     // If it is seeding, we have left recursive expression.
@@ -313,6 +314,8 @@ impl<'a> Parser<'a> {
       }
     }
 
+    let was_seeding = self.packrat.is_seeding();
+
     self.packrat.mark(key);
 
     let rule = self
@@ -320,39 +323,59 @@ impl<'a> Parser<'a> {
       .get(name)
       .ok_or(ParserError::RuleNotFound { position: 0, name })?;
 
-    let (remaining, cst) = self.match_success(input, &rule.expression)?;
+    let (mut remaining, cst) = match self.match_success(input, &rule.expression) {
+      Ok((r, c)) => (r, c),
+      Err(e) => {
+        self.packrat.insert(key, Err(e.clone()));
+        return Err(e);
+      }
+    };
 
-    let tree = CST::new(rule.name, vec![cst.unwrap()], None);
+    let mut tree = CST::new(rule.name, cst.map_or_else(Vec::new, |c| vec![c]), None);
 
-    loop {
-      *input = remaining;
+    self
+      .packrat
+      .insert(key, Ok(State::Parsed(remaining, Some(tree.clone()))));
 
-      self.packrat.remove(key);
-      self
-        .packrat
-        .insert(key, Ok(State::Parsed(remaining, Some(tree.clone()))));
+    if !was_seeding {
+      loop {
+        let prev_remaining = remaining;
+        let prev_tree = tree.clone();
 
-      self.packrat.set_seeding(true);
+        self.packrat.set_seeding(true);
 
-      match self.match_success(input, &rule.expression) {
-        // When successful, packrat table is updated with the new result and seeding stops.
-        Ok((r, c)) => {
-          self.packrat.set_seeding(false);
+        // Whilst trying to parse the result ensure packrat is seeding.
+        let mut try_input = original_input;
+        let result = self.match_success(&mut try_input, &rule.expression);
 
-          self.packrat.insert(
-            key,
-            Ok(State::Parsed(r, Some(CST::new(rule.name, vec![c.unwrap()], None)))),
-          );
-        }
-        Err(e) => {
-          self.packrat.insert(key, Err(e.clone()));
+        self.packrat.set_seeding(false);
 
-          break;
+        match result {
+          Ok((r, c)) => {
+            if r.len() >= prev_remaining.len() {
+              break;
+            }
+
+            remaining = r;
+            if let Some(c) = c {
+              tree = CST::new(rule.name, vec![c], None);
+            }
+
+            self
+              .packrat
+              .insert(key, Ok(State::Parsed(remaining, Some(tree.clone()))));
+          }
+          Err(_e) => {
+            tree = prev_tree;
+            remaining = prev_remaining;
+            break;
+          }
         }
       }
     }
 
-    Ok((*input, Some(tree)))
+    *input = remaining;
+    Ok((remaining, Some(tree)))
   }
 }
 
@@ -756,6 +779,7 @@ mod parser_tests {
       Expression::OneOrMore(Box::new(Expression::Choice(vec![
         Expression::Char("1"),
         Expression::Char("2"),
+        Expression::Char("3"),
       ]))),
     );
     let rule_x = Rule::new("rule_x", Expression::NamedRule("rule_expr"));
