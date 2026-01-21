@@ -3,6 +3,7 @@ import { ReactElement } from 'react'
 
 import { ParserGrammarCopy } from './parser-grammar-copy'
 import { ParserGrammarEditor } from './parser-grammar-editor'
+import { ParserGrammarPresets } from './parser-grammar-presets'
 import { ParserInputCopy } from './parser-input-copy'
 import { ParserInputEditor } from './parser-input-editor'
 import { ParserInputRuleSelect } from './parser-input-rule-select'
@@ -23,12 +24,14 @@ const ParserInputForm = ({ nil: _nil }: ParserInputFormProps): ReactElement => {
           e.preventDefault()
           e.stopPropagation()
         }}
-        className=""
       >
         <InputGroup className="mb-4">
           <InputGroupAddon align="block-start" className="border-b">
             <InputGroupText className="font-mono font-medium">editor</InputGroupText>
-            <ParserGrammarCopy form={form} />
+            <div className="ml-auto">
+              <ParserGrammarPresets form={form} />
+              <ParserGrammarCopy form={form} />
+            </div>
           </InputGroupAddon>
           <ParserGrammarEditor form={form} />
           <InputGroupAddon align="block-end" className="border-t">
