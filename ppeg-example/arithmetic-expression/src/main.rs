@@ -50,11 +50,11 @@ fn main() {
     ]),
   );
 
-  let mut grammar = Grammar::new();
-  grammar.insert(number);
-  grammar.insert(factor);
-  grammar.insert(term);
-  grammar.insert(arithmetic_expression);
+  let grammar = Grammar::default()
+    .with(number)
+    .with(factor)
+    .with(term)
+    .with(arithmetic_expression);
 
   let mut parser = Parser::new(grammar);
   let (_, cst) = parser.parse(&mut "1+(2*3)", "arithmetic_expression").unwrap();

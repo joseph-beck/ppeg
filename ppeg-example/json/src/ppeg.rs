@@ -117,7 +117,7 @@ pub fn parse() {
   ]);
   let array = Rule::new("array", array_expr);
 
-  let mut grammar = Grammar::new();
+  let mut grammar = Grammar::default();
   grammar.insert(number);
   grammar.insert(string);
   grammar.insert(pair);

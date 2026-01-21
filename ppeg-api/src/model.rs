@@ -66,7 +66,7 @@ impl Grammar {
   }
 
   pub fn to_parser_grammar(&self) -> parser::Grammar<'static> {
-    let mut grammar = parser::Grammar::new();
+    let mut grammar = parser::Grammar::default();
 
     self.rules.iter().for_each(|rule| grammar.insert(rule.to_parser_rule()));
 

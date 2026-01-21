@@ -19,10 +19,7 @@ fn main() {
     ]),
   );
 
-  let mut grammar = Grammar::new();
-  grammar.insert(rule_num);
-  grammar.insert(rule_x);
-  grammar.insert(rule_expr);
+  let grammar = Grammar::default().with(rule_num).with(rule_x).with(rule_expr);
 
   let mut parser = Parser::new(grammar);
   let (remaining, cst) = parser.parse(&mut "1+1", "rule_expr").unwrap();

@@ -56,15 +56,17 @@ pub struct Grammar<'a> {
   rules: HashMap<&'a str, Rule<'a>>,
 }
 
-impl Grammar<'_> {
-  pub fn new() -> Self {
-    Grammar { rules: HashMap::new() }
+impl<'a> Grammar<'a> {
+  /// Creates a new instance of grammar with the given rules.
+  pub fn new(rules: HashMap<&'a str, Rule<'a>>) -> Self {
+    Grammar { rules }
   }
 }
 
 impl Default for Grammar<'_> {
+  /// Creates a default empty grammar.
   fn default() -> Self {
-    Self::new()
+    Self::new(HashMap::new())
   }
 }
 
@@ -81,7 +83,15 @@ impl<'a> Grammar<'a> {
     self.rules.insert(rule.name, rule);
   }
 
+  /// Inserts a new rule into the grammar and returns an updated instance of the grammar.
+  pub fn with(mut self, rule: Rule<'a>) -> Self {
+    self.insert(rule);
+
+    self
+  }
+
   /// Gets the the rule from the grammar lookup.
+  /// If the rule does not exist, returns None.
   pub fn get(&self, name: &'a str) -> Option<Rule<'a>> {
     self.rules.get(name).cloned()
   }
@@ -139,7 +149,7 @@ impl<'a> Parser<'a> {
 
   /// Matches the given input against the provided expression.
   /// Returns the remaining input and CST if successful, otherwise returns a ParserError.
-  pub fn match_success(
+  fn match_success(
     &mut self,
     input: &mut &'a str,
     expression: &Expression<'a>,
@@ -153,10 +163,6 @@ impl<'a> Parser<'a> {
       Expression::OneOrMore(expr) => self.one_or_more(input, expr),
       Expression::NamedRule(n) => self.named_rule(input, n),
     }
-  }
-
-  pub fn match_failure(&mut self) -> Result<CST<'a>, ParserError<'a>> {
-    Err(ParserError::Unknown)
   }
 
   /// Parses a character from the input and advances the input when successful.
@@ -310,7 +316,7 @@ impl<'a> Parser<'a> {
 impl<'a> Default for Parser<'a> {
   /// Creates a default parser with an empty grammar input.
   fn default() -> Self {
-    Parser::new(Grammar::new())
+    Parser::new(Grammar::default())
   }
 }
 
@@ -319,8 +325,8 @@ mod grammar_tests {
   use super::*;
 
   #[test]
-  fn test_grammars_insert() {
-    let mut grammar = Grammar::new();
+  fn test_grammar_insert() {
+    let mut grammar = Grammar::default();
     grammar.insert(Rule::new("e", Expression::Empty));
 
     assert_eq!(grammar.rules.get("e"), Some(&Rule::new("e", Expression::Empty)));
@@ -328,8 +334,16 @@ mod grammar_tests {
   }
 
   #[test]
-  fn test_grammars_get() {
-    let mut grammar = Grammar::new();
+  fn test_grammar_with() {
+    let grammar = Grammar::default().with(Rule::new("e", Expression::Empty));
+
+    assert_eq!(grammar.rules.get("e"), Some(&Rule::new("e", Expression::Empty)));
+    assert_eq!(grammar.rules.get("b"), None);
+  }
+
+  #[test]
+  fn test_grammar_get() {
+    let mut grammar = Grammar::default();
     grammar.rules.insert("e", Rule::new("e", Expression::Empty));
 
     assert_eq!(grammar.get("e"), Some(Rule::new("e", Expression::Empty)));
@@ -343,7 +357,7 @@ mod parser_tests {
 
   #[test]
   fn test_parser_parse_char_success() {
-    let mut grammar = Grammar::new();
+    let mut grammar = Grammar::default();
     grammar.insert(Rule::new("rule", Expression::Char("a")));
 
     {
@@ -379,7 +393,7 @@ mod parser_tests {
 
   #[test]
   fn test_parser_parse_char_fail() {
-    let mut grammar = Grammar::new();
+    let mut grammar = Grammar::default();
     grammar.insert(Rule::new("a", Expression::Char("a")));
 
     let mut parser = Parser::new(grammar);
@@ -391,7 +405,7 @@ mod parser_tests {
   #[test]
   fn test_parser_parse_sequence_success() {
     {
-      let mut grammar = Grammar::new();
+      let mut grammar = Grammar::default();
       grammar.insert(Rule::new("rule", Expression::Sequence(vec![Expression::Char("a")])));
 
       let mut parser = Parser::new(grammar);
@@ -411,7 +425,7 @@ mod parser_tests {
     }
 
     {
-      let mut grammar = Grammar::new();
+      let mut grammar = Grammar::default();
       grammar.insert(Rule::new(
         "rule",
         Expression::Sequence(vec![Expression::Char("a"), Expression::Char("b")]),
@@ -438,7 +452,7 @@ mod parser_tests {
 
   #[test]
   fn test_parser_parse_sequence_fail() {
-    let mut grammar = Grammar::new();
+    let mut grammar = Grammar::default();
     grammar.insert(Rule::new("rule", Expression::Sequence(vec![Expression::Char("a")])));
 
     let mut parser = Parser::new(grammar);
@@ -449,7 +463,7 @@ mod parser_tests {
 
   #[test]
   fn test_parser_parse_choice_success() {
-    let mut grammar = Grammar::new();
+    let mut grammar = Grammar::default();
     grammar.insert(Rule::new(
       "rule",
       Expression::Choice(vec![Expression::Char("a"), Expression::Char("b")]),
@@ -506,7 +520,7 @@ mod parser_tests {
 
   #[test]
   fn test_parser_parse_choice_fail() {
-    let mut grammar = Grammar::new();
+    let mut grammar = Grammar::default();
     grammar.insert(Rule::new(
       "rule",
       Expression::Choice(vec![Expression::Char("a"), Expression::Char("b")]),
@@ -520,7 +534,7 @@ mod parser_tests {
 
   #[test]
   fn test_parser_parse_zero_or_more_success() {
-    let mut grammar = Grammar::new();
+    let mut grammar = Grammar::default();
     grammar.insert(Rule::new(
       "rule",
       Expression::ZeroOrMore(Box::new(Expression::Char("a"))),
@@ -565,7 +579,7 @@ mod parser_tests {
 
   #[test]
   fn test_parser_parse_zero_or_more_fail() {
-    let mut grammar = Grammar::new();
+    let mut grammar = Grammar::default();
     grammar.insert(Rule::new(
       "rule",
       Expression::ZeroOrMore(Box::new(Expression::Char("a"))),
@@ -580,7 +594,7 @@ mod parser_tests {
 
   #[test]
   fn test_parser_parse_one_or_more_success() {
-    let mut grammar = Grammar::new();
+    let mut grammar = Grammar::default();
     grammar.insert(Rule::new(
       "rule",
       Expression::OneOrMore(Box::new(Expression::Char("a"))),
@@ -629,7 +643,7 @@ mod parser_tests {
 
   #[test]
   fn test_parser_parse_one_or_more_fail() {
-    let mut grammar = Grammar::new();
+    let mut grammar = Grammar::default();
     grammar.insert(Rule::new(
       "rule",
       Expression::OneOrMore(Box::new(Expression::Char("a"))),
@@ -643,7 +657,7 @@ mod parser_tests {
 
   #[test]
   fn test_parser_parse_named_rule_success() {
-    let mut grammar = Grammar::new();
+    let mut grammar = Grammar::default();
     grammar.insert(Rule::new("rule", Expression::Char("a")));
     grammar.insert(Rule::new("named", Expression::NamedRule("rule")));
 

@@ -22,7 +22,7 @@ fn main() {
     ]),
   );
 
-  let mut grammar = Grammar::new();
+  let mut grammar = Grammar::default();
   grammar.insert(data);
 
   let mut parser = Parser::new(grammar);
