@@ -26,6 +26,12 @@ pub enum ParserError<'a> {
   Unexpected {
     position: usize,
   },
+  /// Left recursion has been detected.
+  /// This may not result in a parsing error.
+  /// It is flagged for seeding the expression.
+  LeftRecursion {
+    name: &'a str,
+  },
   /// Catch all unknown error.
   Unknown,
 }
@@ -62,6 +68,9 @@ impl fmt::Display for ParserError<'_> {
       }
       ParserError::Unexpected { position } => {
         write!(f, "Error: unexpected at position {}", position)
+      }
+      ParserError::LeftRecursion { name } => {
+        write!(f, "Error: left recursion detected in rule '{}'", name)
       }
       ParserError::Unknown => write!(f, "Error: unknown"),
     }
