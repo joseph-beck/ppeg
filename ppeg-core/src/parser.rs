@@ -109,7 +109,7 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-  /// Creates a new instance of the parser with the given input string.
+  /// Creates a new instance of the parser with the given grammar.
   pub fn new(grammar: Grammar<'a>) -> Self {
     Parser { grammar }
   }
@@ -159,6 +159,8 @@ impl<'a> Parser<'a> {
     Err(ParserError::Unknown)
   }
 
+  /// Parses a character from the input and advances the input when successful.
+  /// If the character does not match, returns a `ParserError::Unknown`.
   fn char(&mut self, input: &mut &'a str, char: &'a str) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
     let mut cst = CST::new("char", vec![], None);
 
@@ -173,6 +175,9 @@ impl<'a> Parser<'a> {
     }
   }
 
+  /// Parses a sequence of expressions from the input.
+  /// Each expression in the sequence must match in order for the sequence match to be successful.
+  /// If any expression fails to match, the entire sequence match fails.
   fn sequence(
     &mut self,
     input: &mut &'a str,
@@ -190,6 +195,9 @@ impl<'a> Parser<'a> {
     Ok((*input, Some(cst)))
   }
 
+  /// Parses a choice of expressions from the input.
+  /// Matches the first expression that succeeds.
+  /// If none of the expressions match, returns a `ParserError::Unknown`.
   fn choice(
     &mut self,
     input: &mut &'a str,
@@ -211,6 +219,9 @@ impl<'a> Parser<'a> {
     Err(ParserError::Unknown)
   }
 
+  /// Parses zero or more occurrences of the given expression from the input.
+  /// Continues to match the expression until it no longer matches.
+  /// This will always succeed, even if no occurrences are found.
   fn zero_or_more(
     &mut self,
     input: &mut &'a str,
@@ -250,6 +261,9 @@ impl<'a> Parser<'a> {
     }
   }
 
+  /// Parses one or more occurrences of the given expression from the input.
+  /// Continues to match the expression until it no longer matches.
+  /// If no occurrences are found, returns a `ParserError::FailedToMatch`.
   fn one_or_more(
     &mut self,
     input: &mut &'a str,
@@ -272,6 +286,9 @@ impl<'a> Parser<'a> {
     Ok((remaining, Some(cst)))
   }
 
+  /// Parses a named rule from the grammar.
+  /// Looks up the rule by name and applies its expression to the input.
+  /// If the rule is not found, returns a `ParserError::RuleNotFound`.
   fn named_rule(&mut self, input: &mut &'a str, name: &'a str) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
     let rule = self.grammar.get(name);
 
