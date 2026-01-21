@@ -4,7 +4,10 @@ use ppeg_core::parser::{Expression, Grammar, Parser, Rule};
 fn main() {
   let rule_num = Rule::new(
     "rule_num",
-    Expression::OneOrMore(Box::new(Expression::Choice(vec![Expression::Char("1")]))),
+    Expression::OneOrMore(Box::new(Expression::Choice(vec![
+      Expression::Char("1"),
+      Expression::Char("2"),
+    ]))),
   );
   let rule_x = Rule::new("rule_x", Expression::NamedRule("rule_expr"));
   let rule_expr = Rule::new(
@@ -22,7 +25,7 @@ fn main() {
   let grammar = Grammar::default().with(rule_num).with(rule_x).with(rule_expr);
 
   let mut parser = Parser::new(grammar);
-  let (remaining, cst) = parser.parse(&mut "1+1", "rule_expr").unwrap();
+  let (remaining, cst) = parser.parse(&mut "1+2", "rule_expr").unwrap();
 
   println!("{}", remaining);
   if let Some(cst) = cst {

@@ -738,10 +738,25 @@ mod parser_tests {
   }
 
   #[test]
+  fn test_parser_parse_named_rule_fail() {
+    let mut grammar = Grammar::default();
+    grammar.insert(Rule::new("rule", Expression::Char("a")));
+    grammar.insert(Rule::new("named", Expression::NamedRule("rule")));
+
+    let mut parser = Parser::new(grammar);
+    let result = parser.parse(&mut "b", "named");
+
+    assert!(result.is_err());
+  }
+
+  #[test]
   fn test_parser_parse_left_recursion() {
     let rule_num = Rule::new(
       "rule_num",
-      Expression::OneOrMore(Box::new(Expression::Choice(vec![Expression::Char("1")]))),
+      Expression::OneOrMore(Box::new(Expression::Choice(vec![
+        Expression::Char("1"),
+        Expression::Char("2"),
+      ]))),
     );
     let rule_x = Rule::new("rule_x", Expression::NamedRule("rule_expr"));
     let rule_expr = Rule::new(
@@ -759,7 +774,7 @@ mod parser_tests {
     let grammar = Grammar::default().with(rule_num).with(rule_x).with(rule_expr);
 
     let mut parser = Parser::new(grammar);
-    let (remaining, cst) = parser.parse(&mut "1+1+1", "rule_expr").unwrap();
+    let (remaining, cst) = parser.parse(&mut "1+2", "rule_expr").unwrap();
 
     assert!(remaining.is_empty());
     match cst {
