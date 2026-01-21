@@ -28,7 +28,7 @@ const ParserInputForm = ({ nil: _nil }: ParserInputFormProps): ReactElement => {
         <InputGroup className="mb-4">
           <InputGroupAddon align="block-start" className="border-b">
             <InputGroupText className="font-mono font-medium">editor</InputGroupText>
-            <div className="ml-auto">
+            <div className="ml-auto inline-flex space-x-2">
               <ParserGrammarPresets form={form} />
               <ParserGrammarCopy form={form} />
             </div>
