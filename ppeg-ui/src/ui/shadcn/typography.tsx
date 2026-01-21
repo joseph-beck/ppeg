@@ -18,8 +18,16 @@ function H4({ className, ...props }: React.ComponentProps<'h4'>) {
   return <h4 className={cn('scroll-m-20 text-xl font-semibold tracking-tight text-balance', className)} {...props} />
 }
 
+function H5({ className, ...props }: React.ComponentProps<'h5'>) {
+  return <h5 className={cn('scroll-m-20 text-lg font-semibold tracking-tight text-balance', className)} {...props} />
+}
+
+function H6({ className, ...props }: React.ComponentProps<'h6'>) {
+  return <h6 className={cn('scroll-m-20 text-base font-semibold tracking-tight text-balance', className)} {...props} />
+}
+
 function P({ className, ...props }: React.ComponentProps<'p'>) {
-  return <p className={cn('leading-7 [&:not(:first-child)]:mt-6', className)} {...props} />
+  return <p className={cn('leading-7 not-first:mt-6', className)} {...props} />
 }
 
 function Blockquote({ className, ...props }: React.ComponentProps<'blockquote'>) {
@@ -55,4 +63,4 @@ function Muted({ className, ...props }: React.ComponentProps<'p'>) {
   return <p className={cn('text-muted-foreground text-sm', className)} {...props} />
 }
 
-export { Blockquote, Code, H1, H2, H3, H4, Large, Lead, List, Muted, P, Small }
+export { Blockquote, Code, H1, H2, H3, H4, H5, H6, Large, Lead, List, Muted, P, Small }

@@ -20,7 +20,6 @@ const CopyGroup = ({ input }: CopyGroupProps): ReactElement => {
     <Tooltip>
       <TooltipTrigger asChild>
         <InputGroupButton
-          className="ml-auto"
           size="icon-xs"
           onClick={() => {
             navigator.clipboard.writeText(input)

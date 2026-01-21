@@ -21,7 +21,9 @@ const ParserOutput = (): ReactElement => {
       <InputGroup>
         <InputGroupAddon align="block-start" className="border-b">
           <InputGroupText className="font-mono font-medium">output</InputGroupText>
-          <ParserOutputCopy />
+          <div className="ml-auto">
+            <ParserOutputCopy />
+          </div>
         </InputGroupAddon>
         <ParserOutputEditor />
         <InputGroupAddon align="block-end" className="border-t justify-end">
