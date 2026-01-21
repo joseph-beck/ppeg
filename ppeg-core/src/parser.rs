@@ -98,21 +98,6 @@ impl<'a> Grammar<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Output<'a> {
-  /// Output result of parsing.
-  /// Ok if successful, Err with ParserError if failed.
-  pub result: Result<Vec<&'a str>, ParserError<'a>>,
-  /// Rule that was applied to produce this output.
-  pub expression: Expression<'a>,
-}
-
-impl<'a> Output<'a> {
-  pub fn new(result: Result<Vec<&'a str>, ParserError<'a>>, expression: Expression<'a>) -> Self {
-    Output { result, expression }
-  }
-}
-
-#[derive(Debug, Clone, PartialEq)]
 pub struct Parser<'a> {
   /// Grammars lookup table.
   grammar: Grammar<'a>,
