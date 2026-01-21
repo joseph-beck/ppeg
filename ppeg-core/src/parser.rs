@@ -104,8 +104,10 @@ impl<'a> Grammar<'a> {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Parser<'a> {
   /// Grammars lookup table.
+  /// Stores all the named rules of the parser.
   grammar: Grammar<'a>,
   /// Packrat memoization table.
+  /// Stores parser states so that left recursion can be handled.
   packrat: Packrat<'a>,
 }
 
@@ -126,19 +128,9 @@ impl<'a> Parser<'a> {
     input: &mut &'a str,
     rule_name: &'a str,
   ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
-    let rule = self.grammar.get(rule_name).ok_or(ParserError::RuleNotFound {
-      position: 0,
-      name: rule_name,
-    })?;
-
-    let (remaining, cst) = self.match_success(input, &rule.expression)?;
-    if let Some(node) = cst {
-      let mut root = CST::new(rule.name, vec![], None);
-      root.add(Some(node));
-      Ok((remaining, Some(root)))
-    } else {
-      Ok((remaining, None))
-    }
+    // Parse must always start with a named rule.
+    // Simply call named rule here.
+    self.named_rule(input, rule_name)
   }
 
   /// Matches the given input against the provided expression.
@@ -314,8 +306,8 @@ impl<'a> Parser<'a> {
       }
     }
 
+    // Check if packrat was seeding and mark the current rule for seeding.
     let was_seeding = self.packrat.is_seeding();
-
     self.packrat.mark(key);
 
     let rule = self
@@ -342,6 +334,9 @@ impl<'a> Parser<'a> {
         let prev_remaining = remaining;
         let prev_tree = tree.clone();
 
+        // Clear all memoed entries except for the current rule being processed.
+        // Supports indirect left recursion.
+        self.packrat.clear_except(original_input, name);
         self.packrat.set_seeding(true);
 
         // Whilst trying to parse the result ensure packrat is seeding.
@@ -366,8 +361,11 @@ impl<'a> Parser<'a> {
               .insert(key, Ok(State::Parsed(remaining, Some(tree.clone()))));
           }
           Err(_e) => {
+            // Failed to parse the left recursive expression here.
+            // Revert back to previous state.
             tree = prev_tree;
             remaining = prev_remaining;
+
             break;
           }
         }
@@ -773,7 +771,7 @@ mod parser_tests {
   }
 
   #[test]
-  fn test_parser_parse_left_recursion() {
+  fn test_parser_parse_indirect_left_recursion() {
     let rule_num = Rule::new(
       "rule_num",
       Expression::OneOrMore(Box::new(Expression::Choice(vec![
@@ -798,7 +796,41 @@ mod parser_tests {
     let grammar = Grammar::default().with(rule_num).with(rule_x).with(rule_expr);
 
     let mut parser = Parser::new(grammar);
-    let (remaining, cst) = parser.parse(&mut "1+2", "rule_expr").unwrap();
+    let (remaining, cst) = parser.parse(&mut "1+2+3", "rule_expr").unwrap();
+
+    assert!(remaining.is_empty());
+    match cst {
+      Some(_) => assert!(true),
+      None => assert!(false),
+    }
+  }
+
+  #[test]
+  fn test_parser_parse_direct_left_recursion() {
+    let rule_expr = Rule::new(
+      "rule_expr",
+      Expression::Choice(vec![
+        Expression::Sequence(vec![
+          Expression::NamedRule("rule_expr"),
+          Expression::Char("+"),
+          Expression::NamedRule("rule_num"),
+        ]),
+        Expression::NamedRule("rule_num"),
+      ]),
+    );
+    let rule_num = Rule::new(
+      "rule_num",
+      Expression::OneOrMore(Box::new(Expression::Choice(vec![
+        Expression::Char("1"),
+        Expression::Char("2"),
+        Expression::Char("3"),
+      ]))),
+    );
+
+    let grammar = Grammar::default().with(rule_expr).with(rule_num);
+
+    let mut parser = Parser::new(grammar);
+    let (remaining, cst) = parser.parse(&mut "1+2+3", "rule_expr").unwrap();
 
     assert!(remaining.is_empty());
     match cst {

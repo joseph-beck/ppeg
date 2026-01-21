@@ -14,17 +14,17 @@ pub enum State<'a> {
   Failed(ParserError<'a>),
 }
 
-/// Packrat memoization table for storing previous parser state.
+/// Packrat memo table for storing previous parser state.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Packrat<'a> {
-  /// Memoization table mapping (grammar rule, input position) to parser output.
+  /// Memo table mapping (grammar rule, input position) to parser output.
   memo_table: HashMap<(&'a str, &'a str), Result<State<'a>, ParserError<'a>>>,
   /// Seeding flag for left recursion handling.
   seeding: bool,
 }
 
 impl<'a> Packrat<'a> {
-  /// Create a new empty Packrat memoization table.
+  /// Create a new empty Packrat memo table.
   /// HashMap is defaulted to a new empty map.
   /// Seeding flag is defaulted to false.
   pub fn new() -> Self {
@@ -34,17 +34,17 @@ impl<'a> Packrat<'a> {
     }
   }
 
-  /// Get a memoized result for a given (rule, input) pair.
+  /// Get a memoed result for a given (rule, input) pair.
   pub fn get(&self, key: (&'a str, &'a str)) -> Option<&Result<State<'a>, ParserError<'a>>> {
     self.memo_table.get(&key)
   }
 
-  /// Insert a memoized result for a given (rule, input) pair.
+  /// Insert a memoed result for a given (rule, input) pair.
   pub fn insert(&mut self, key: (&'a str, &'a str), output: Result<State<'a>, ParserError<'a>>) {
     self.memo_table.insert(key, output);
   }
 
-  /// Remove a memoized result for a given (rule, input) pair.
+  /// Remove a memoed result for a given (rule, input) pair.
   pub fn remove(&mut self, key: (&'a str, &'a str)) {
     self.memo_table.remove(&key);
   }
@@ -54,13 +54,21 @@ impl<'a> Packrat<'a> {
     self.memo_table.insert(key, Ok(State::Seeding));
   }
 
-  /// Update the memoization table only if the current state is Seeding.
+  /// Update the memo table only if the current state is Seeding.
   pub fn update_when_seeding(&mut self, key: (&'a str, &'a str), result: Result<State<'a>, ParserError<'a>>) {
     let data = self.get(key);
 
     if let Some(Ok(State::Seeding)) = data {
       self.memo_table.insert(key, result);
     }
+  }
+
+  /// Clears all memoed entries except for the given rule with a given input
+  /// and the rule that must be kept.
+  pub fn clear_except(&mut self, input: &'a str, keep_rule: &'a str) {
+    self
+      .memo_table
+      .retain(|&(rule, pos), _| pos != input || rule == keep_rule);
   }
 
   /// Set the seeding flag.
