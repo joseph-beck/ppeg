@@ -216,7 +216,7 @@ impl<'a> Parser<'a> {
   fn zero_or_more(
     &mut self,
     input: &mut &'a str,
-    expression: &Box<Expression<'a>>,
+    expression: &Expression<'a>,
   ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
     let mut cst = CST::new("zero_or_more", vec![], None);
     let mut children: Vec<CST<'a>> = Vec::new();
@@ -258,10 +258,10 @@ impl<'a> Parser<'a> {
   fn one_or_more(
     &mut self,
     input: &mut &'a str,
-    expression: &Box<Expression<'a>>,
+    expression: &Expression<'a>,
   ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
     let start_length = input.len();
-    let (remaining, cst) = self.match_success(input, &Expression::ZeroOrMore(expression.clone()))?;
+    let (remaining, cst) = self.match_success(input, &Expression::ZeroOrMore(Box::new(expression.clone())))?;
 
     if remaining.len() == start_length {
       return Err(ParserError::FailedToMatch {
