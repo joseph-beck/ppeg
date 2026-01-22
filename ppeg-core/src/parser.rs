@@ -48,6 +48,7 @@ pub struct Rule<'a> {
 }
 
 impl<'a> Rule<'a> {
+  /// Create a new rule with the given name and expression.
   pub fn new(name: &'a str, expression: Expression<'a>) -> Self {
     Rule { name, expression }
   }
@@ -57,6 +58,7 @@ impl<'a> Rule<'a> {
 pub struct Grammar<'a> {
   /// Stores all of the rules of a grammar.
   /// Mapping of rule name to the rule data.
+  /// Ruled data consists of the name and the expression.
   rules: HashMap<&'a str, Rule<'a>>,
 }
 
@@ -75,6 +77,7 @@ impl Default for Grammar<'_> {
 }
 
 impl std::fmt::Debug for Grammar<'_> {
+  /// Debugger formatting.
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     write!(f, "Grammars: {:?}", self.rules)
   }
@@ -156,6 +159,7 @@ impl<'a> Parser<'a> {
   fn char(&mut self, input: &mut &'a str, char: &'a str) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
     let mut cst = CST::new("char", vec![], None);
 
+    // When matching a character advanced the input by one character.
     if input.starts_with(char) {
       let remaining = &input[char.len()..];
       cst.add(Some(CST::new(char, vec![], None)));
@@ -222,6 +226,7 @@ impl<'a> Parser<'a> {
     let mut cst = CST::new("zero_or_more", vec![], None);
     let mut children: Vec<CST<'a>> = Vec::new();
 
+    // Zero or more continues until no progress is made on the input.
     loop {
       let start_length = input.len();
 
@@ -264,6 +269,7 @@ impl<'a> Parser<'a> {
     let start_length = input.len();
     let (remaining, cst) = self.match_success(input, &Expression::ZeroOrMore(Box::new(expression.clone())))?;
 
+    // When no progress is made one or more has failed to match.
     if remaining.len() == start_length {
       return Err(ParserError::FailedToMatch {
         position: 0,
@@ -286,7 +292,7 @@ impl<'a> Parser<'a> {
     let original_input = *input;
 
     // Check if the result has already been parsed and what the memo state is.
-    // If it is seeding, we have left recursive expression.
+    // If it is seeding, we have left recursive expression, it returns and error and continues resolving.
     // If None then we continue with the parse.
     if let Some(state) = self.packrat.get(key) {
       match state {
@@ -337,12 +343,13 @@ impl<'a> Parser<'a> {
         // Clear all memoed entries except for the current rule being processed.
         // Supports indirect left recursion.
         self.packrat.clear_except(original_input, name);
+        // Whilst trying to parse the result ensure packrat is seeding.
         self.packrat.set_seeding(true);
 
-        // Whilst trying to parse the result ensure packrat is seeding.
         let mut try_input = original_input;
         let result = self.match_success(&mut try_input, &rule.expression);
 
+        // Stop seeding after trying to parse and check the result.
         self.packrat.set_seeding(false);
 
         match result {
@@ -360,7 +367,7 @@ impl<'a> Parser<'a> {
               .packrat
               .insert(key, Ok(State::Parsed(remaining, Some(tree.clone()))));
           }
-          Err(_e) => {
+          Err(_) => {
             // Failed to parse the left recursive expression here.
             // Revert back to previous state.
             tree = prev_tree;
@@ -372,7 +379,6 @@ impl<'a> Parser<'a> {
       }
     }
 
-    *input = remaining;
     Ok((remaining, Some(tree)))
   }
 }
@@ -384,6 +390,7 @@ impl<'a> Default for Parser<'a> {
   }
 }
 
+// Unit tests Grammar struct.
 #[cfg(test)]
 mod grammar_tests {
   use super::*;
@@ -415,6 +422,7 @@ mod grammar_tests {
   }
 }
 
+// Unit tests Parser struct.
 #[cfg(test)]
 mod parser_tests {
   use super::*;
