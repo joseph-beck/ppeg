@@ -8,30 +8,18 @@ pub enum ParserError<'a> {
     input: &'a str,
     name: &'a str,
   },
-  InvalidExpression {
-    position: usize,
-    name: &'a str,
-  },
+  /// Occurs when the given expression is invalid.
+  InvalidExpression { position: usize, name: &'a str },
   /// Occurs when trying to consume when at the end of the input.
-  EndOfInput {
-    position: usize,
-    input: Option<&'a str>,
-  },
+  EndOfInput { position: usize, input: Option<&'a str> },
   /// Occurs when trying to access a rule that does not exist in the grammar.
-  RuleNotFound {
-    position: usize,
-    name: &'a str,
-  },
+  RuleNotFound { position: usize, name: &'a str },
   /// Occurs when something unexpected happens.
-  Unexpected {
-    position: usize,
-  },
+  Unexpected { position: usize },
   /// Left recursion has been detected.
   /// This may not result in a parsing error.
   /// It is flagged for seeding the expression.
-  LeftRecursion {
-    name: &'a str,
-  },
+  LeftRecursion { name: &'a str },
   /// Catch all unknown error.
   Unknown,
 }
