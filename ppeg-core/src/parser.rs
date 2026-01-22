@@ -342,7 +342,7 @@ impl<'a> Parser<'a> {
 
         // Clear all memoed entries except for the current rule being processed.
         // Supports indirect left recursion.
-        self.packrat.clear_except(original_input, name);
+        self.packrat.clear_except((name, original_input));
         // Whilst trying to parse the result ensure packrat is seeding.
         self.packrat.set_seeding(true);
 

@@ -49,9 +49,20 @@ impl<'a> Packrat<'a> {
     self.memo_table.remove(&key);
   }
 
+  // Removes all memoed entries from the memo table.
+  pub fn clear(&mut self) {
+    self.memo_table.clear();
+  }
+
+  /// Removes all memoed entries except for the given key, rule with a given input,
+  /// and the rule that must be kept.
+  pub fn clear_except(&mut self, key: (&'a str, &'a str)) {
+    self.memo_table.retain(|&k, _| key == k);
+  }
+
   /// Mark a rule at a given input position as being in the seeding state.
   pub fn mark(&mut self, key: (&'a str, &'a str)) {
-    self.memo_table.insert(key, Ok(State::Seeding));
+    self.insert(key, Ok(State::Seeding));
   }
 
   /// Update the memo table only if the current state is Seeding.
@@ -59,24 +70,16 @@ impl<'a> Packrat<'a> {
     let data = self.get(key);
 
     if let Some(Ok(State::Seeding)) = data {
-      self.memo_table.insert(key, result);
+      self.insert(key, result);
     }
   }
 
-  /// Clears all memoed entries except for the given rule with a given input
-  /// and the rule that must be kept.
-  pub fn clear_except(&mut self, input: &'a str, keep_rule: &'a str) {
-    self
-      .memo_table
-      .retain(|&(rule, pos), _| pos != input || rule == keep_rule);
-  }
-
-  /// Set the seeding flag.
+  /// Set the state of the seeding flag.
   pub fn set_seeding(&mut self, seeding: bool) {
     self.seeding = seeding;
   }
 
-  /// Check if currently seeding
+  /// Check if currently seeding.
   pub fn is_seeding(&self) -> bool {
     self.seeding
   }
@@ -102,5 +105,125 @@ mod tests {
   fn test_packrat_default() {
     let packrat: Packrat = Packrat::default();
     assert!(packrat.memo_table.is_empty());
+  }
+
+  #[test]
+  fn test_packrat_get() {
+    let mut packrat = Packrat::new();
+    packrat.memo_table.insert(("a", "a"), Ok(State::Seeding));
+
+    let result = packrat.get(("a", "a"));
+    assert_eq!(result, Some(&Ok(State::Seeding)));
+  }
+
+  #[test]
+  fn test_packrat_insert() {
+    let mut packrat = Packrat::new();
+    packrat.insert(("a", "a"), Ok(State::Seeding));
+
+    let result = packrat.memo_table.get(&("a", "a"));
+    assert_eq!(result, Some(&Ok(State::Seeding)));
+  }
+
+  #[test]
+  fn test_packrat_remove() {
+    let mut packrat = Packrat::new();
+    packrat.memo_table.insert(("a", "a"), Ok(State::Seeding));
+
+    let result = packrat.memo_table.get(&("a", "a"));
+    assert_eq!(result, Some(&Ok(State::Seeding)));
+
+    packrat.remove(("a", "a"));
+    let result = packrat.memo_table.get(&("a", "a"));
+    assert_eq!(result, None);
+  }
+
+  #[test]
+  fn test_packrat_clear() {
+    let mut packrat = Packrat::new();
+    packrat.memo_table.insert(("a", "input1"), Ok(State::Seeding));
+    packrat
+      .memo_table
+      .insert(("b", "input1"), Ok(State::Parsed("input2", None)));
+    packrat
+      .memo_table
+      .insert(("a", "input2"), Ok(State::Failed(ParserError::Unknown)));
+
+    packrat.clear();
+
+    assert_eq!(packrat.memo_table.len(), 0);
+  }
+
+  #[test]
+  fn test_packrat_clear_except() {
+    let mut packrat = Packrat::new();
+    packrat.memo_table.insert(("a", "input1"), Ok(State::Seeding));
+    packrat
+      .memo_table
+      .insert(("b", "input1"), Ok(State::Parsed("input2", None)));
+    packrat
+      .memo_table
+      .insert(("a", "input2"), Ok(State::Failed(ParserError::Unknown)));
+
+    packrat.clear_except(("a", "input1"));
+
+    assert_eq!(packrat.memo_table.len(), 1);
+    assert_eq!(packrat.memo_table.get(&("a", "input1")), Some(&Ok(State::Seeding)));
+  }
+
+  #[test]
+  fn test_packrat_mark() {
+    let mut packrat = Packrat::new();
+    packrat.mark(("a", "a"));
+
+    let result = packrat.memo_table.get(&("a", "a"));
+    assert_eq!(result, Some(&Ok(State::Seeding)));
+  }
+
+  #[test]
+  fn test_packrat_update_when_seeding() {
+    let mut packrat = Packrat::new();
+
+    {
+      packrat.memo_table.insert(("a", "a"), Ok(State::Seeding));
+
+      packrat.update_when_seeding(("a", "a"), Ok(State::Parsed("b", None)));
+
+      let result = packrat.memo_table.get(&("a", "a"));
+      assert_eq!(result, Some(&Ok(State::Parsed("b", None))));
+    }
+
+    {
+      packrat.memo_table.insert(("c", "c"), Ok(State::Parsed("d", None)));
+
+      packrat.update_when_seeding(("c", "c"), Ok(State::Failed(ParserError::Unknown)));
+
+      let result = packrat.memo_table.get(&("c", "c"));
+      assert_eq!(result, Some(&Ok(State::Parsed("d", None))));
+    }
+  }
+
+  #[test]
+  fn test_packrat_set_seeding() {
+    let mut packrat = Packrat::new();
+    assert_eq!(packrat.is_seeding(), false);
+
+    packrat.set_seeding(true);
+    assert_eq!(packrat.is_seeding(), true);
+
+    packrat.set_seeding(false);
+    assert_eq!(packrat.is_seeding(), false);
+  }
+
+  #[test]
+  fn test_packrat_is_seeding() {
+    let mut packrat = Packrat::new();
+    assert_eq!(packrat.is_seeding(), false);
+
+    packrat.seeding = true;
+    assert_eq!(packrat.is_seeding(), true);
+
+    packrat.seeding = false;
+    assert_eq!(packrat.is_seeding(), false);
   }
 }
