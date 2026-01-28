@@ -5,7 +5,7 @@ members = [
     "ppeg-core",
     "ppeg-example/arithmetic-expression",
     "ppeg-example/demo",
-    "ppeg-example/json", "ppeg-example/left-recursion",
+    "ppeg-example/json", "ppeg-example/left-recursion", "ppeg-example/macros",
 ]
 resolver = "1"
 
