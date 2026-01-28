@@ -1,12 +1,13 @@
 //! Macros support the creation of PEGs using macros for a more concise and readable syntax.
 //! This helps simplify the definitions of grammars, rule and expressions.
+//! There are also shortcuts for creating parsers and parsing input using the defined grammars.
 //!
 //! ## Example
 //! ```rust
-//! use ppeg_core::{grammar, rule, c, seq};
+//! use ppeg_core::{grammar, rule, c, seq, parse};
 //!
 //! // Create a rule that matches the sequence "a" followed by "b".
-//! let a_and_b = rule!("my_rule" => seq!(c!("a"), c!("b")));
+//! let a_and_b = rule!("a_and_b" => seq!(c!("a"), c!("b")));
 //!
 //! let peg = grammar!(
 //!   // Insert a predefined rule.
@@ -14,6 +15,9 @@
 //!   // Or define a rule inline.
 //!   rule!("c" => c!("c"))
 //! );
+//!
+//! // Parse the result and unwrap the error to get the remaining input and CST.
+//! let (remaining, cst) = parse!(peg, &mut "ab", "a_and_b").unwrap();
 //! ```
 
 /// Creates an `Empty` expression, which matches the empty string.
@@ -158,9 +162,50 @@ macro_rules! grammar {
   };
 }
 
+/// Creates a `Parser` from a given `Grammar`.
+///
+/// ## Example
+/// ```rust
+/// use ppeg_core::{grammar, rule, c, seq, parser};
+///
+/// let peg = grammar!(
+///   rule!("a_and_b" => seq!(c!("a"), c!("b"))),
+///   rule!("c" => c!("c"))
+/// );
+///
+/// let parser = parser!(peg);
+/// ```
+#[macro_export]
+macro_rules! parser {
+  ( $grammar:expr ) => {
+    $crate::parser::Parser::new($grammar)
+  };
+}
+
+/// Creates a `Parse` result from a given grammar, input and start rule.
+///
+/// ## Example
+/// ```rust
+/// use ppeg_core::{grammar, rule, c, seq, parse};
+///
+/// let peg = grammar!(
+///   rule!("a_and_b" => seq!(c!("a"), c!("b"))),
+///   rule!("c" => c!("c"))
+/// );
+///
+/// let result = parse!(peg, &mut "ab", "a_and_b");
+/// ```
+#[macro_export]
+macro_rules! parse {
+  ( $grammar:expr, $input:expr, $start_rule:expr ) => {{
+    let mut parser = $crate::parser::Parser::new($grammar);
+    parser.parse($input, $start_rule)
+  }};
+}
+
 #[cfg(test)]
 mod tests {
-  use crate::parser::{Expression, Grammar, Rule};
+  use crate::parser::{Expression, Grammar, Parser, Rule};
 
   #[test]
   fn test_empty_macro() {
@@ -250,5 +295,28 @@ mod tests {
     };
 
     assert_eq!(grammar, expected_grammar);
+  }
+
+  #[test]
+  fn test_parser_macro() {
+    let grammar = grammar!(rule!("a_and_b" => seq!(c!("a"), c!("b"))), rule!("c" => c!("c")));
+    let parser = parser!(grammar.clone());
+
+    let expected_parser = Parser::new(grammar);
+
+    assert_eq!(parser, expected_parser);
+  }
+
+  #[test]
+  fn test_parse_macro() {
+    let grammar = grammar!(rule!("a_and_b" => seq!(c!("a"), c!("b"))), rule!("c" => c!("c")));
+    let result = parse!(grammar.clone(), &mut "ab", "a_and_b");
+
+    let expected_result = {
+      let mut parser = Parser::new(grammar);
+      parser.parse(&mut "ab", "a_and_b")
+    };
+
+    assert_eq!(result, expected_result);
   }
 }
