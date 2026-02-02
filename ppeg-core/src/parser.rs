@@ -1,3 +1,7 @@
+//! PPEG Parser module holds the logic for parsing expressions defined in PEG grammars.
+//! It includes the definitions for expressions, rules, and grammars.
+//! The parser supports left recursive expressions using Packrat parsing techniques.
+
 use std::{collections::HashMap, vec};
 
 use crate::{
@@ -323,9 +327,9 @@ impl<'a> Parser<'a> {
 
     let (mut remaining, cst) = match self.match_success(input, &rule.expression) {
       Ok((r, c)) => (r, c),
-      Err(e) => {
-        self.packrat.insert(key, Err(e.clone()));
-        return Err(e);
+      Err(err) => {
+        self.packrat.insert(key, Err(err.clone()));
+        return Err(err);
       }
     };
 

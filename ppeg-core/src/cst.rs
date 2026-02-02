@@ -1,3 +1,6 @@
+//! PPEG Concrete Syntax Tree (CST) module holds the data structures and logic for representing
+//! the Concrete Syntax Tree produced during parsing.
+
 /// Concrete Syntax Tree (CST).
 #[derive(Debug, Clone, PartialEq)]
 pub struct CST<'a> {

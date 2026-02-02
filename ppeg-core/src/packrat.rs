@@ -1,3 +1,7 @@
+//! PPEG Packrat parsing module holds the logic and data structures used for Packrat parsing.
+//! Packrat parsing uses a memoization table to store previous parsing results,
+//! allowing for parses to be seeded and left recursive expressions to be handled without infinite loops.
+
 use std::collections::HashMap;
 
 use crate::{cst::CST, error::ParserError};
