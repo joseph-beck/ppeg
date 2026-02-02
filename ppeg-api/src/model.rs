@@ -151,8 +151,8 @@ impl Label {
 
   pub fn from_parser_label(parser_label: Option<&cst::Label>) -> Option<Label> {
     parser_label.map(|label| Label {
-      hidden: label.hidden(),
-      productive: label.productive(),
+      hidden: label.is_hidden(),
+      productive: label.is_productive(),
     })
   }
 }

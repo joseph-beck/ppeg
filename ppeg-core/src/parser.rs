@@ -5,7 +5,7 @@
 use std::{collections::HashMap, vec};
 
 use crate::{
-  cst::CST,
+  cst::{CST, Label},
   error::ParserError,
   packrat::{Packrat, State},
 };
@@ -161,7 +161,7 @@ impl<'a> Parser<'a> {
   /// Parses a character from the input and advances the input when successful.
   /// If the character does not match, returns a `ParserError::Unknown`.
   fn char(&mut self, input: &mut &'a str, char: &'a str) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
-    let mut cst = CST::new("char", vec![], None);
+    let mut cst = CST::new("char", vec![], Some(Label::default().with_hidden(true)));
 
     // When matching a character advanced the input by one character.
     if input.starts_with(char) {
@@ -183,7 +183,7 @@ impl<'a> Parser<'a> {
     input: &mut &'a str,
     expressions: &Vec<Expression<'a>>,
   ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
-    let mut cst = CST::new("sequence", vec![], None);
+    let mut cst = CST::new("sequence", vec![], Some(Label::default().with_hidden(true)));
 
     for expr in expressions {
       let (remaining, node) = self.match_success(input, expr)?;
@@ -209,7 +209,12 @@ impl<'a> Parser<'a> {
           *input = remaining;
 
           match cst {
-            Some(n) => return Ok((remaining, Some(CST::new("choice", vec![n], None)))),
+            Some(n) => {
+              return Ok((
+                remaining,
+                Some(CST::new("choice", vec![n], Some(Label::default().with_hidden(true)))),
+              ));
+            }
             None => return Ok((remaining, None)),
           }
         }
@@ -227,7 +232,7 @@ impl<'a> Parser<'a> {
     input: &mut &'a str,
     expression: &Expression<'a>,
   ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
-    let mut cst = CST::new("zero_or_more", vec![], None);
+    let mut cst = CST::new("zero_or_more", vec![], Some(Label::default().with_hidden(true)));
     let mut children: Vec<CST<'a>> = Vec::new();
 
     // Zero or more continues until no progress is made on the input.
@@ -333,7 +338,11 @@ impl<'a> Parser<'a> {
       }
     };
 
-    let mut tree = CST::new(rule.name, cst.map_or_else(Vec::new, |c| vec![c]), None);
+    let mut tree = CST::new(
+      rule.name,
+      cst.map_or_else(Vec::new, |c| vec![c]),
+      Some(Label::default().with_hidden(true)),
+    );
 
     self
       .packrat
@@ -364,7 +373,7 @@ impl<'a> Parser<'a> {
 
             remaining = r;
             if let Some(c) = c {
-              tree = CST::new(rule.name, vec![c], None);
+              tree = CST::new(rule.name, vec![c], Some(Label::default().with_hidden(true)));
             }
 
             self

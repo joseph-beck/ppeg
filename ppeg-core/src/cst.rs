@@ -126,13 +126,27 @@ impl Label {
   }
 
   /// Is this label marked as productive?
-  pub fn productive(&self) -> bool {
+  pub fn is_productive(&self) -> bool {
     self.productive
   }
 
   /// Is this label marked as hidden?
-  pub fn hidden(&self) -> bool {
+  pub fn is_hidden(&self) -> bool {
     self.hidden
+  }
+
+  /// Set the label as productive and then return self for chaining.
+  pub fn with_productive(mut self, productive: bool) -> Self {
+    self.productive = productive;
+
+    self
+  }
+
+  /// Set the label as hidden and then return self for chaining.
+  pub fn with_hidden(mut self, hidden: bool) -> Self {
+    self.hidden = hidden;
+
+    self
   }
 }
 
@@ -215,5 +229,20 @@ mod tests {
     let label: Label = Default::default();
 
     assert!(!label.productive);
+    assert!(!label.hidden);
+  }
+
+  #[test]
+  fn test_label_with_productive() {
+    let label = Label::default().with_productive(true);
+
+    assert!(label.productive);
+  }
+
+  #[test]
+  fn test_label_with_hidden() {
+    let label = Label::default().with_hidden(true);
+
+    assert!(label.hidden);
   }
 }
