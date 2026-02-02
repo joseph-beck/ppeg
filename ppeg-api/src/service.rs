@@ -73,6 +73,8 @@ mod health_tests {
 
 #[cfg(test)]
 mod parse_tests {
+  use crate::model::Label;
+
   use super::*;
   use actix_web::{App, http::Method, test};
 
@@ -105,9 +107,9 @@ mod parse_tests {
         vec![CST::new(
           "char".to_string(),
           vec![CST::new("a".to_string(), vec![], None)],
-          None,
+          Some(Label::new(false, true)),
         )],
-        None,
+        Some(Label::new(false, true)),
       )),
     );
 
