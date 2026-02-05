@@ -1,5 +1,5 @@
 [workspace]
-members = [
+members = ["bench", "e2e",
     "ppeg-api",
     "ppeg-cli",
     "ppeg-core",
