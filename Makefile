@@ -1,7 +1,7 @@
-.phony: api
+.PHONY: api
 api:
 	@cargo run --bin ppeg-api
 
-.phony: ui
+.PHONY: ui
 ui:
 	@cd ppeg-ui && pnpm dev

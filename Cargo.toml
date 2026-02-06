@@ -1,11 +1,14 @@
 [workspace]
 members = [
+    "e2e",
     "ppeg-api",
     "ppeg-cli",
     "ppeg-core",
-    "ppeg-example/arithmetic-expression",
-    "ppeg-example/demo",
-    "ppeg-example/json", "ppeg-example/left-recursion", "ppeg-example/macros",
+    "example/arithmetic-expression",
+    "example/demo",
+    "example/json",
+    "example/left-recursion",
+    "example/macros",
 ]
 resolver = "1"
 
