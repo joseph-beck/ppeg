@@ -9,7 +9,7 @@ members = [
     "example/left-recursion",
     "example/macros",
 ]
-exclude = ["bench"]
+exclude = ["bench", "e2e"]
 resolver = "1"
 
 [workspace.dependencies]

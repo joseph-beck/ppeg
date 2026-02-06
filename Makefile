@@ -1,11 +1,15 @@
-.phony: api
+.PHONY: api
 api:
 	@cargo run --bin ppeg-api
 
-.phony: ui
+.PHONY: ui
 ui:
 	@cd ppeg-ui && pnpm dev
 
-.phony: benchmark
-benchmark:
+.PHONY: bench
+bench:
 	@cd bench && cargo bench
+
+.PHONY: e2e
+e2e:
+	@cd e2e && cargo test
