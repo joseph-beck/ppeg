@@ -1,3 +1,3 @@
 #![feature(test)]
 
-mod parser;
+pub mod parser;

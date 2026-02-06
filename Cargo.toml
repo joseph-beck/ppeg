@@ -1,5 +1,7 @@
 [workspace]
 members = [
+    "bench",
+    "e2e",
     "ppeg-api",
     "ppeg-cli",
     "ppeg-core",
@@ -9,7 +11,6 @@ members = [
     "example/left-recursion",
     "example/macros",
 ]
-exclude = ["bench", "e2e"]
 resolver = "1"
 
 [workspace.dependencies]
