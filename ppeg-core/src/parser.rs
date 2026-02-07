@@ -232,7 +232,6 @@ impl<'a> Parser<'a> {
     input: &mut &'a str,
     expression: &Expression<'a>,
   ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
-    let mut cst = CST::new("zero_or_more", vec![], Some(Label::default().with_hidden(true)));
     let mut children: Vec<CST<'a>> = Vec::new();
 
     // Zero or more continues until no progress is made on the input.
@@ -256,6 +255,8 @@ impl<'a> Parser<'a> {
         Err(_) => break,
       }
     }
+
+    let mut cst = CST::new("zero_or_more", vec![], Some(Label::default().with_hidden(true)));
 
     for child in children {
       cst.add(Some(child));
