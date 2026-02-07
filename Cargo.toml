@@ -13,3 +13,7 @@ members = [
 resolver = "1"
 
 [workspace.dependencies]
+
+[profile.profiling]
+inherits = "release"
+debug = true
