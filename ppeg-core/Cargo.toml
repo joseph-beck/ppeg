@@ -9,5 +9,5 @@ edition = "2024"
 criterion = "0.8.2"
 
 [[bench]]
-name = "parser"
+name = "bench"
 harness = false
