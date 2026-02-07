@@ -20,6 +20,102 @@
 //! let (remaining, cst) = parse!(peg, &mut "ab", "a_and_b").unwrap();
 //! ```
 
+/// Shortcut for creating a `Choice` expression that matches any single digit character `[0-9]`.
+/// Can be used to create expressions like `number` by combining it with `one_or_more!()`.
+///
+/// ## Example
+/// ```rust
+/// use ppeg_core::{digit, one_or_more};
+///
+/// let number = one_or_more!(digit!());
+/// ```
+#[macro_export]
+macro_rules! digit {
+  () => {
+    $crate::parser::Expression::Choice(vec![
+      $crate::parser::Expression::Char("0"),
+      $crate::parser::Expression::Char("1"),
+      $crate::parser::Expression::Char("2"),
+      $crate::parser::Expression::Char("3"),
+      $crate::parser::Expression::Char("4"),
+      $crate::parser::Expression::Char("5"),
+      $crate::parser::Expression::Char("6"),
+      $crate::parser::Expression::Char("7"),
+      $crate::parser::Expression::Char("8"),
+      $crate::parser::Expression::Char("9"),
+    ])
+  };
+}
+
+/// Shortcut for creating a `Choice` expression that matches any single letter character `[a-zA-Z]`.
+/// Can be used to create expressions like `word` by combining it with `one_or_more!()`.
+///
+/// ## Example
+/// ```rust
+/// use ppeg_core::{letter, one_or_more};
+///
+/// let word = one_or_more!(letter!());
+/// ```
+#[macro_export]
+macro_rules! letter {
+  () => {
+    $crate::parser::Expression::Choice(vec![
+      $crate::parser::Expression::Char("a"),
+      $crate::parser::Expression::Char("b"),
+      $crate::parser::Expression::Char("c"),
+      $crate::parser::Expression::Char("d"),
+      $crate::parser::Expression::Char("e"),
+      $crate::parser::Expression::Char("f"),
+      $crate::parser::Expression::Char("g"),
+      $crate::parser::Expression::Char("h"),
+      $crate::parser::Expression::Char("i"),
+      $crate::parser::Expression::Char("j"),
+      $crate::parser::Expression::Char("k"),
+      $crate::parser::Expression::Char("l"),
+      $crate::parser::Expression::Char("m"),
+      $crate::parser::Expression::Char("n"),
+      $crate::parser::Expression::Char("o"),
+      $crate::parser::Expression::Char("p"),
+      $crate::parser::Expression::Char("q"),
+      $crate::parser::Expression::Char("r"),
+      $crate::parser::Expression::Char("s"),
+      $crate::parser::Expression::Char("t"),
+      $crate::parser::Expression::Char("u"),
+      $crate::parser::Expression::Char("v"),
+      $crate::parser::Expression::Char("w"),
+      $crate::parser::Expression::Char("x"),
+      $crate::parser::Expression::Char("y"),
+      $crate::parser::Expression::Char("z"),
+      $crate::parser::Expression::Char("A"),
+      $crate::parser::Expression::Char("B"),
+      $crate::parser::Expression::Char("C"),
+      $crate::parser::Expression::Char("D"),
+      $crate::parser::Expression::Char("E"),
+      $crate::parser::Expression::Char("F"),
+      $crate::parser::Expression::Char("G"),
+      $crate::parser::Expression::Char("H"),
+      $crate::parser::Expression::Char("I"),
+      $crate::parser::Expression::Char("J"),
+      $crate::parser::Expression::Char("K"),
+      $crate::parser::Expression::Char("L"),
+      $crate::parser::Expression::Char("M"),
+      $crate::parser::Expression::Char("N"),
+      $crate::parser::Expression::Char("O"),
+      $crate::parser::Expression::Char("P"),
+      $crate::parser::Expression::Char("Q"),
+      $crate::parser::Expression::Char("R"),
+      $crate::parser::Expression::Char("S"),
+      $crate::parser::Expression::Char("T"),
+      $crate::parser::Expression::Char("U"),
+      $crate::parser::Expression::Char("V"),
+      $crate::parser::Expression::Char("W"),
+      $crate::parser::Expression::Char("X"),
+      $crate::parser::Expression::Char("Y"),
+      $crate::parser::Expression::Char("Z"),
+    ])
+  };
+}
+
 /// Creates an `Empty` expression, which matches the empty string.
 ///
 /// ## Example
@@ -206,6 +302,90 @@ macro_rules! parse {
 #[cfg(test)]
 mod tests {
   use crate::parser::{Expression, Grammar, Parser, Rule};
+
+  #[test]
+  fn test_digit_macro() {
+    let expr = digit!();
+
+    assert_eq!(
+      expr,
+      Expression::Choice(vec![
+        Expression::Char("0"),
+        Expression::Char("1"),
+        Expression::Char("2"),
+        Expression::Char("3"),
+        Expression::Char("4"),
+        Expression::Char("5"),
+        Expression::Char("6"),
+        Expression::Char("7"),
+        Expression::Char("8"),
+        Expression::Char("9"),
+      ])
+    );
+  }
+
+  #[test]
+  fn test_letter_macro() {
+    let expr = letter!();
+
+    assert_eq!(
+      expr,
+      Expression::Choice(vec![
+        Expression::Char("a"),
+        Expression::Char("b"),
+        Expression::Char("c"),
+        Expression::Char("d"),
+        Expression::Char("e"),
+        Expression::Char("f"),
+        Expression::Char("g"),
+        Expression::Char("h"),
+        Expression::Char("i"),
+        Expression::Char("j"),
+        Expression::Char("k"),
+        Expression::Char("l"),
+        Expression::Char("m"),
+        Expression::Char("n"),
+        Expression::Char("o"),
+        Expression::Char("p"),
+        Expression::Char("q"),
+        Expression::Char("r"),
+        Expression::Char("s"),
+        Expression::Char("t"),
+        Expression::Char("u"),
+        Expression::Char("v"),
+        Expression::Char("w"),
+        Expression::Char("x"),
+        Expression::Char("y"),
+        Expression::Char("z"),
+        Expression::Char("A"),
+        Expression::Char("B"),
+        Expression::Char("C"),
+        Expression::Char("D"),
+        Expression::Char("E"),
+        Expression::Char("F"),
+        Expression::Char("G"),
+        Expression::Char("H"),
+        Expression::Char("I"),
+        Expression::Char("J"),
+        Expression::Char("K"),
+        Expression::Char("L"),
+        Expression::Char("M"),
+        Expression::Char("N"),
+        Expression::Char("O"),
+        Expression::Char("P"),
+        Expression::Char("Q"),
+        Expression::Char("R"),
+        Expression::Char("S"),
+        Expression::Char("T"),
+        Expression::Char("U"),
+        Expression::Char("V"),
+        Expression::Char("W"),
+        Expression::Char("X"),
+        Expression::Char("Y"),
+        Expression::Char("Z")
+      ])
+    )
+  }
 
   #[test]
   fn test_empty_macro() {
