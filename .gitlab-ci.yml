@@ -2,7 +2,7 @@ stages:
   - check
   - build
   - test
-  - docs
+  - reports
 
 # rust images are out of date.
 # here the latest rust toolchain is installed manually.
@@ -119,11 +119,22 @@ test:test-ui:
 
 # generate rustdoc, goes to target/doc.
 # stored as artifact for later.
-docs:docs:
+reports:docs:
   extends: .rust
-  stage: docs
+  stage: reports
   script:
     - "cargo doc"
   artifacts:
     paths:
       - target/doc
+
+# generate criterion benchmark results, goes to target/criterion.
+# stored as artifact for later.
+reports:bench:
+  extends: .rust
+  stage: reports
+  script:
+    - "cargo bench"
+  artifacts:
+    paths:
+      - target/criterion
