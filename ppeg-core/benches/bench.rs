@@ -7,5 +7,6 @@ criterion_main! {
   parser::direct_left_recursive::direct_left_recursive_group,
   parser::indirect_left_recursive::indirect_left_recursive_group,
   parser::number::number_group,
+  parser::sentence::sentence_group,
   parser::word::word_group,
 }
