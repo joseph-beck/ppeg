@@ -25,7 +25,7 @@ fn indirect_left_recursive() {
 }
 
 fn bench_indirect_left_recursive(c: &mut Criterion) {
-  c.bench_function("indirect_left_recursive", |b| b.iter(|| indirect_left_recursive()));
+  c.bench_function("ppeg_indirect_left_recursive", |b| b.iter(|| indirect_left_recursive()));
 }
 
 criterion_group!(indirect_left_recursive_group, bench_indirect_left_recursive);

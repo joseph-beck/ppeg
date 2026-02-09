@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "e2e",
+    "bench",
     "ppeg-api",
     "ppeg-cli",
     "ppeg-core",
