@@ -1,9 +1,11 @@
 use criterion::criterion_main;
 
+mod nom;
 mod pest;
 mod ppeg;
 
 criterion_main! {
+  nom::word::word_group,
   pest::number::number_group,
   pest::sentence::sentence_group,
   pest::word::word_group,
