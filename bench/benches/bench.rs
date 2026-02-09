@@ -5,7 +5,11 @@ mod pest;
 mod ppeg;
 
 criterion_main! {
+  nom::arithmetic_expression::arithmetic_expression_group,
+  nom::number::number_group,
+  nom::sentence::sentence_group,
   nom::word::word_group,
+  pest::arithmetic_expression::arithmetic_expression_group,
   pest::number::number_group,
   pest::sentence::sentence_group,
   pest::word::word_group,
