@@ -20,7 +20,7 @@ fn sentence() {
 }
 
 fn bench_sentence(c: &mut Criterion) {
-  c.bench_function("sentence", |b| b.iter(|| sentence()));
+  c.bench_function("ppeg_sentence", |b| b.iter(|| sentence()));
 }
 
 criterion_group!(sentence_group, bench_sentence);

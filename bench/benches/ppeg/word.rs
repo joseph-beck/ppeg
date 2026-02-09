@@ -12,7 +12,7 @@ fn word() {
 }
 
 fn bench_word(c: &mut Criterion) {
-  c.bench_function("word", |b| b.iter(|| word()));
+  c.bench_function("ppeg_word", |b| b.iter(|| word()));
 }
 
 criterion_group!(word_group, bench_word);

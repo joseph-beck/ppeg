@@ -31,7 +31,7 @@ fn arithmetic_expression() {
 }
 
 fn bench_arithmetic_expression(c: &mut Criterion) {
-  c.bench_function("arithmetic_expression", |b| b.iter(|| arithmetic_expression()));
+  c.bench_function("ppeg_arithmetic_expression", |b| b.iter(|| arithmetic_expression()));
 }
 
 criterion_group!(arithmetic_expression_group, bench_arithmetic_expression);

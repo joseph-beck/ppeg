@@ -12,7 +12,7 @@ fn number() {
 }
 
 fn bench_number(c: &mut Criterion) {
-  c.bench_function("number", |b| b.iter(|| number()));
+  c.bench_function("ppeg_number", |b| b.iter(|| number()));
 }
 
 criterion_group!(number_group, bench_number);
