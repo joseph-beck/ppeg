@@ -6,6 +6,7 @@
     "Dagre",
     "dagrejs",
     "graphlib",
+    "iden",
     "packrat",
     "ppeg",
     "rankdir",
