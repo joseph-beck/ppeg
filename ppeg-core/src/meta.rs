@@ -63,7 +63,7 @@
 //!   rule := { char_c, char_c }
 //! ").unwrap();
 //!
-//! let (remaining, cst) = parse(&grammar, "rule", "cc").unwrap();
+//! let (remaining, cst) = parse!(grammar, &mut "cc", "rule").unwrap();
 //! ```
 
 use crate::{
@@ -391,11 +391,273 @@ mod meta_tests {
   }
 
   #[test]
-  fn test_meta_generate() {
+  fn test_meta_generate_empty() {
+    let meta = Meta::new();
+    let grammar = meta.generate("").unwrap();
+
+    let expected_grammar = Grammar::default();
+
+    assert_eq!(grammar, expected_grammar);
+  }
+
+  #[test]
+  fn test_meta_generate_invalid() {
+    let meta = Meta::new();
+    let error = meta.generate("invalid").unwrap_err();
+
+    assert_eq!(
+      error,
+      MetaError::InvalidExpression {
+        position: 7,
+        expression: "expected ':'".to_string()
+      }
+    );
+  }
+
+  #[test]
+  fn test_meta_generate_comment() {
+    let meta = Meta::new();
+    let grammar = meta
+      .generate(
+        r#"
+          // This is a comment
+          char_c := { 'c' } // Inline comment
+        "#,
+      )
+      .unwrap();
+
+    let expected_grammar = Grammar::default().with(Rule::new("char_c", Expression::Char("c")));
+
+    assert_eq!(grammar, expected_grammar);
+  }
+
+  #[test]
+  fn test_meta_generate_whitespace() {
+    let meta = Meta::new();
+    let grammar = meta
+      .generate(
+        r#"
+          char_c   :=   {   'c'  }
+        "#,
+      )
+      .unwrap();
+
+    let expected_grammar = Grammar::default().with(Rule::new("char_c", Expression::Char("c")));
+
+    assert_eq!(grammar, expected_grammar);
+  }
+
+  #[test]
+  fn test_meta_generate_char() {
     let meta = Meta::new();
     let grammar = meta.generate("char_c := { 'c' }").unwrap();
 
     let expected_grammar = Grammar::default().with(Rule::new("char_c", Expression::Char("c")));
+
+    assert_eq!(grammar, expected_grammar);
+  }
+
+  #[test]
+  fn test_meta_generate_sequence() {
+    let meta = Meta::new();
+    let grammar = meta
+      .generate(
+        r#"
+          char_c := { 'c' }
+          sequence := { char_c, char_c }
+        "#,
+      )
+      .unwrap();
+
+    let expected_grammar = Grammar::default()
+      .with(Rule::new("char_c", Expression::Char("c")))
+      .with(Rule::new(
+        "sequence",
+        Expression::Sequence(vec![Expression::NamedRule("char_c"), Expression::NamedRule("char_c")]),
+      ));
+
+    assert_eq!(grammar, expected_grammar);
+  }
+
+  #[test]
+  fn test_meta_generate_choice() {
+    let meta = Meta::new();
+    let grammar = meta
+      .generate(
+        r#"
+          char_c := { 'c' }
+          choice := { char_c | 'b' }
+        "#,
+      )
+      .unwrap();
+
+    let expected_grammar = Grammar::default()
+      .with(Rule::new("char_c", Expression::Char("c")))
+      .with(Rule::new(
+        "choice",
+        Expression::Choice(vec![Expression::NamedRule("char_c"), Expression::Char("b")]),
+      ));
+
+    assert_eq!(grammar, expected_grammar);
+  }
+
+  #[test]
+  fn test_meta_generate_zero_or_more() {
+    let meta = Meta::new();
+    let grammar = meta
+      .generate(
+        r#"
+          char_c := { 'c' }
+          zero_or_more := { char_c* }
+        "#,
+      )
+      .unwrap();
+
+    let expected_grammar = Grammar::default()
+      .with(Rule::new("char_c", Expression::Char("c")))
+      .with(Rule::new(
+        "zero_or_more",
+        Expression::ZeroOrMore(Box::new(Expression::NamedRule("char_c"))),
+      ));
+
+    assert_eq!(grammar, expected_grammar);
+  }
+
+  #[test]
+  fn test_meta_generate_one_or_more() {
+    let meta = Meta::new();
+    let grammar = meta
+      .generate(
+        r#"
+          char_c := { 'c' }
+          one_or_more := { char_c+ }
+        "#,
+      )
+      .unwrap();
+
+    let expected_grammar = Grammar::default()
+      .with(Rule::new("char_c", Expression::Char("c")))
+      .with(Rule::new(
+        "one_or_more",
+        Expression::OneOrMore(Box::new(Expression::NamedRule("char_c"))),
+      ));
+
+    assert_eq!(grammar, expected_grammar);
+  }
+
+  #[test]
+  fn test_meta_generate_named_rule() {
+    let meta = Meta::new();
+    let grammar = meta
+      .generate(
+        r#"
+          char_c := { 'c' }
+          named_rule := { char_c }
+        "#,
+      )
+      .unwrap();
+
+    let expected_grammar = Grammar::default()
+      .with(Rule::new("char_c", Expression::Char("c")))
+      .with(Rule::new("named_rule", Expression::NamedRule("char_c")));
+
+    assert_eq!(grammar, expected_grammar);
+  }
+
+  #[test]
+  fn test_meta_generate_nested() {
+    let meta = Meta::new();
+    let grammar = meta
+      .generate(
+        r#"
+          char_c := { 'c' }
+          nested := { 'a' | { 'b', char_c } }
+        "#,
+      )
+      .unwrap();
+
+    let expected_grammar = Grammar::default()
+      .with(Rule::new("char_c", Expression::Char("c")))
+      .with(Rule::new(
+        "nested",
+        Expression::Choice(vec![
+          Expression::Char("a"),
+          Expression::Sequence(vec![Expression::Char("b"), Expression::NamedRule("char_c")]),
+        ]),
+      ));
+
+    assert_eq!(grammar, expected_grammar);
+  }
+
+  #[test]
+  fn test_meta_multi_lines() {
+    let meta = Meta::new();
+    let grammar = meta
+      .generate(
+        r#"
+          char_c := {
+            'c'
+          }
+          char_d := {
+            'd'
+          }
+          sequence := {
+            char_c,
+            char_d
+          }
+        "#,
+      )
+      .unwrap();
+
+    let expected_grammar = Grammar::default()
+      .with(Rule::new("char_c", Expression::Char("c")))
+      .with(Rule::new("char_d", Expression::Char("d")))
+      .with(Rule::new(
+        "sequence",
+        Expression::Sequence(vec![Expression::NamedRule("char_c"), Expression::NamedRule("char_d")]),
+      ));
+
+    assert_eq!(grammar, expected_grammar);
+  }
+
+  #[test]
+  fn test_meta_multi_lines_nested() {
+    let meta = Meta::new();
+    let grammar = meta
+      .generate(
+        r#"
+          char_c := {
+            'c'
+          }
+          char_d := {
+            'd'
+          }
+          nested := {
+            'a' |
+            {
+              'b',
+              char_c,
+              char_d
+            }
+          }
+        "#,
+      )
+      .unwrap();
+
+    let expected_grammar = Grammar::default()
+      .with(Rule::new("char_c", Expression::Char("c")))
+      .with(Rule::new("char_d", Expression::Char("d")))
+      .with(Rule::new(
+        "nested",
+        Expression::Choice(vec![
+          Expression::Char("a"),
+          Expression::Sequence(vec![
+            Expression::Char("b"),
+            Expression::NamedRule("char_c"),
+            Expression::NamedRule("char_d"),
+          ]),
+        ]),
+      ));
 
     assert_eq!(grammar, expected_grammar);
   }
@@ -413,6 +675,17 @@ mod parser_tests {
   }
 
   #[test]
+  fn test_parser_advance() {
+    let mut parser = Parser::new("abc");
+    parser.advance();
+    assert_eq!(parser.position, 1);
+    parser.advance();
+    assert_eq!(parser.position, 2);
+    parser.advance();
+    assert_eq!(parser.position, 3);
+  }
+
+  #[test]
   fn test_parser_current() {
     let parser = Parser::new("abc");
     assert_eq!(parser.current(), Some('a'));
@@ -426,14 +699,95 @@ mod parser_tests {
   }
 
   #[test]
-  fn test_parser_current_and_advance() {
-    let mut parser = Parser::new("abc");
+  fn test_parser_consume_comments_and_whitespace() {
+    let mut parser = Parser::new("  // comment\n  abc");
+    parser.consume_comments_and_whitespace();
     assert_eq!(parser.current(), Some('a'));
-    parser.advance();
-    assert_eq!(parser.current(), Some('b'));
-    parser.advance();
-    assert_eq!(parser.current(), Some('c'));
-    parser.advance();
-    assert_eq!(parser.current(), None);
+  }
+
+  #[test]
+  fn test_parser_parse_grammar() {
+    let mut parser = Parser::new(
+      r#"
+          char_c := { 'c' }
+          rule := { char_c, char_c }
+        "#,
+    );
+
+    let grammar = parser.parse_grammar().unwrap();
+
+    let expected_grammar = Grammar::default()
+      .with(Rule::new("char_c", Expression::Char("c")))
+      .with(Rule::new(
+        "rule",
+        Expression::Sequence(vec![Expression::NamedRule("char_c"), Expression::NamedRule("char_c")]),
+      ));
+
+    assert_eq!(grammar, expected_grammar);
+  }
+
+  #[test]
+  fn test_parser_parse_rule() {
+    let mut parser = Parser::new(r#"char_c := { 'c' }"#);
+
+    let rule = parser.parse_rule().unwrap();
+
+    let expected_rule = Rule::new("char_c", Expression::Char("c"));
+
+    assert_eq!(rule, expected_rule);
+  }
+
+  #[test]
+  fn test_parser_parse_identifier() {
+    let mut parser = Parser::new(r#"char_c := { 'c' }"#);
+
+    let identifier = parser.parse_identifier().unwrap();
+
+    assert_eq!(identifier, "char_c");
+  }
+
+  #[test]
+  fn test_parser_parse_expression() {
+    let mut parser = Parser::new(r#"'c'"#);
+
+    let expression = parser.parse_expression().unwrap();
+
+    assert_eq!(expression, Expression::Char("c"));
+
+    let mut parser = Parser::new(r#"{ 'c', 'd' }"#);
+
+    let expression = parser.parse_expression().unwrap();
+
+    assert_eq!(
+      expression,
+      Expression::Sequence(vec![Expression::Char("c"), Expression::Char("d")])
+    );
+
+    let mut parser = Parser::new(r#"{ 'c' | 'd' }"#);
+
+    let expression = parser.parse_expression().unwrap();
+
+    assert_eq!(
+      expression,
+      Expression::Choice(vec![Expression::Char("c"), Expression::Char("d")])
+    );
+
+    let mut parser = Parser::new(r#"{ 'c'+ }"#);
+
+    let expression = parser.parse_expression().unwrap();
+
+    assert_eq!(expression, Expression::OneOrMore(Box::new(Expression::Char("c"))));
+
+    let mut parser = Parser::new(r#"{ 'c'* }"#);
+
+    let expression = parser.parse_expression().unwrap();
+
+    assert_eq!(expression, Expression::ZeroOrMore(Box::new(Expression::Char("c"))));
+
+    let mut parser = Parser::new(r#"char_c"#);
+
+    let expression = parser.parse_expression().unwrap();
+
+    assert_eq!(expression, Expression::NamedRule("char_c"));
   }
 }
