@@ -1,7 +1,7 @@
 import { Parse } from '@/types/ppeg/parse'
 
 const parserInputRuleArithmeticExpressionMock: Parse = {
-  grammar: {
+  grammarObject: {
     rules: [
       {
         name: 'rule_number',
@@ -148,6 +148,7 @@ const parserInputRuleArithmeticExpressionMock: Parse = {
       },
     ],
   },
+  grammarType: 'json',
   input: '1+(2*3)',
   rule: 'rule_arithmetic_expression',
 }

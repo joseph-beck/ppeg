@@ -9,7 +9,7 @@ members = [
     "example/demo",
     "example/json",
     "example/left-recursion",
-    "example/macros",
+    "example/macros", "example/meta",
 ]
 resolver = "1"
 

@@ -1,7 +1,7 @@
 import { Parse } from '@/types/ppeg/parse'
 
 const parserInputRuleWordMock: Parse = {
-  grammar: {
+  grammarObject: {
     rules: [
       {
         name: 'rule_word',
@@ -127,6 +127,7 @@ const parserInputRuleWordMock: Parse = {
       },
     ],
   },
+  grammarType: 'json',
   input: 'abba',
   rule: 'rule_word',
 }

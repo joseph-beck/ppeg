@@ -12,14 +12,34 @@ describe('parserSchemaTransform', () => {
       grammar: '{"rules":[]}',
       input: 'some input',
       rule: 'start',
+      grammarType: 'json',
     }
 
     const result = parserSchemaTransform(schema)
 
     expect(result).toEqual({
-      grammar: { rules: [] },
+      grammarObject: { rules: [] },
+      grammarType: 'json',
       input: 'some input',
       rule: 'start',
+    })
+  })
+
+  it('should transform a ppeg schema correctly', () => {
+    const schema = {
+      grammar: `a := { 'a' }`,
+      input: 'some input',
+      rule: 'a',
+      grammarType: 'ppeg',
+    }
+
+    const result = parserSchemaTransform(schema)
+
+    expect(result).toEqual({
+      grammarMeta: "a := { 'a' }",
+      grammarType: 'ppeg',
+      input: 'some input',
+      rule: 'a',
     })
   })
 
@@ -28,6 +48,7 @@ describe('parserSchemaTransform', () => {
       grammar: 'invalid json',
       input: 'some input',
       rule: 'start',
+      grammarType: 'json',
     }
 
     expect(parserSchemaTransform(schema)).toBeUndefined()
@@ -38,6 +59,18 @@ describe('parserSchemaTransform', () => {
       grammar: '{"invalidKey":123}',
       input: 'some input',
       rule: 'start',
+      grammarType: 'json',
+    }
+
+    expect(parserSchemaTransform(schema)).toBeUndefined()
+  })
+
+  it('should throw an error for invalid grammar grammarType', () => {
+    const schema = {
+      grammar: '{"rules":[]}',
+      input: 'some input',
+      rule: 'start',
+      grammarType: 'other',
     }
 
     expect(parserSchemaTransform(schema)).toBeUndefined()

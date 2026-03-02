@@ -29,7 +29,9 @@ const ParserGrammarPresets = ({ form }: ParserGrammarPresetsProps): ReactElement
   const presets = getPresets()
 
   const loadPreset = (preset: Parse) => {
-    form.setFieldValue('grammar', JSON.stringify(preset.grammar, null, 2))
+    if (form.getFieldValue('grammarType') === 'json' && preset.grammarType === 'json') {
+      form.setFieldValue('grammar', JSON.stringify(preset.grammarObject, null, 2))
+    }
 
     form.setFieldValue('rule', '')
     form.setFieldValue('input', '')

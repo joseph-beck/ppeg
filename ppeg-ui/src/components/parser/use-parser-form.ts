@@ -1,6 +1,7 @@
 import { useForm } from '@tanstack/react-form'
 
 import { parserSchemaTransform } from '@/lib/parser/parser-schema-transform'
+import { Rule } from '@/types/ppeg/rule'
 import { schema } from '@/types/ppeg/schema'
 
 import { defaultParserFormOpts } from './default-parser-form-opts'
@@ -19,9 +20,33 @@ const useParserForm = () => {
     onSubmit: async ({ value, meta: _meta }) => {
       const data = parserSchemaTransform(value)
 
-      if (data?.grammar.rules) {
+      console.log('test0')
+
+      if (data?.grammarType === 'json' && data?.grammarObject.rules) {
+        console.log('test1')
         parserRuleStore.setState(() => {
-          return [...data.grammar.rules]
+          return [...data.grammarObject.rules]
+        })
+      }
+
+      if (data?.grammarType === 'ppeg') {
+        console.log('test2')
+        // this is a pretty dirty trick to extra this information...
+        // TODO: make this more robust.
+        const rules = data.grammarMeta
+          .split('\n')
+          .filter((line) => line.includes(':='))
+          .map((line) => {
+            const [name, _] = line.split(':=')
+
+            return {
+              name: name.trim(),
+              expression: { type: 'Empty' },
+            } satisfies Rule
+          })
+
+        parserRuleStore.setState(() => {
+          return [...rules]
         })
       }
 

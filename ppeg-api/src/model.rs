@@ -76,7 +76,10 @@ impl Grammar {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Parse {
-  grammar: Grammar,
+  #[serde(rename = "grammarObject")]
+  grammar_object: Option<Grammar>,
+  #[serde(rename = "grammarMeta")]
+  grammar_meta: Option<String>,
   input: String,
   rule: String,
 }
@@ -84,7 +87,8 @@ pub struct Parse {
 impl Default for Parse {
   fn default() -> Self {
     Parse {
-      grammar: Grammar { rules: vec![] },
+      grammar_object: None,
+      grammar_meta: None,
       input: String::new(),
       rule: String::new(),
     }
@@ -92,16 +96,26 @@ impl Default for Parse {
 }
 
 impl Parse {
-  pub fn new(grammar: Option<Grammar>, input: Option<String>, rule: Option<String>) -> Self {
+  pub fn new(
+    grammar_object: Option<Grammar>,
+    grammar_meta: Option<String>,
+    input: Option<String>,
+    rule: Option<String>,
+  ) -> Self {
     Parse {
-      grammar: grammar.unwrap_or_else(|| Grammar::new(None)),
+      grammar_object,
+      grammar_meta,
       input: input.unwrap_or_default(),
       rule: rule.unwrap_or_default(),
     }
   }
 
-  pub fn grammar(&self) -> Grammar {
-    self.grammar.clone()
+  pub fn grammar_object(&self) -> Option<Grammar> {
+    self.grammar_object.clone()
+  }
+
+  pub fn grammar_meta(&self) -> Option<String> {
+    self.grammar_meta.clone()
   }
 
   pub fn input(&self) -> String {
@@ -110,6 +124,24 @@ impl Parse {
 
   pub fn rule(&self) -> String {
     self.rule.clone()
+  }
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum GrammarType {
+  PPEG,
+  JSON,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ParseParams {
+  pub grammar_type: GrammarType,
+}
+
+impl ParseParams {
+  pub fn new(grammar_type: GrammarType) -> Self {
+    ParseParams { grammar_type }
   }
 }
 
