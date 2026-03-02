@@ -9,7 +9,14 @@ const useParserMutation = () => {
   return useMutation<Output, unknown, Parse>({
     mutationKey: ['parser-mutation'],
     mutationFn: async (parse) => {
-      return axios.post('http://127.0.0.1:8080/v1/parse', parse).then((res) => res.data)
+      const { grammarType, ...requestBody } = parse
+
+      console.log('requestBody', requestBody)
+      console.log('grammarType', grammarType)
+
+      return axios
+        .post(`http://localhost:8080/v1/parse?grammar_type=${grammarType}`, requestBody)
+        .then((res) => res.data)
     },
     onSuccess: (data) => {
       void data

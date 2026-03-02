@@ -1,7 +1,7 @@
 import { Parse } from '@/types/ppeg/parse'
 
 const parserInputRuleIndirectLeftRecursion: Parse = {
-  grammar: {
+  grammarObject: {
     rules: [
       {
         name: 'rule_number',
@@ -54,6 +54,7 @@ const parserInputRuleIndirectLeftRecursion: Parse = {
       },
     ],
   },
+  grammarType: 'json',
   input: '1+1',
   rule: 'rule_expr',
 }
