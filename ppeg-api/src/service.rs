@@ -1,5 +1,5 @@
 use actix_web::{HttpResponse, Responder, get, post, web};
-use ppeg_core::parser;
+use ppeg_core::{meta, parser};
 
 use crate::model::{self, CST, Output};
 
@@ -20,8 +20,13 @@ async fn health() -> impl Responder {
 /// }
 /// ```
 #[post("/v1/parse")]
-async fn parse(parse_request: web::Json<model::Parse>) -> impl Responder {
-  let grammar = parse_request.grammar().to_parser_grammar();
+async fn parse(parse_request: web::Json<model::Parse>, parse_params: web::Query<model::ParseParams>) -> impl Responder {
+  let grammar = match parse_params.grammar_type {
+    model::GrammarType::JSON => parse_request.grammar_object().unwrap().to_parser_grammar(),
+    model::GrammarType::PPEG => meta::Meta::new()
+      .generate(Box::leak(parse_request.grammar_meta().unwrap().into_boxed_str()))
+      .unwrap(),
+  };
   let input = parse_request.input().clone();
   let rule = parse_request.rule().clone();
 
@@ -79,17 +84,59 @@ mod parse_tests {
   use actix_web::{App, http::Method, test};
 
   #[actix_web::test]
-  async fn test_parse_post() {
+  async fn test_parse_post_json() {
     let app = test::init_service(App::new().service(parse)).await;
 
     let grammar = model::Grammar::new(Some(vec![model::Rule::new(
       "rule_a".to_string(),
       model::Expression::Char("a".to_string()),
     )]));
-    let parse_data = model::Parse::new(Some(grammar), Some("a".to_string()), Some("rule_a".to_string()));
+    let parse_data = model::Parse::new(Some(grammar), None, Some("a".to_string()), Some("rule_a".to_string()));
 
     let req = test::TestRequest::default()
-      .uri("/v1/parse")
+      .uri("/v1/parse?grammar_type=json")
+      .method(Method::POST)
+      .set_json(parse_data)
+      .to_request();
+
+    let resp = test::call_service(&app, req).await;
+
+    assert!(resp.status().is_success());
+
+    let body: model::Output = test::read_body_json(resp).await;
+
+    let res = model::Output::new(
+      "".to_string(),
+      Some(CST::new(
+        "rule_a".to_string(),
+        vec![CST::new(
+          "char".to_string(),
+          vec![CST::new("a".to_string(), vec![], None)],
+          Some(Label::new(false, true)),
+        )],
+        Some(Label::new(false, true)),
+      )),
+    );
+
+    assert_eq!(body, res);
+  }
+
+  #[actix_web::test]
+  async fn test_parse_post_ppeg() {
+    let app = test::init_service(App::new().service(parse)).await;
+
+    let grammar = r#"
+      rule_a := { 'a' }
+    "#;
+    let parse_data = model::Parse::new(
+      None,
+      Some(grammar.to_string()),
+      Some("a".to_string()),
+      Some("rule_a".to_string()),
+    );
+
+    let req = test::TestRequest::default()
+      .uri("/v1/parse?grammar_type=ppeg")
       .method(Method::POST)
       .set_json(parse_data)
       .to_request();
