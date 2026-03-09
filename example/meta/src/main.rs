@@ -1,4 +1,4 @@
-use ppeg_core::meta::Meta;
+use ppeg_core::{meta::Meta, parse};
 
 fn main() {
   let grammar = Meta::new()
@@ -10,11 +10,15 @@ fn main() {
         rule := {
           'a' | // Inline comment
           { char_c, 'b' } |
-          { 'd' }+
+          { 'd' }+ |
+          { '\n' } // Example using an escape character for a newline
         }
       "#,
     )
     .unwrap();
 
-  println!("\n{:?}", grammar);
+  println!("{:#?}", grammar);
+
+  let (_, cst) = parse!(grammar, &mut "c", "char_c").unwrap();
+  println!("{:#?}", cst);
 }

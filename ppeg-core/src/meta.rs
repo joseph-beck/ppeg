@@ -286,11 +286,14 @@ impl<'a> Parser<'a> {
     self.consume('\'')?;
     let start = self.position;
 
+    let mut escaped = false;
+
     while let Some(c) = self.current() {
-      if c == '\'' {
+      if !escaped && c == '\'' {
         break;
       }
 
+      escaped = !escaped && c == '\\';
       self.advance();
     }
 
@@ -302,6 +305,7 @@ impl<'a> Parser<'a> {
     }
 
     let chr = &self.input[start..self.position];
+
     self.consume('\'')?;
 
     Ok(Expression::Char(chr))
