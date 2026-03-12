@@ -1,15 +1,17 @@
 [workspace]
 members = [
-    "e2e",
     "bench",
-    "ppeg-api",
-    "ppeg-cli",
-    "ppeg-core",
+    "e2e",
     "example/arithmetic-expression",
     "example/demo",
     "example/json",
     "example/left-recursion",
-    "example/macros", "example/meta", "ppeg-wasm",
+    "example/macros",
+    "example/meta",
+    "ppeg-api",
+    "ppeg-cli",
+    "ppeg-core",
+    "ppeg-wasm",
 ]
 resolver = "1"
 
