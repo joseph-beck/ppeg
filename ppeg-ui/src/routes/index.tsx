@@ -1,14 +1,10 @@
-import { createLazyFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 
 import { ParserInputForm } from '@/components/parser/parser-input-form'
 import { ParserOutput } from '@/components/parser/parser-output-form'
 import { PPEGTitle } from '@/components/shared/ppeg-title'
 
-const Route = createLazyFileRoute('/')({
-  component: Page,
-})
-
-function Page() {
+const Page = () => {
   return (
     <div className="p-2 flex flex-col items-center ">
       <PPEGTitle />
@@ -29,5 +25,9 @@ function Page() {
     </div>
   )
 }
+
+const Route = createFileRoute('/')({
+  component: Page,
+})
 
 export { Route }

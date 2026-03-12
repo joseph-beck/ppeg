@@ -2,6 +2,7 @@
   "cSpell.words": [
     "actix",
     "bindgen",
+    "cdylib",
     "clippy",
     "COLOUR",
     "Dagre",
@@ -12,6 +13,7 @@
     "ppeg",
     "rankdir",
     "reactflow",
+    "rlib",
     "rustdoc",
     "rustup",
     "serde",

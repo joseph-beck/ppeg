@@ -1364,6 +1364,7 @@ version = "0.1.0"
 name = "ppeg-wasm"
 version = "0.1.0"
 dependencies = [
+ "ppeg-core",
  "wasm-bindgen",
 ]
 
