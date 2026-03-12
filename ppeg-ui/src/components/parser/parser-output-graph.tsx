@@ -40,16 +40,19 @@ const ParserOutputGraph = (): ReactElement => {
     [nodes, setEdges, edges, setNodes],
   )
 
+  const className =
+    'w-full h-full lg:min-h-160 md:min-h-120 sm:min-h-80 flex items-center justify-center border rounded-lg bg-muted/20'
+
   if (!store.cst) {
     return (
-      <div className="w-full h-full lg:min-h-200 md:min-h-150 sm:min-h-100 flex items-center justify-center border rounded-lg bg-muted/20">
+      <div className={className}>
         <P>parse an input to view a parse tree...</P>
       </div>
     )
   }
 
   return (
-    <div className="w-full h-full lg:min-h-200 md:min-h-150 sm:min-h-100 flex items-center justify-center border rounded-lg bg-muted/20">
+    <div className={className}>
       <ReactFlow
         nodes={nodes}
         edges={edges}

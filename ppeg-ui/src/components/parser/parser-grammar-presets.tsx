@@ -46,11 +46,11 @@ const ParserGrammarPresets = ({ form }: ParserGrammarPresetsProps): ReactElement
       <DialogTrigger asChild>
         <InputGroupButton variant="default">presets</InputGroupButton>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3/4 md:w-1/3 lg:w-1/4">
+      <DialogContent className="sm:max-w-3/4 md:w-1/2 lg:w-1/3 h-[80%]">
         <DialogHeader>
-          <DialogTitle>parse tree</DialogTitle>
+          <DialogTitle>grammar presets</DialogTitle>
         </DialogHeader>
-        <div className="w-full h-full space-y-4">
+        <div className="w-full space-y-4 overflow-y-auto py-4">
           {isNonEmptyArray(presets)
             ? presets.map((preset, index) => (
                 <Card key={index} size="sm" className="mx-auto w-full max-w-sm">
