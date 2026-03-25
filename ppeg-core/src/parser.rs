@@ -109,6 +109,18 @@ impl<'a> Grammar<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct Context<'a> {
+  pos: usize,
+  input: &'a str,
+}
+
+impl<'a> Context<'a> {
+  pub fn new(pos: usize, input: &'a str) -> Self {
+    Context { pos, input }
+  }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Parser<'a> {
   /// Grammars lookup table.
   /// Stores all the named rules of the parser.
@@ -135,41 +147,45 @@ impl<'a> Parser<'a> {
     input: &mut &'a str,
     rule_name: &'a str,
   ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
+    let context = Context::new(0, input);
     // Parse must always start with a named rule.
     // Simply call named rule here.
-    self.named_rule(input, rule_name)
+    match self.named_rule(context, rule_name) {
+      Ok((ctx, cst)) => Ok((&ctx.input[ctx.pos..], cst)),
+      Err(err) => Err(err),
+    }
   }
 
   /// Matches the given input against the provided expression.
   /// Returns the remaining input and CST if successful, otherwise returns a ParserError.
   fn match_success(
     &mut self,
-    input: &mut &'a str,
+    context: Context<'a>,
     expression: &Expression<'a>,
-  ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
+  ) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
     match expression {
-      Expression::Empty => Ok((input, None)),
-      Expression::Char(char) => self.char(input, char),
-      Expression::Sequence(exprs) => self.sequence(input, exprs),
-      Expression::Choice(exprs) => self.choice(input, exprs),
-      Expression::ZeroOrMore(expr) => self.zero_or_more(input, expr),
-      Expression::OneOrMore(expr) => self.one_or_more(input, expr),
-      Expression::NamedRule(n) => self.named_rule(input, n),
+      Expression::Empty => Ok((context, None)),
+      Expression::Char(char) => self.char(context, char),
+      Expression::Sequence(exprs) => self.sequence(context, exprs),
+      Expression::Choice(exprs) => self.choice(context, exprs),
+      Expression::ZeroOrMore(expr) => self.zero_or_more(context, expr),
+      Expression::OneOrMore(expr) => self.one_or_more(context, expr),
+      Expression::NamedRule(n) => self.named_rule(context, n),
     }
   }
 
   /// Parses a character from the input and advances the input when successful.
   /// If the character does not match, returns a `ParserError::Unknown`.
-  fn char(&mut self, input: &mut &'a str, char: &'a str) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
+  fn char(&mut self, context: Context<'a>, char: &'a str) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
     let mut cst = CST::new("char", vec![], Some(Label::default().with_hidden(true)));
+    let mut ctx = context.clone();
 
     // When matching a character advanced the input by one character.
-    if input.starts_with(char) {
-      let remaining = &input[char.len()..];
+    if context.input[context.pos..].starts_with(char) {
       cst.add(Some(CST::new(char, vec![], None)));
-      *input = remaining;
+      ctx.pos += char.len();
 
-      Ok((remaining, Some(cst)))
+      Ok((ctx, Some(cst)))
     } else {
       Err(ParserError::Unknown)
     }
@@ -180,19 +196,20 @@ impl<'a> Parser<'a> {
   /// If any expression fails to match, the entire sequence match fails.
   fn sequence(
     &mut self,
-    input: &mut &'a str,
+    context: Context<'a>,
     expressions: &Vec<Expression<'a>>,
-  ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
+  ) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
     let mut cst = CST::new("sequence", vec![], Some(Label::default().with_hidden(true)));
+    let mut ctx = context.clone();
 
     for expr in expressions {
-      let (remaining, node) = self.match_success(input, expr)?;
-      *input = remaining;
+      let (new_ctx, node) = self.match_success(ctx, expr)?;
+      ctx = new_ctx;
 
       cst.add(node);
     }
 
-    Ok((*input, Some(cst)))
+    Ok((ctx, Some(cst)))
   }
 
   /// Parses a choice of expressions from the input.
@@ -200,24 +217,20 @@ impl<'a> Parser<'a> {
   /// If none of the expressions match, returns a `ParserError::Unknown`.
   fn choice(
     &mut self,
-    input: &mut &'a str,
+    context: Context<'a>,
     expressions: &Vec<Expression<'a>>,
-  ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
+  ) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
     for expr in expressions {
-      match self.match_success(input, expr) {
-        Ok((remaining, cst)) => {
-          *input = remaining;
-
-          match cst {
-            Some(n) => {
-              return Ok((
-                remaining,
-                Some(CST::new("choice", vec![n], Some(Label::default().with_hidden(true)))),
-              ));
-            }
-            None => return Ok((remaining, None)),
+      match self.match_success(context.clone(), expr) {
+        Ok((ctx, cst)) => match cst {
+          Some(n) => {
+            return Ok((
+              ctx,
+              Some(CST::new("choice", vec![n], Some(Label::default().with_hidden(true)))),
+            ));
           }
-        }
+          None => return Ok((ctx, None)),
+        },
         Err(_) => continue,
       }
     }
@@ -229,22 +242,23 @@ impl<'a> Parser<'a> {
   /// This will always succeed, even if no occurrences are found.
   fn zero_or_more(
     &mut self,
-    input: &mut &'a str,
+    context: Context<'a>,
     expression: &Expression<'a>,
-  ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
+  ) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
     let mut children: Vec<CST<'a>> = Vec::new();
+    let mut ctx = context.clone();
 
     // Zero or more continues until no progress is made on the input.
     loop {
-      let start_length = input.len();
+      let start_pos = context.pos;
 
-      match self.match_success(input, expression) {
-        Ok((remaining, cst)) => {
-          if remaining.len() == start_length {
+      match self.match_success(ctx.clone(), expression) {
+        Ok((new_ctx, cst)) => {
+          if new_ctx.pos == start_pos {
             break;
           }
 
-          *input = remaining;
+          ctx = new_ctx;
 
           if let Some(n) = cst {
             children.push(n);
@@ -263,8 +277,8 @@ impl<'a> Parser<'a> {
     }
 
     match cst.is_leaf() {
-      true => Ok((*input, None)),
-      false => Ok((*input, Some(cst))),
+      true => Ok((ctx.clone(), None)),
+      false => Ok((ctx.clone(), Some(cst))),
     }
   }
 
@@ -273,17 +287,17 @@ impl<'a> Parser<'a> {
   /// If no occurrences are found, returns a `ParserError::FailedToMatch`.
   fn one_or_more(
     &mut self,
-    input: &mut &'a str,
+    context: Context<'a>,
     expression: &Expression<'a>,
-  ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
-    let start_length = input.len();
-    let (remaining, cst) = self.match_success(input, &Expression::ZeroOrMore(Box::new(expression.clone())))?;
+  ) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
+    let start_pos = context.pos;
+    let (ctx, cst) = self.match_success(context, &Expression::ZeroOrMore(Box::new(expression.clone())))?;
 
     // When no progress is made one or more has failed to match.
-    if remaining.len() == start_length {
+    if ctx.pos == start_pos {
       return Err(ParserError::FailedToMatch {
-        position: 0,
-        input,
+        position: ctx.pos,
+        input: ctx.input,
         name: "one_or_more",
       });
     }
@@ -291,15 +305,19 @@ impl<'a> Parser<'a> {
     let mut cst = cst.unwrap();
     cst.set("one_or_more");
 
-    Ok((remaining, Some(cst)))
+    Ok((ctx, Some(cst)))
   }
 
   /// Parses a named rule from the grammar.
   /// Looks up the rule by name and applies its expression to the input.
   /// If the rule is not found, returns a `ParserError::RuleNotFound`.
-  fn named_rule(&mut self, input: &mut &'a str, name: &'a str) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
-    let key = (name, *input);
-    let original_input = *input;
+  fn named_rule(
+    &mut self,
+    context: Context<'a>,
+    name: &'a str,
+  ) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
+    let key = (name, context.pos);
+    let original_ctx = context.clone();
 
     // Check if the result has already been parsed and what the memo state is.
     // If it is seeding, we have left recursive expression, it returns and error and continues resolving.
@@ -309,9 +327,8 @@ impl<'a> Parser<'a> {
         Ok(State::Seeding) => {
           return Err(ParserError::LeftRecursion { name });
         }
-        Ok(State::Parsed(remaining, cst)) => {
-          *input = remaining;
-          return Ok((remaining, cst.clone()));
+        Ok(State::Parsed(ctx, cst)) => {
+          return Ok((ctx.clone(), cst.clone()));
         }
         Ok(State::Failed(err)) => {
           return Err(err.clone());
@@ -331,7 +348,9 @@ impl<'a> Parser<'a> {
       .get(name)
       .ok_or(ParserError::RuleNotFound { position: 0, name })?;
 
-    let (mut remaining, cst) = match self.match_success(input, &rule.expression) {
+    let ctx = context.clone();
+
+    let (mut new_ctx, cst) = match self.match_success(ctx.clone(), &rule.expression) {
       Ok((r, c)) => (r, c),
       Err(err) => {
         self.packrat.insert(key, Err(err.clone()));
@@ -347,45 +366,45 @@ impl<'a> Parser<'a> {
 
     self
       .packrat
-      .insert(key, Ok(State::Parsed(remaining, Some(tree.clone()))));
+      .insert(key, Ok(State::Parsed(new_ctx.clone(), Some(tree.clone()))));
 
     if !was_seeding {
       loop {
-        let prev_remaining = remaining;
+        let prev_ctx = new_ctx.clone();
         let prev_tree = tree.clone();
 
         // Clear all memoed entries except for the current rule being processed.
         // Supports indirect left recursion.
-        self.packrat.clear_except((name, original_input));
+        self.packrat.clear_except((name, original_ctx.clone().pos));
         // Whilst trying to parse the result ensure packrat is seeding.
         self.packrat.set_seeding(true);
 
-        let mut try_input = original_input;
-        let result = self.match_success(&mut try_input, &rule.expression);
+        let try_ctx = original_ctx.clone();
+        let result = self.match_success(try_ctx, &rule.expression);
 
         // Stop seeding after trying to parse and check the result.
         self.packrat.set_seeding(false);
 
         match result {
           Ok((r, c)) => {
-            if r.len() >= prev_remaining.len() {
+            if r.pos >= prev_ctx.pos {
               break;
             }
 
-            remaining = r;
+            new_ctx = r;
             if let Some(c) = c {
               tree = CST::new(rule.name, vec![c], Some(Label::default().with_hidden(true)));
             }
 
             self
               .packrat
-              .insert(key, Ok(State::Parsed(remaining, Some(tree.clone()))));
+              .insert(key, Ok(State::Parsed(new_ctx.clone(), Some(tree.clone()))));
           }
           Err(_) => {
             // Failed to parse the left recursive expression here.
             // Revert back to previous state.
             tree = prev_tree;
-            remaining = prev_remaining;
+            new_ctx = prev_ctx;
 
             break;
           }
@@ -393,7 +412,7 @@ impl<'a> Parser<'a> {
       }
     }
 
-    Ok((remaining, Some(tree)))
+    Ok((new_ctx, Some(tree)))
   }
 }
 

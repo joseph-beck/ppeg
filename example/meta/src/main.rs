@@ -19,6 +19,7 @@ fn main() {
 
   println!("{:#?}", grammar);
 
-  let (_, cst) = parse!(grammar, &mut "c", "char_c").unwrap();
+  let (remaining, cst) = parse!(grammar, &mut "c", "char_c").unwrap();
+  println!("{:#?}", remaining);
   println!("{:#?}", cst);
 }
