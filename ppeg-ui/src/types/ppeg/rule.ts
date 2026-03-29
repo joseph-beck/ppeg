@@ -9,6 +9,14 @@ const rule = z.object({
 
 type Rule = z.infer<typeof rule>
 
-export type { Rule }
+const rules = z.array(rule)
 
-export { rule }
+type Rules = z.infer<typeof rules>
+
+const ruleNames = z.array(z.string())
+
+type RuleNames = z.infer<typeof ruleNames>
+
+export type { Rule, RuleNames,Rules }
+
+export { rule, ruleNames,rules }

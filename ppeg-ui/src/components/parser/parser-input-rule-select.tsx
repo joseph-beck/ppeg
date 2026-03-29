@@ -34,9 +34,9 @@ const ParserInputRuleSelect = ({ form }: ParserInputRuleSelectProps): ReactEleme
                 {isNonEmptyArray(rules) ? (
                   <>
                     <SelectLabel>Rules</SelectLabel>
-                    {rules.map((rule) => (
-                      <SelectItem key={rule.name} value={rule.name}>
-                        {rule.name}
+                    {rules.map((ruleName) => (
+                      <SelectItem key={ruleName} value={ruleName}>
+                        {ruleName}
                       </SelectItem>
                     ))}
                   </>
