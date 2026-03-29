@@ -71,6 +71,11 @@ impl<'a> Grammar<'a> {
   pub fn new(rules: HashMap<&'a str, Rule<'a>>) -> Self {
     Grammar { rules }
   }
+
+  /// Gets all rules stored in the grammar as a vector.
+  pub fn rules(&self) -> Vec<&Rule<'a>> {
+    self.rules.values().collect()
+  }
 }
 
 impl Default for Grammar<'_> {

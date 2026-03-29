@@ -9,6 +9,7 @@
     "dagrejs",
     "graphlib",
     "iden",
+    "inited",
     "packrat",
     "ppeg",
     "rankdir",
