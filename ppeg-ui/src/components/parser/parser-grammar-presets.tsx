@@ -15,6 +15,8 @@ import { ReactElement, useState } from 'react'
 import { isNonEmptyArray } from '@/lib/is/is-non-empty-array'
 
 import { getPresets, PresetInput } from './get-presets'
+import { parserRuleStore } from './parser-rule-store'
+import { useParser } from './use-parser'
 import { useParserForm } from './use-parser-form'
 
 interface ParserGrammarPresetsProps {
@@ -23,15 +25,26 @@ interface ParserGrammarPresetsProps {
 
 const ParserGrammarPresets = ({ form }: ParserGrammarPresetsProps): ReactElement => {
   const [open, setOpen] = useState(false)
+  const { getRules } = useParser()
 
   const presets = getPresets()
 
   const loadPreset = (preset: PresetInput) => {
     form.setFieldValue('grammar', preset.grammar)
-    form.setFieldValue('rule', preset.rule)
     form.setFieldValue('input', preset.input)
 
-    console.log(form.state)
+    try {
+      const rules = getRules(preset.grammar)
+      parserRuleStore.setState(() => rules)
+
+      const rule = rules.includes(preset.rule) ? preset.rule : ''
+
+      queueMicrotask(() => {
+        form.setFieldValue('rule', rule)
+      })
+    } catch (_) {
+      parserRuleStore.setState(() => [])
+    }
 
     void form.handleSubmit()
 

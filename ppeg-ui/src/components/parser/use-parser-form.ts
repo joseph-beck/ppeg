@@ -16,8 +16,6 @@ const useParserForm = () => {
     // still requires a manual cast even though it is of type ParserFormMeta
     onSubmitMeta: defaultParserFormMeta as ParserFormMeta,
     onSubmit: async ({ value, meta: _meta }) => {
-      console.log(value)
-
       try {
         const rules = getRules(value.grammar)
         parserRuleStore.setState(() => rules)
