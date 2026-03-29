@@ -25,12 +25,14 @@ interface ParserGrammarPresetsProps {
 
 const ParserGrammarPresets = ({ form }: ParserGrammarPresetsProps): ReactElement => {
   const [open, setOpen] = useState(false)
+
   const { getRules } = useParser()
 
   const presets = getPresets()
 
   const loadPreset = (preset: PresetInput) => {
     form.setFieldValue('grammar', preset.grammar)
+
     form.setFieldValue('input', preset.input)
 
     try {
