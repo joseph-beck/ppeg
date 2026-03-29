@@ -2,14 +2,18 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { ParserInputForm } from '@/components/parser/parser-input-form'
 import { ParserOutput } from '@/components/parser/parser-output-form'
+import { useParser } from '@/components/parser/use-parser'
 import { PPEGTitle } from '@/components/shared/ppeg-title'
 
 const Page = () => {
+  const { isReady } = useParser()
+
   return (
     <div className="p-2 flex flex-col items-center ">
       <PPEGTitle />
-      <div
-        className="
+      {isReady ? (
+        <div
+          className="
           w-full
           max-w-7xl
           flex
@@ -18,10 +22,11 @@ const Page = () => {
           md:flex-row
           md:items-start
         "
-      >
-        <ParserInputForm />
-        <ParserOutput />
-      </div>
+        >
+          <ParserInputForm />
+          <ParserOutput />
+        </div>
+      ) : undefined}
     </div>
   )
 }

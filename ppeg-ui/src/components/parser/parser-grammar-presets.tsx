@@ -13,10 +13,8 @@ import { InputGroupButton } from '@shadcn/input-group'
 import { ReactElement, useState } from 'react'
 
 import { isNonEmptyArray } from '@/lib/is/is-non-empty-array'
-import { Parse } from '@/types/ppeg/parse'
 
-import { getPresets } from './get-presets'
-import { parserOutputStore } from './parser-output-store'
+import { getPresets, PresetInput } from './get-presets'
 import { useParserForm } from './use-parser-form'
 
 interface ParserGrammarPresetsProps {
@@ -28,15 +26,14 @@ const ParserGrammarPresets = ({ form }: ParserGrammarPresetsProps): ReactElement
 
   const presets = getPresets()
 
-  const loadPreset = (preset: Parse) => {
-    if (form.getFieldValue('grammarType') === 'json' && preset.grammarType === 'json') {
-      form.setFieldValue('grammar', JSON.stringify(preset.grammarObject, null, 2))
-    }
+  const loadPreset = (preset: PresetInput) => {
+    form.setFieldValue('grammar', preset.grammar)
+    form.setFieldValue('rule', preset.rule)
+    form.setFieldValue('input', preset.input)
 
-    form.setFieldValue('rule', '')
-    form.setFieldValue('input', '')
+    console.log(form.state)
 
-    parserOutputStore.setState(() => ({ remaining: '', cst: undefined }))
+    void form.handleSubmit()
 
     setOpen(false)
   }

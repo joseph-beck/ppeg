@@ -4,7 +4,6 @@ import { ReactElement } from 'react'
 import { ParserGrammarCopy } from './parser-grammar-copy'
 import { ParserGrammarEditor } from './parser-grammar-editor'
 import { ParserGrammarPresets } from './parser-grammar-presets'
-import { ParserGrammarTypeSelect } from './parser-grammar-type-select'
 import { ParserInputCopy } from './parser-input-copy'
 import { ParserInputEditor } from './parser-input-editor'
 import { ParserInputRuleSelect } from './parser-input-rule-select'
@@ -24,12 +23,13 @@ const ParserInputForm = ({ nil: _nil }: ParserInputFormProps): ReactElement => {
         onSubmit={(e) => {
           e.preventDefault()
           e.stopPropagation()
+
+          void form.handleSubmit()
         }}
       >
         <InputGroup className="mb-4">
           <InputGroupAddon align="block-start" className="border-b">
             <InputGroupText className="font-mono font-medium">editor</InputGroupText>
-            <ParserGrammarTypeSelect form={form} />
             <div className="ml-auto inline-flex space-x-2">
               <ParserGrammarPresets form={form} />
               <ParserGrammarCopy form={form} />

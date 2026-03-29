@@ -1,9 +1,7 @@
 import { Store } from '@tanstack/react-store'
 
-import { Rule } from '@/types/ppeg/rule'
+const defaultParserRuleStoreState: string[] = []
 
-const defaultParserRuleStoreState: Rule[] = []
-
-const parserRuleStore = new Store<Rule[]>(defaultParserRuleStoreState)
+const parserRuleStore = new Store<string[]>(defaultParserRuleStoreState)
 
 export { parserRuleStore }
