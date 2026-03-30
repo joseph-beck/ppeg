@@ -56,7 +56,7 @@ impl<'a> Parser<'a> {
     expression: &Expression<'a>,
   ) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
     match expression {
-      Expression::Empty => Ok((context, None)),
+      Expression::Empty => self.empty(context),
       Expression::Char(char) => self.char(context, char),
       Expression::Sequence(exprs) => self.sequence(context, exprs),
       Expression::Choice(exprs) => self.choice(context, exprs),
@@ -72,6 +72,10 @@ impl<'a> Parser<'a> {
       Expression::OneOrMore(expr) => self.one_or_more(context, expr),
       Expression::NamedRule(n) => self.named_rule(context, n),
     }
+  }
+
+  fn empty(&mut self, context: Context<'a>) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
+    Ok((context, None))
   }
 
   /// Parses a character from the input and advances the input when successful.
@@ -374,6 +378,21 @@ mod tests {
     let result = parser.parse(&mut "b", "a");
 
     assert!(result.is_err());
+  }
+
+  #[test]
+  fn test_parser_parse_empty() {
+    let mut grammar = Grammar::default();
+    grammar.insert(Rule::new("rule", Expression::Empty));
+
+    let mut parser = Parser::new(grammar);
+    let (remaining, cst) = parser.parse(&mut "", "rule").unwrap();
+
+    assert!(remaining.is_empty());
+    assert_eq!(
+      cst,
+      Some(CST::new("rule", vec![], Some(Label::default().with_hidden(true))))
+    );
   }
 
   #[test]
