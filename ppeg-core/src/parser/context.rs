@@ -7,12 +7,18 @@ pub struct Context<'a> {
   pub pos: usize,
   /// The input string being parsed.
   pub input: &'a str,
+  /// Current choice depth of the context, used for tracking nested choices in the grammar.
+  pub choice_depth: usize,
 }
 
 impl<'a> Context<'a> {
   /// Creates a new Context with the given position and input string.
-  pub fn new(pos: usize, input: &'a str) -> Self {
-    Context { pos, input }
+  pub fn new(pos: usize, input: &'a str, choice_depth: usize) -> Self {
+    Context {
+      pos,
+      input,
+      choice_depth,
+    }
   }
 }
 
@@ -22,9 +28,10 @@ mod tests {
 
   #[test]
   fn test_context_new() {
-    let context = Context::new(0, "test");
+    let context = Context::new(0, "test", 0);
 
     assert_eq!(context.pos, 0);
     assert_eq!(context.input, "test");
+    assert_eq!(context.choice_depth, 0);
   }
 }

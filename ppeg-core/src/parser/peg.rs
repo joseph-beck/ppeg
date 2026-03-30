@@ -9,7 +9,7 @@ use crate::parser::{
   error::ParserError,
   expression::Expression,
   grammar::Grammar,
-  history::History,
+  history::{History, Node},
   packrat::Packrat,
 };
 
@@ -44,7 +44,7 @@ impl<'a> Parser<'a> {
     input: &mut &'a str,
     rule_name: &'a str,
   ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
-    let context = Context::new(0, input);
+    let context = Context::new(0, input, 0);
     // Parse must always start with a named rule.
     // Simply call named rule here.
     match self.named_rule(context, rule_name) {
@@ -90,9 +90,14 @@ impl<'a> Parser<'a> {
     let mut ctx = context.clone();
 
     // When matching a character advanced the input by one character.
+    // History can also be wiped here as we have been productive.
     if context.input[context.pos..].starts_with(char) {
       cst.add(Some(CST::new(char, vec![], None)));
       ctx.pos += char.len();
+
+      // Reset choice depth and history as we have been productive.
+      ctx.choice_depth = 0;
+      self.history.clear();
 
       Ok((ctx, Some(cst)))
     } else {
@@ -111,9 +116,11 @@ impl<'a> Parser<'a> {
     let mut cst = CST::new("sequence", vec![], Some(Label::default().with_hidden(true)));
     let mut ctx = context.clone();
 
-    for expr in expressions {
+    for (i, expr) in expressions.iter().enumerate() {
       let (new_ctx, node) = self.match_success(ctx, expr)?;
       ctx = new_ctx;
+
+      self.history.add(Node::Seq(i));
 
       cst.add(node);
     }
@@ -129,16 +136,24 @@ impl<'a> Parser<'a> {
     context: Context<'a>,
     expressions: &Vec<Expression<'a>>,
   ) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
-    for expr in expressions {
+    for (i, expr) in expressions.iter().enumerate() {
+      let node = Node::Ch(i, context.choice_depth);
+
+      if !self.history.prod(node.clone()) {
+        continue;
+      }
+
+      self.history.add(node.clone());
+
       match self.match_success(context.clone(), expr) {
-        Ok((ctx, cst)) => match cst {
+        Ok((c, cst)) => match cst {
           Some(n) => {
             return Ok((
-              ctx,
+              c,
               Some(CST::new("choice", vec![n], Some(Label::default().with_hidden(true)))),
             ));
           }
-          None => return Ok((ctx, None)),
+          None => return Ok((c, None)),
         },
         Err(_) => continue,
       }
@@ -159,7 +174,7 @@ impl<'a> Parser<'a> {
 
     // Zero or more continues until no progress is made on the input.
     loop {
-      let start_pos = context.pos;
+      let start_pos = ctx.pos;
 
       match self.match_success(ctx.clone(), expression) {
         Ok((new_ctx, cst)) => {
@@ -225,30 +240,35 @@ impl<'a> Parser<'a> {
     context: Context<'a>,
     name: &'a str,
   ) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
-    if let Some(memo) = self.packrat.get((name, context.pos)) {
-      return memo.clone();
-    }
+    // let memo_result = self.packrat.get((name, context.pos));
+    // if let Some(memo) = memo_result {
+    //   return memo.clone();
+    // }
 
     match self.grammar.get(name) {
-      Some(rule) => match self.match_success(context.clone(), rule.expression()) {
-        Ok((ctx, cst)) => {
-          let mut node = CST::new(name, vec![], Some(Label::default().with_hidden(false)));
-          if let Some(n) = cst {
-            node.add(Some(n));
+      Some(rule) => {
+        self.history.add(Node::Nm(name));
+
+        match self.match_success(context.clone(), rule.expression()) {
+          Ok((ctx, cst)) => {
+            let mut node = CST::new(name, vec![], Some(Label::default().with_hidden(false)));
+            if let Some(n) = cst {
+              node.add(Some(n));
+            }
+
+            let result = Ok((ctx, Some(node)));
+            self.packrat.insert((name, context.pos), result.clone());
+
+            return result;
           }
+          Err(err) => {
+            let result = Err(err);
+            self.packrat.insert((name, context.pos), result.clone());
 
-          let result = Ok((ctx, Some(node)));
-          self.packrat.insert((name, context.pos), result.clone());
-
-          return result;
+            return result;
+          }
         }
-        Err(err) => {
-          let result = Err(err);
-          self.packrat.insert((name, context.pos), result.clone());
-
-          return result;
-        }
-      },
+      }
       None => Err(ParserError::RuleNotFound {
         name,
         position: context.pos,
@@ -675,7 +695,7 @@ mod tests {
         Expression::Sequence(vec![
           Expression::NamedRule("rule_x"),
           Expression::Char("+"),
-          Expression::NamedRule("rule_num"),
+          Expression::NamedRule("rule_x"),
         ]),
         Expression::NamedRule("rule_num"),
       ]),
@@ -701,7 +721,7 @@ mod tests {
         Expression::Sequence(vec![
           Expression::NamedRule("rule_expr"),
           Expression::Char("+"),
-          Expression::NamedRule("rule_num"),
+          Expression::NamedRule("rule_expr"),
         ]),
         Expression::NamedRule("rule_num"),
       ]),
