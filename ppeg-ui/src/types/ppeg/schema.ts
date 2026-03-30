@@ -7,7 +7,6 @@ const schema = z.object({
   grammar: z.string(),
   input: z.string(),
   rule: z.string(),
-  grammarType: z.string(),
 })
 
 type Schema = z.infer<typeof schema>

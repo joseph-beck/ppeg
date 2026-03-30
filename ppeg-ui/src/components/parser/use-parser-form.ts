@@ -1,69 +1,54 @@
 import { useForm } from '@tanstack/react-form'
 
-import { parserSchemaTransform } from '@/lib/parser/parser-schema-transform'
-import { Rule } from '@/types/ppeg/rule'
 import { schema } from '@/types/ppeg/schema'
 
 import { defaultParserFormOpts } from './default-parser-form-opts'
 import { defaultParserFormMeta, ParserFormMeta } from './parser-form-meta'
 import { parserOutputStore } from './parser-output-store'
 import { parserRuleStore } from './parser-rule-store'
-import { useParserMutation } from './use-parser-mutation'
+import { useParser } from './use-parser'
 
 const useParserForm = () => {
-  const mutation = useParserMutation()
+  const { parse, getRules } = useParser()
 
   return useForm({
     ...defaultParserFormOpts,
     // still requires a manual cast even though it is of type ParserFormMeta
     onSubmitMeta: defaultParserFormMeta as ParserFormMeta,
     onSubmit: async ({ value, meta: _meta }) => {
-      const data = parserSchemaTransform(value)
-
-      console.log('test0')
-
-      if (data?.grammarType === 'json' && data?.grammarObject.rules) {
-        console.log('test1')
-        parserRuleStore.setState(() => {
-          return [...data.grammarObject.rules]
-        })
+      try {
+        const rules = getRules(value.grammar)
+        parserRuleStore.setState(() => rules)
+      } catch (_) {
+        parserRuleStore.setState(() => [])
       }
 
-      if (data?.grammarType === 'ppeg') {
-        console.log('test2')
-        // this is a pretty dirty trick to extra this information...
-        // TODO: make this more robust.
-        const rules = data.grammarMeta
-          .split('\n')
-          .filter((line) => line.includes(':='))
-          .map((line) => {
-            const [name, _] = line.split(':=')
-
-            return {
-              name: name.trim(),
-              expression: { type: 'Empty' },
-            } satisfies Rule
-          })
-
-        parserRuleStore.setState(() => {
-          return [...rules]
-        })
-      }
-
-      // until we have some data no transformations should occur in the mutation or parser output store
-      if (!data || !data.rule || data.input === '') {
-        return
-      }
-
-      const result = await mutation.mutateAsync(data)
-
-      parserOutputStore.setState((state) => {
-        return {
-          ...state,
-          remaining: result?.remaining ?? '',
-          cst: result?.cst,
+      try {
+        // until we have some data no transformations should occur in the mutation or parser output store
+        if (!value || !value.rule || value.input === '') {
+          return
         }
-      })
+
+        const result = parse(value.input, value.grammar, value.rule)
+
+        parserOutputStore.setState((state) => {
+          return {
+            ...state,
+            remaining: result?.remaining ?? '',
+            cst: result?.cst,
+          }
+        })
+      } catch (error) {
+        console.error('failed to parse input', error)
+
+        parserOutputStore.setState((state) => {
+          return {
+            ...state,
+            remaining: '',
+            cst: undefined,
+          }
+        })
+      }
     },
     onSubmitInvalid: ({ value, meta }) => {
       console.error(value, meta)
