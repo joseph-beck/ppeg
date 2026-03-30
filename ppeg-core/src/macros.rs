@@ -176,6 +176,36 @@ macro_rules! or {
   };
 }
 
+/// Creates a `Not` expression from a given expression.
+///
+/// ## Example
+/// ```rust
+/// use ppeg_core::{not, c};
+///
+/// let expr = not!(c!("a"));
+/// ```
+#[macro_export]
+macro_rules! not {
+  ( $expr:expr ) => {
+    $crate::parser::expression::Expression::Not(Box::new($expr))
+  };
+}
+
+/// Creates an `Optional` expression from a given expression.
+///
+/// ## Example
+/// ```rust
+/// use ppeg_core::{opt, c};
+///
+/// let expr = opt!(c!("a"));
+/// ```
+#[macro_export]
+macro_rules! opt {
+  ( $expr:expr ) => {
+    $crate::parser::expression::Expression::Optional(Box::new($expr))
+  };
+}
+
 /// Creates a `ZeroOrMore` expression from a given expression.
 ///
 /// ## Example
@@ -424,6 +454,20 @@ mod tests {
         Expression::Char("c")
       ])
     );
+  }
+
+  #[test]
+  fn test_not_macro() {
+    let expr = not!(c!("a"));
+
+    assert_eq!(expr, Expression::Not(Box::new(Expression::Char("a"))));
+  }
+
+  #[test]
+  fn test_optional_macro() {
+    let expr = opt!(c!("a"));
+
+    assert_eq!(expr, Expression::Optional(Box::new(Expression::Char("a"))));
   }
 
   #[test]
