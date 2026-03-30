@@ -250,7 +250,7 @@ impl<'a> Parser<'a> {
 
     let ctx = context.clone();
 
-    let (mut new_ctx, cst) = match self.match_success(ctx.clone(), &rule.expression) {
+    let (mut new_ctx, cst) = match self.match_success(ctx.clone(), &rule.expression()) {
       Ok((r, c)) => (r, c),
       Err(err) => {
         self.packrat.insert(key, Err(err.clone()));
@@ -259,7 +259,7 @@ impl<'a> Parser<'a> {
     };
 
     let mut tree = CST::new(
-      rule.name,
+      rule.name(),
       cst.map_or_else(Vec::new, |c| vec![c]),
       Some(Label::default().with_hidden(true)),
     );
@@ -280,7 +280,7 @@ impl<'a> Parser<'a> {
         self.packrat.set_seeding(true);
 
         let try_ctx = original_ctx.clone();
-        let result = self.match_success(try_ctx, &rule.expression);
+        let result = self.match_success(try_ctx, &rule.expression());
 
         // Stop seeding after trying to parse and check the result.
         self.packrat.set_seeding(false);
@@ -293,7 +293,7 @@ impl<'a> Parser<'a> {
 
             new_ctx = r;
             if let Some(c) = c {
-              tree = CST::new(rule.name, vec![c], Some(Label::default().with_hidden(true)));
+              tree = CST::new(rule.name(), vec![c], Some(Label::default().with_hidden(true)));
             }
 
             self
