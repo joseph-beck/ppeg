@@ -13,6 +13,12 @@ fn main() {
           { 'd' }+ |
           { '\n' } // Example using an escape character for a newline
         }
+
+        // Not rule
+        not_c := { !char_c }
+
+        // Optional rule
+        optional_c := { char_c? }
       "#,
     )
     .unwrap();

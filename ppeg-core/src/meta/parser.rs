@@ -13,6 +13,14 @@
 //! - A series of rules that any one of them can match for the rule to match.
 //! - For example the rule `choice := { char_c | 'b' }` matches either character 'c' or character 'b'.
 //!
+//! Not
+//! - A rule that matches if the given rule does not match.
+//! - For example the rule `not_c := { !char_c }` matches if the rule `char_c` does not match.
+//!
+//! Optional
+//! - A rule that matches if the given rule matches, but also matches if the given rule does not match.
+//! - For example the rule `optional_c := { char_c? }` matches if the rule `char_c` matches, but also matches if the rule `char_c` does not match.
+//!
 //! Zero or more
 //! - A rule that can match zero or more times.
 //! - For example the rule `zero_or_more := { char_c* }` matches zero or more characters 'c'.
@@ -247,6 +255,7 @@ impl<'a> Parser<'a> {
   fn parse_expression(&mut self) -> Result<Expression<'a>, MetaError> {
     let expr = match self.current() {
       Some('\'') => self.parse_char()?,
+      Some('!') => self.parse_not()?,
       Some('{') => {
         self.advance();
         self.consume_comments_and_whitespace();
@@ -276,6 +285,7 @@ impl<'a> Parser<'a> {
     match self.current() {
       Some('*') => self.parse_zero_or_more(expr),
       Some('+') => self.parse_one_or_more(expr),
+      Some('?') => self.parse_optional(expr),
       _ => Ok(expr),
     }
   }
@@ -360,6 +370,19 @@ impl<'a> Parser<'a> {
     Ok(Expression::Choice(choices))
   }
 
+  fn parse_not(&mut self) -> Result<Expression<'a>, MetaError> {
+    self.consume('!')?;
+    let expr = self.parse_expression()?;
+
+    Ok(Expression::Not(Box::new(expr)))
+  }
+
+  fn parse_optional(&mut self, expr: Expression<'a>) -> Result<Expression<'a>, MetaError> {
+    self.consume('?')?;
+
+    Ok(Expression::Optional(Box::new(expr)))
+  }
+
   /// Parses an expression that is followed by a `+` operator, indicating it must match one or more times.
   /// For example `char_c+` matches one or more characters 'c'.
   fn parse_one_or_more(&mut self, expr: Expression<'a>) -> Result<Expression<'a>, MetaError> {
@@ -385,7 +408,7 @@ impl<'a> Parser<'a> {
 }
 
 #[cfg(test)]
-mod meta_tests {
+mod tests {
   use super::*;
 
   #[test]
@@ -500,6 +523,50 @@ mod meta_tests {
       .with(Rule::new(
         "choice",
         Expression::Choice(vec![Expression::NamedRule("char_c"), Expression::Char("b")]),
+      ));
+
+    assert_eq!(grammar, expected_grammar);
+  }
+
+  #[test]
+  fn test_meta_generate_not() {
+    let meta = Meta::new();
+    let grammar = meta
+      .generate(
+        r#"
+          char_c := { 'c' }
+          not_c := { !char_c }
+        "#,
+      )
+      .unwrap();
+
+    let expected_grammar = Grammar::default()
+      .with(Rule::new("char_c", Expression::Char("c")))
+      .with(Rule::new(
+        "not_c",
+        Expression::Not(Box::new(Expression::NamedRule("char_c"))),
+      ));
+
+    assert_eq!(grammar, expected_grammar);
+  }
+
+  #[test]
+  fn test_meta_generate_optional() {
+    let meta = Meta::new();
+    let grammar = meta
+      .generate(
+        r#"
+            char_c := { 'c' }
+            optional_c := { char_c? }
+          "#,
+      )
+      .unwrap();
+
+    let expected_grammar = Grammar::default()
+      .with(Rule::new("char_c", Expression::Char("c")))
+      .with(Rule::new(
+        "optional_c",
+        Expression::Optional(Box::new(Expression::NamedRule("char_c"))),
       ));
 
     assert_eq!(grammar, expected_grammar);
