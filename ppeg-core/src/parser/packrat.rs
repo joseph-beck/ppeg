@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 use crate::{
   cst::CST,
-  parser::{error::ParserError, context::Context},
+  parser::{context::Context, error::ParserError},
 };
 
 /// When parsing a rule using Packrat parsing state must be tracked.
