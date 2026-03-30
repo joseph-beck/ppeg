@@ -1,4 +1,4 @@
-use ppeg_core::parser::{expression::Expression, grammar::Grammar, peg::Parser, rule::Rule};
+use ppeg_core::prelude::*;
 
 fn main() {
   let digit = Expression::Choice(vec![

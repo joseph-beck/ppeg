@@ -1,4 +1,4 @@
-use ppeg_core::{meta::parser::Meta, parse};
+use ppeg_core::{parse, prelude::*};
 
 fn main() {
   let grammar = Meta::new()

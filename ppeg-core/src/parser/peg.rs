@@ -3,15 +3,13 @@
 
 use std::vec;
 
-use crate::{
+use crate::parser::{
+  context::Context,
   cst::{CST, Label},
-  parser::{
-    context::Context,
-    error::ParserError,
-    expression::Expression,
-    grammar::Grammar,
-    packrat::{Packrat, State},
-  },
+  error::ParserError,
+  expression::Expression,
+  grammar::Grammar,
+  packrat::{Packrat, State},
 };
 
 #[derive(Debug, Clone, PartialEq)]
