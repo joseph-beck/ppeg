@@ -1,5 +1,11 @@
+//! ## Example
+//! ```rust
+//! use ppeg_core::prelude::*;
+//! ```
+
 use std::fmt;
 
+// MetaError
 #[derive(Debug, Clone, PartialEq)]
 pub enum MetaError {
   // Occurs when the input given to meta is invalid.

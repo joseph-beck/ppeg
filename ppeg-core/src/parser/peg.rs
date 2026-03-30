@@ -9,7 +9,8 @@ use crate::parser::{
   error::ParserError,
   expression::Expression,
   grammar::Grammar,
-  packrat::{Packrat, State},
+  history::History,
+  packrat::Packrat,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -20,6 +21,9 @@ pub struct Parser<'a> {
   /// Packrat memoization table.
   /// Stores parser states so that left recursion can be handled.
   packrat: Packrat<'a>,
+  /// Parser history for parsing left recursive expressions.
+  /// Stores history of parser states to avoid infinite recursion.
+  history: History<'a>,
 }
 
 impl<'a> Parser<'a> {
@@ -28,6 +32,7 @@ impl<'a> Parser<'a> {
     Parser {
       grammar,
       packrat: Packrat::new(),
+      history: History::new(),
     }
   }
 
@@ -220,103 +225,35 @@ impl<'a> Parser<'a> {
     context: Context<'a>,
     name: &'a str,
   ) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
-    let key = (name, context.pos);
-    let original_ctx = context.clone();
+    if let Some(memo) = self.packrat.get((name, context.pos)) {
+      return memo.clone();
+    }
 
-    // Check if the result has already been parsed and what the memo state is.
-    // If it is seeding, we have left recursive expression, it returns and error and continues resolving.
-    // If None then we continue with the parse.
-    if let Some(state) = self.packrat.get(key) {
-      match state {
-        Ok(State::Seeding) => {
-          return Err(ParserError::LeftRecursion { name });
-        }
-        Ok(State::Parsed(ctx, cst)) => {
-          return Ok((ctx.clone(), cst.clone()));
-        }
-        Ok(State::Failed(err)) => {
-          return Err(err.clone());
+    match self.grammar.get(name) {
+      Some(rule) => match self.match_success(context.clone(), rule.expression()) {
+        Ok((ctx, cst)) => {
+          let mut node = CST::new(name, vec![], Some(Label::default().with_hidden(false)));
+          if let Some(n) = cst {
+            node.add(Some(n));
+          }
+
+          let result = Ok((ctx, Some(node)));
+          self.packrat.insert((name, context.pos), result.clone());
+
+          return result;
         }
         Err(err) => {
-          return Err(err.clone());
+          let result = Err(err);
+          self.packrat.insert((name, context.pos), result.clone());
+
+          return result;
         }
-      }
+      },
+      None => Err(ParserError::RuleNotFound {
+        name,
+        position: context.pos,
+      }),
     }
-
-    // Check if packrat was seeding and mark the current rule for seeding.
-    let was_seeding = self.packrat.is_seeding();
-    self.packrat.mark(key);
-
-    let rule = self
-      .grammar
-      .get(name)
-      .ok_or(ParserError::RuleNotFound { position: 0, name })?;
-
-    let ctx = context.clone();
-
-    let (mut new_ctx, cst) = match self.match_success(ctx.clone(), &rule.expression()) {
-      Ok((r, c)) => (r, c),
-      Err(err) => {
-        self.packrat.insert(key, Err(err.clone()));
-        return Err(err);
-      }
-    };
-
-    let mut tree = CST::new(
-      rule.name(),
-      cst.map_or_else(Vec::new, |c| vec![c]),
-      Some(Label::default().with_hidden(true)),
-    );
-
-    self
-      .packrat
-      .insert(key, Ok(State::Parsed(new_ctx.clone(), Some(tree.clone()))));
-
-    if !was_seeding {
-      loop {
-        let prev_ctx = new_ctx.clone();
-        let prev_tree = tree.clone();
-
-        // Clear all memoed entries except for the current rule being processed.
-        // Supports indirect left recursion.
-        self.packrat.clear_except((name, original_ctx.clone().pos));
-        // Whilst trying to parse the result ensure packrat is seeding.
-        self.packrat.set_seeding(true);
-
-        let try_ctx = original_ctx.clone();
-        let result = self.match_success(try_ctx, &rule.expression());
-
-        // Stop seeding after trying to parse and check the result.
-        self.packrat.set_seeding(false);
-
-        match result {
-          Ok((r, c)) => {
-            if r.pos >= prev_ctx.pos {
-              break;
-            }
-
-            new_ctx = r;
-            if let Some(c) = c {
-              tree = CST::new(rule.name(), vec![c], Some(Label::default().with_hidden(true)));
-            }
-
-            self
-              .packrat
-              .insert(key, Ok(State::Parsed(new_ctx.clone(), Some(tree.clone()))));
-          }
-          Err(_) => {
-            // Failed to parse the left recursive expression here.
-            // Revert back to previous state.
-            tree = prev_tree;
-            new_ctx = prev_ctx;
-
-            break;
-          }
-        }
-      }
-    }
-
-    Ok((new_ctx, Some(tree)))
   }
 }
 
@@ -391,7 +328,7 @@ mod tests {
     assert!(remaining.is_empty());
     assert_eq!(
       cst,
-      Some(CST::new("rule", vec![], Some(Label::default().with_hidden(true))))
+      Some(CST::new("rule", vec![], Some(Label::default().with_hidden(false))))
     );
   }
 

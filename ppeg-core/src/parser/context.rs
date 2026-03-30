@@ -10,7 +10,21 @@ pub struct Context<'a> {
 }
 
 impl<'a> Context<'a> {
+  /// Creates a new Context with the given position and input string.
   pub fn new(pos: usize, input: &'a str) -> Self {
     Context { pos, input }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_context_new() {
+    let context = Context::new(0, "test");
+
+    assert_eq!(context.pos, 0);
+    assert_eq!(context.input, "test");
   }
 }

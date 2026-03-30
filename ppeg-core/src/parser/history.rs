@@ -1,3 +1,4 @@
+#[derive(Debug, Clone, PartialEq)]
 pub enum Node<'a> {
   Ch(u32, u32),
   Nm(&'a str),
@@ -5,6 +6,7 @@ pub enum Node<'a> {
   Ct(&'a str),
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct History<'a> {
   nodes: Vec<Node<'a>>,
 }

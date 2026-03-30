@@ -1,5 +1,11 @@
+//! ## Example
+//! ```rust
+//! use ppeg_core::prelude::*;
+//! ```
+
 use std::fmt;
 
+/// ParserError
 #[derive(Debug, Clone, PartialEq)]
 pub enum ParserError<'a> {
   /// Occurs when an expression fails to match the given rule with the given input.

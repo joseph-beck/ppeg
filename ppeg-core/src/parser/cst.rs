@@ -1,5 +1,10 @@
 //! PPEG Concrete Syntax Tree (CST) module holds the data structures and logic for representing
 //! the Concrete Syntax Tree produced during parsing.
+//!
+//! ## Example
+//! ```rust
+//! use ppeg_core::prelude::*;
+//! ```
 
 /// Concrete Syntax Tree (CST).
 #[derive(Debug, Clone, PartialEq)]

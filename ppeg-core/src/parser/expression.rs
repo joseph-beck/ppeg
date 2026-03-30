@@ -1,3 +1,9 @@
+//! ## Example
+//! ```rust
+//! use ppeg_core::prelude::*;
+//! ```
+
+/// Expression
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression<'a> {
   /// Matches what is an "empty" expression.
