@@ -32,17 +32,17 @@
 #[macro_export]
 macro_rules! digit {
   () => {
-    $crate::parser::Expression::Choice(vec![
-      $crate::parser::Expression::Char("0"),
-      $crate::parser::Expression::Char("1"),
-      $crate::parser::Expression::Char("2"),
-      $crate::parser::Expression::Char("3"),
-      $crate::parser::Expression::Char("4"),
-      $crate::parser::Expression::Char("5"),
-      $crate::parser::Expression::Char("6"),
-      $crate::parser::Expression::Char("7"),
-      $crate::parser::Expression::Char("8"),
-      $crate::parser::Expression::Char("9"),
+    $crate::parser::expression::Expression::Choice(vec![
+      $crate::parser::expression::Expression::Char("0"),
+      $crate::parser::expression::Expression::Char("1"),
+      $crate::parser::expression::Expression::Char("2"),
+      $crate::parser::expression::Expression::Char("3"),
+      $crate::parser::expression::Expression::Char("4"),
+      $crate::parser::expression::Expression::Char("5"),
+      $crate::parser::expression::Expression::Char("6"),
+      $crate::parser::expression::Expression::Char("7"),
+      $crate::parser::expression::Expression::Char("8"),
+      $crate::parser::expression::Expression::Char("9"),
     ])
   };
 }
@@ -59,59 +59,59 @@ macro_rules! digit {
 #[macro_export]
 macro_rules! letter {
   () => {
-    $crate::parser::Expression::Choice(vec![
-      $crate::parser::Expression::Char("a"),
-      $crate::parser::Expression::Char("b"),
-      $crate::parser::Expression::Char("c"),
-      $crate::parser::Expression::Char("d"),
-      $crate::parser::Expression::Char("e"),
-      $crate::parser::Expression::Char("f"),
-      $crate::parser::Expression::Char("g"),
-      $crate::parser::Expression::Char("h"),
-      $crate::parser::Expression::Char("i"),
-      $crate::parser::Expression::Char("j"),
-      $crate::parser::Expression::Char("k"),
-      $crate::parser::Expression::Char("l"),
-      $crate::parser::Expression::Char("m"),
-      $crate::parser::Expression::Char("n"),
-      $crate::parser::Expression::Char("o"),
-      $crate::parser::Expression::Char("p"),
-      $crate::parser::Expression::Char("q"),
-      $crate::parser::Expression::Char("r"),
-      $crate::parser::Expression::Char("s"),
-      $crate::parser::Expression::Char("t"),
-      $crate::parser::Expression::Char("u"),
-      $crate::parser::Expression::Char("v"),
-      $crate::parser::Expression::Char("w"),
-      $crate::parser::Expression::Char("x"),
-      $crate::parser::Expression::Char("y"),
-      $crate::parser::Expression::Char("z"),
-      $crate::parser::Expression::Char("A"),
-      $crate::parser::Expression::Char("B"),
-      $crate::parser::Expression::Char("C"),
-      $crate::parser::Expression::Char("D"),
-      $crate::parser::Expression::Char("E"),
-      $crate::parser::Expression::Char("F"),
-      $crate::parser::Expression::Char("G"),
-      $crate::parser::Expression::Char("H"),
-      $crate::parser::Expression::Char("I"),
-      $crate::parser::Expression::Char("J"),
-      $crate::parser::Expression::Char("K"),
-      $crate::parser::Expression::Char("L"),
-      $crate::parser::Expression::Char("M"),
-      $crate::parser::Expression::Char("N"),
-      $crate::parser::Expression::Char("O"),
-      $crate::parser::Expression::Char("P"),
-      $crate::parser::Expression::Char("Q"),
-      $crate::parser::Expression::Char("R"),
-      $crate::parser::Expression::Char("S"),
-      $crate::parser::Expression::Char("T"),
-      $crate::parser::Expression::Char("U"),
-      $crate::parser::Expression::Char("V"),
-      $crate::parser::Expression::Char("W"),
-      $crate::parser::Expression::Char("X"),
-      $crate::parser::Expression::Char("Y"),
-      $crate::parser::Expression::Char("Z"),
+    $crate::parser::expression::Expression::Choice(vec![
+      $crate::parser::expression::Expression::Char("a"),
+      $crate::parser::expression::Expression::Char("b"),
+      $crate::parser::expression::Expression::Char("c"),
+      $crate::parser::expression::Expression::Char("d"),
+      $crate::parser::expression::Expression::Char("e"),
+      $crate::parser::expression::Expression::Char("f"),
+      $crate::parser::expression::Expression::Char("g"),
+      $crate::parser::expression::Expression::Char("h"),
+      $crate::parser::expression::Expression::Char("i"),
+      $crate::parser::expression::Expression::Char("j"),
+      $crate::parser::expression::Expression::Char("k"),
+      $crate::parser::expression::Expression::Char("l"),
+      $crate::parser::expression::Expression::Char("m"),
+      $crate::parser::expression::Expression::Char("n"),
+      $crate::parser::expression::Expression::Char("o"),
+      $crate::parser::expression::Expression::Char("p"),
+      $crate::parser::expression::Expression::Char("q"),
+      $crate::parser::expression::Expression::Char("r"),
+      $crate::parser::expression::Expression::Char("s"),
+      $crate::parser::expression::Expression::Char("t"),
+      $crate::parser::expression::Expression::Char("u"),
+      $crate::parser::expression::Expression::Char("v"),
+      $crate::parser::expression::Expression::Char("w"),
+      $crate::parser::expression::Expression::Char("x"),
+      $crate::parser::expression::Expression::Char("y"),
+      $crate::parser::expression::Expression::Char("z"),
+      $crate::parser::expression::Expression::Char("A"),
+      $crate::parser::expression::Expression::Char("B"),
+      $crate::parser::expression::Expression::Char("C"),
+      $crate::parser::expression::Expression::Char("D"),
+      $crate::parser::expression::Expression::Char("E"),
+      $crate::parser::expression::Expression::Char("F"),
+      $crate::parser::expression::Expression::Char("G"),
+      $crate::parser::expression::Expression::Char("H"),
+      $crate::parser::expression::Expression::Char("I"),
+      $crate::parser::expression::Expression::Char("J"),
+      $crate::parser::expression::Expression::Char("K"),
+      $crate::parser::expression::Expression::Char("L"),
+      $crate::parser::expression::Expression::Char("M"),
+      $crate::parser::expression::Expression::Char("N"),
+      $crate::parser::expression::Expression::Char("O"),
+      $crate::parser::expression::Expression::Char("P"),
+      $crate::parser::expression::Expression::Char("Q"),
+      $crate::parser::expression::Expression::Char("R"),
+      $crate::parser::expression::Expression::Char("S"),
+      $crate::parser::expression::Expression::Char("T"),
+      $crate::parser::expression::Expression::Char("U"),
+      $crate::parser::expression::Expression::Char("V"),
+      $crate::parser::expression::Expression::Char("W"),
+      $crate::parser::expression::Expression::Char("X"),
+      $crate::parser::expression::Expression::Char("Y"),
+      $crate::parser::expression::Expression::Char("Z"),
     ])
   };
 }
@@ -127,7 +127,7 @@ macro_rules! letter {
 #[macro_export]
 macro_rules! empty {
   () => {
-    $crate::parser::Expression::Empty
+    $crate::parser::expression::Expression::Empty
   };
 }
 
@@ -142,7 +142,7 @@ macro_rules! empty {
 #[macro_export]
 macro_rules! c {
   ($expr:expr) => {
-    $crate::parser::Expression::Char($expr)
+    $crate::parser::expression::Expression::Char($expr)
   };
 }
 
@@ -157,7 +157,7 @@ macro_rules! c {
 #[macro_export]
 macro_rules! seq {
   ( $( $expr:expr ),* ) => {
-    $crate::parser::Expression::Sequence(vec![ $( $expr ),* ])
+    $crate::parser::expression::Expression::Sequence(vec![ $( $expr ),* ])
   };
 }
 
@@ -172,7 +172,7 @@ macro_rules! seq {
 #[macro_export]
 macro_rules! or {
   ( $( $expr:expr ),* ) => {
-    $crate::parser::Expression::Choice(vec![ $( $expr ),* ])
+    $crate::parser::expression::Expression::Choice(vec![ $( $expr ),* ])
   };
 }
 
@@ -187,7 +187,7 @@ macro_rules! or {
 #[macro_export]
 macro_rules! zero_or_more {
   ( $expr:expr ) => {
-    $crate::parser::Expression::ZeroOrMore(Box::new($expr))
+    $crate::parser::expression::Expression::ZeroOrMore(Box::new($expr))
   };
 }
 
@@ -202,7 +202,7 @@ macro_rules! zero_or_more {
 #[macro_export]
 macro_rules! one_or_more {
   ( $expr:expr ) => {
-    $crate::parser::Expression::OneOrMore(Box::new($expr))
+    $crate::parser::expression::Expression::OneOrMore(Box::new($expr))
   };
 }
 
@@ -217,7 +217,7 @@ macro_rules! one_or_more {
 #[macro_export]
 macro_rules! expr {
   ( $expr:expr ) => {
-    $crate::parser::Expression::NamedRule($expr)
+    $crate::parser::expression::Expression::NamedRule($expr)
   };
 }
 
@@ -232,7 +232,7 @@ macro_rules! expr {
 #[macro_export]
 macro_rules! rule {
   ( $name:expr => $expr:expr ) => {
-    $crate::parser::Rule {
+    $crate::parser::rule::Rule {
       name: $name,
       expression: $expr,
     }
@@ -253,7 +253,7 @@ macro_rules! rule {
 #[macro_export]
 macro_rules! grammar {
   ( $( $rule:expr ),* $(,)? ) => {
-    $crate::parser::Grammar::default()
+    $crate::parser::grammar::Grammar::default()
       $( .with($rule) )*
   };
 }
@@ -274,7 +274,7 @@ macro_rules! grammar {
 #[macro_export]
 macro_rules! parser {
   ( $grammar:expr ) => {
-    $crate::parser::Parser::new($grammar)
+    $crate::parser::peg::Parser::new($grammar)
   };
 }
 
@@ -294,14 +294,14 @@ macro_rules! parser {
 #[macro_export]
 macro_rules! parse {
   ( $grammar:expr, $input:expr, $start_rule:expr ) => {{
-    let mut parser = $crate::parser::Parser::new($grammar);
+    let mut parser = $crate::parser::peg::Parser::new($grammar);
     parser.parse($input, $start_rule)
   }};
 }
 
 #[cfg(test)]
 mod tests {
-  use crate::parser::{Expression, Grammar, Parser, Rule};
+  use crate::parser::{expression::Expression, grammar::Grammar, peg::Parser, rule::Rule};
 
   #[test]
   fn test_digit_macro() {

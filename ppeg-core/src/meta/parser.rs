@@ -67,8 +67,8 @@
 //! ```
 
 use crate::{
-  error::MetaError,
-  parser::{Expression, Grammar, Rule},
+  meta::error::MetaError,
+  parser::{expression::Expression, grammar::Grammar, rule::Rule},
 };
 
 #[derive(Debug, Clone, PartialEq, Copy)]

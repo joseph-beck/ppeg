@@ -4,7 +4,10 @@
 
 use std::collections::HashMap;
 
-use crate::{cst::CST, error::ParserError, parser::Context};
+use crate::{
+  cst::CST,
+  parser::{error::ParserError, context::Context},
+};
 
 /// When parsing a rule using Packrat parsing state must be tracked.
 /// This enum represents the possible states of parsing a rule.

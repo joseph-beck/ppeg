@@ -1,129 +1,18 @@
 //! PPEG Parser module holds the logic for parsing expressions defined in PEG grammars.
 //! It includes the definitions for expressions, rules, and grammars.
-//! The parser supports left recursive expressions using Packrat parsing techniques.
 
-use std::{collections::HashMap, vec};
+use std::vec;
 
 use crate::{
   cst::{CST, Label},
-  error::ParserError,
-  packrat::{Packrat, State},
+  parser::{
+    context::Context,
+    error::ParserError,
+    expression::Expression,
+    grammar::Grammar,
+    packrat::{Packrat, State},
+  },
 };
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Expression<'a> {
-  /// Matches what is an "empty" expression.
-  /// This means that it matches with what it is given,
-  /// consumes the output but gives no output.
-  /// Expression for `ε` symbol.
-  Empty,
-  /// Matches a single character.
-  /// For example, `A` matches the character A.
-  /// Expression for `C`.
-  Char(&'a str),
-  /// Matches a sequence of the given expressions.
-  /// For example, `AB` matches A followed by B.
-  /// Expression for `EE'`.
-  Sequence(Vec<Expression<'a>>),
-  /// Matches a or b occurrences of an expression.
-  /// For example, `A|B` matches either A or B.
-  /// Expression for `E|E'`. ?
-  Choice(Vec<Expression<'a>>),
-  /// Matches one or more occurrences of the expression.
-  /// For example, `A` matches one or more occurrences of A.
-  /// Expression for `EE*`.
-  OneOrMore(Box<Expression<'a>>),
-  /// Matches zero or more occurrences of the expression.
-  /// For example, `A` matches zero or more occurrences of A.
-  /// Expression for `E*`.
-  ZeroOrMore(Box<Expression<'a>>),
-  /// Matches a named rule.
-  /// Expression for `N`.
-  NamedRule(&'a str),
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Rule<'a> {
-  /// As this is a named rule, it needs a name!
-  pub name: &'a str,
-  /// Expression that applies to this rule.
-  /// For example Expression::OneAndOne.
-  pub expression: Expression<'a>,
-}
-
-impl<'a> Rule<'a> {
-  /// Create a new rule with the given name and expression.
-  pub fn new(name: &'a str, expression: Expression<'a>) -> Self {
-    Rule { name, expression }
-  }
-}
-
-#[derive(Clone, PartialEq)]
-pub struct Grammar<'a> {
-  /// Stores all of the rules of a grammar.
-  /// Mapping of rule name to the rule data.
-  /// Ruled data consists of the name and the expression.
-  rules: HashMap<&'a str, Rule<'a>>,
-}
-
-impl<'a> Grammar<'a> {
-  /// Creates a new instance of grammar with the given rules.
-  pub fn new(rules: HashMap<&'a str, Rule<'a>>) -> Self {
-    Grammar { rules }
-  }
-
-  /// Gets all rules stored in the grammar as a vector.
-  pub fn rules(&self) -> Vec<&Rule<'a>> {
-    self.rules.values().collect()
-  }
-}
-
-impl Default for Grammar<'_> {
-  /// Creates a default empty grammar.
-  fn default() -> Self {
-    Self::new(HashMap::new())
-  }
-}
-
-impl std::fmt::Debug for Grammar<'_> {
-  /// Debugger formatting.
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "Grammars: {:?}", self.rules)
-  }
-}
-
-impl<'a> Grammar<'a> {
-  /// Inserts a new grammar into the grammars lookup table.
-  /// Breaks down the grammar into its value and rule components.
-  pub fn insert(&mut self, rule: Rule<'a>) {
-    self.rules.insert(rule.name, rule);
-  }
-
-  /// Inserts a new rule into the grammar and returns an updated instance of the grammar.
-  pub fn with(mut self, rule: Rule<'a>) -> Self {
-    self.insert(rule);
-
-    self
-  }
-
-  /// Gets the the rule from the grammar lookup.
-  /// If the rule does not exist, returns None.
-  pub fn get(&self, name: &'a str) -> Option<Rule<'a>> {
-    self.rules.get(name).cloned()
-  }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Context<'a> {
-  pos: usize,
-  input: &'a str,
-}
-
-impl<'a> Context<'a> {
-  pub fn new(pos: usize, input: &'a str) -> Self {
-    Context { pos, input }
-  }
-}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Parser<'a> {
@@ -173,6 +62,14 @@ impl<'a> Parser<'a> {
       Expression::Char(char) => self.char(context, char),
       Expression::Sequence(exprs) => self.sequence(context, exprs),
       Expression::Choice(exprs) => self.choice(context, exprs),
+      Expression::Not(_expr) => Err(ParserError::NotImplemented {
+        position: context.pos,
+        name: "not",
+      }),
+      Expression::Optional(_expr) => Err(ParserError::NotImplemented {
+        position: context.pos,
+        name: "optional",
+      }),
       Expression::ZeroOrMore(expr) => self.zero_or_more(context, expr),
       Expression::OneOrMore(expr) => self.one_or_more(context, expr),
       Expression::NamedRule(n) => self.named_rule(context, n),
@@ -428,41 +325,10 @@ impl<'a> Default for Parser<'a> {
   }
 }
 
-// Unit tests Grammar struct.
 #[cfg(test)]
-mod grammar_tests {
-  use super::*;
+mod tests {
+  use crate::parser::rule::Rule;
 
-  #[test]
-  fn test_grammar_insert() {
-    let mut grammar = Grammar::default();
-    grammar.insert(Rule::new("e", Expression::Empty));
-
-    assert_eq!(grammar.rules.get("e"), Some(&Rule::new("e", Expression::Empty)));
-    assert_eq!(grammar.rules.get("b"), None);
-  }
-
-  #[test]
-  fn test_grammar_with() {
-    let grammar = Grammar::default().with(Rule::new("e", Expression::Empty));
-
-    assert_eq!(grammar.rules.get("e"), Some(&Rule::new("e", Expression::Empty)));
-    assert_eq!(grammar.rules.get("b"), None);
-  }
-
-  #[test]
-  fn test_grammar_get() {
-    let mut grammar = Grammar::default();
-    grammar.rules.insert("e", Rule::new("e", Expression::Empty));
-
-    assert_eq!(grammar.get("e"), Some(Rule::new("e", Expression::Empty)));
-    assert_eq!(grammar.get("b"), None);
-  }
-}
-
-// Unit tests Parser struct.
-#[cfg(test)]
-mod parser_tests {
   use super::*;
 
   #[test]

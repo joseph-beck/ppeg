@@ -1,4 +1,4 @@
-use ppeg_core::{cst, meta::Meta, parser::Parser};
+use ppeg_core::{cst, meta::parser::Meta, parser::peg::Parser};
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
