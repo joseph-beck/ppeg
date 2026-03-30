@@ -1,7 +1,31 @@
-use std::collections::HashMap;
+//! Grammar is a collection of rules that define the structure of the parser.
+//! Uses a hash map to store the rules, using the name as the key and the rule as the value.
+//!
+//! ## Example
+//! ```rust
+//! use ppeg_core::prelude::*;
+//!
+//! // Create a grammar and insert the rule into it using with.
+//! let grammar = Grammar::new().with(Rule::new(
+//!   "ab",
+//!   Expression::Sequence(vec![Expression::Char("a"), Expression::Char("b")]),
+//! ));
+//!
+//! // Or create a mutable grammar and insert the rule into it using insert.
+//! let mut grammar = Grammar::new();
+//! grammar.insert(Rule::new(
+//!   "ab",
+//!   Expression::Sequence(vec![Expression::Char("a"), Expression::Char("b")]),
+//! ));
+//! ```
+
+use std::{collections::HashMap, fmt};
 
 use crate::parser::rule::Rule;
 
+/// Grammar is a collection of rules that define the structure of the parser.
+/// Uses a hash map to store the rules, using the name as the key and the rule as the value.
+/// This means that rule lookups during parsing are O(1).
 #[derive(Clone, PartialEq)]
 pub struct Grammar<'a> {
   /// Stores all of the rules of a grammar.
@@ -20,23 +44,7 @@ impl<'a> Grammar<'a> {
   pub fn rules(&self) -> Vec<&Rule<'a>> {
     self.rules.values().collect()
   }
-}
 
-impl Default for Grammar<'_> {
-  /// Creates a default empty grammar.
-  fn default() -> Self {
-    Self::new(HashMap::new())
-  }
-}
-
-impl std::fmt::Debug for Grammar<'_> {
-  /// Debugger formatting.
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "Grammars: {:?}", self.rules)
-  }
-}
-
-impl<'a> Grammar<'a> {
   /// Inserts a new grammar into the grammars lookup table.
   /// Breaks down the grammar into its value and rule components.
   pub fn insert(&mut self, rule: Rule<'a>) {
@@ -57,11 +65,31 @@ impl<'a> Grammar<'a> {
   }
 }
 
+impl Default for Grammar<'_> {
+  /// Creates a default empty grammar.
+  fn default() -> Self {
+    Self::new(HashMap::new())
+  }
+}
+
+impl fmt::Debug for Grammar<'_> {
+  /// Debugger formatting.
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "Grammars: {:?}", self.rules)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use crate::parser::{expression::Expression, rule::Rule};
 
   use super::*;
+
+  #[test]
+  fn test_grammar_new() {
+    let grammar = Grammar::new(HashMap::new());
+    assert!(grammar.rules.is_empty());
+  }
 
   #[test]
   fn test_grammar_insert() {
@@ -87,5 +115,11 @@ mod tests {
 
     assert_eq!(grammar.get("e"), Some(Rule::new("e", Expression::Empty)));
     assert_eq!(grammar.get("b"), None);
+  }
+
+  #[test]
+  fn test_grammar_default() {
+    let grammar = Grammar::default();
+    assert!(grammar.rules.is_empty());
   }
 }
