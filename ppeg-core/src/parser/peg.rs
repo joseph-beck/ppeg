@@ -507,6 +507,28 @@ mod tests {
   }
 
   #[test]
+  fn test_parser_parse_not() {
+    let mut grammar = Grammar::default();
+    grammar.insert(Rule::new("rule", Expression::Not(Box::new(Expression::Char("a")))));
+
+    let mut parser = Parser::new(grammar);
+    let result = parser.parse(&mut "a", "rule");
+
+    assert!(result.is_err());
+  }
+
+  #[test]
+  fn test_parser_parse_optional() {
+    let mut grammar = Grammar::default();
+    grammar.insert(Rule::new("rule", Expression::Optional(Box::new(Expression::Char("a")))));
+
+    let mut parser = Parser::new(grammar);
+    let result = parser.parse(&mut "a", "rule");
+
+    assert!(result.is_err());
+  }
+
+  #[test]
   fn test_parser_parse_zero_or_more_success() {
     let mut grammar = Grammar::default();
     grammar.insert(Rule::new(
