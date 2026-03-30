@@ -59,7 +59,7 @@ pub fn get_rules(grammar: &str) -> Result<JsValue, JsValue> {
     .generate(grammar)
     .map_err(|e| JsValue::from_str(&format!("grammar: error generating grammar {}", e)))?;
 
-  let rules: Vec<String> = grammar.rules().iter().map(|rule| rule.name.to_string()).collect();
+  let rules: Vec<String> = grammar.rules().iter().map(|rule| rule.name().to_string()).collect();
 
   serde_wasm_bindgen::to_value(&rules).map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
 }
