@@ -232,10 +232,7 @@ macro_rules! expr {
 #[macro_export]
 macro_rules! rule {
   ( $name:expr => $expr:expr ) => {
-    $crate::parser::rule::Rule {
-      name: $name,
-      expression: $expr,
-    }
+    $crate::parser::rule::Rule::new($name, $expr)
   };
 }
 
@@ -456,10 +453,10 @@ mod tests {
 
     assert_eq!(
       rule,
-      Rule {
-        name: "a_and_b",
-        expression: Expression::Sequence(vec![Expression::Char("a"), Expression::Char("b")])
-      }
+      Rule::new(
+        "a_and_b",
+        Expression::Sequence(vec![Expression::Char("a"), Expression::Char("b")])
+      )
     );
   }
 

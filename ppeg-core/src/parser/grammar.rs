@@ -40,7 +40,7 @@ impl<'a> Grammar<'a> {
   /// Inserts a new grammar into the grammars lookup table.
   /// Breaks down the grammar into its value and rule components.
   pub fn insert(&mut self, rule: Rule<'a>) {
-    self.rules.insert(rule.name, rule);
+    self.rules.insert(rule.name(), rule);
   }
 
   /// Inserts a new rule into the grammar and returns an updated instance of the grammar.
