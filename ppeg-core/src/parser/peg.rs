@@ -96,12 +96,21 @@ impl<'a> Parser<'a> {
       ctx.pos += char.len();
 
       // Reset choice depth and history as we have been productive.
-      ctx.choice_depth = 0;
+      ctx.reset_choice_depth();
       self.history.clear();
+
+      println!("woo {:?} {:?}", char, ctx.clone());
 
       Ok((ctx, Some(cst)))
     } else {
-      Err(ParserError::Unknown)
+      Err(ParserError::Unknown {
+        message: format!(
+          "failed to match char {:?} at position {}: remaining input {:?}",
+          char,
+          context.pos,
+          &context.input[context.pos..]
+        ),
+      })
     }
   }
 
@@ -137,7 +146,11 @@ impl<'a> Parser<'a> {
     expressions: &Vec<Expression<'a>>,
   ) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
     for (i, expr) in expressions.iter().enumerate() {
-      let node = Node::Ch(i, context.choice_depth);
+      let mut ctx = context.clone();
+
+      let node = Node::Ch(i, ctx.choice_depth(expr.clone()));
+
+      println!("{:?}, {:?}", node, self.history);
 
       if !self.history.prod(node.clone()) {
         continue;
@@ -145,7 +158,7 @@ impl<'a> Parser<'a> {
 
       self.history.add(node.clone());
 
-      match self.match_success(context.clone(), expr) {
+      match self.match_success(ctx.clone(), expr) {
         Ok((c, cst)) => match cst {
           Some(n) => {
             return Ok((
@@ -158,7 +171,11 @@ impl<'a> Parser<'a> {
         Err(_) => continue,
       }
     }
-    Err(ParserError::Unknown)
+    Err(ParserError::FailedToMatch {
+      position: context.pos,
+      input: context.input,
+      name: "choice",
+    })
   }
 
   /// Parses zero or more occurrences of the given expression from the input.

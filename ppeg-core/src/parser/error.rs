@@ -29,7 +29,7 @@ pub enum ParserError<'a> {
   /// Occurs when a feature is not implemented.
   NotImplemented { position: usize, name: &'a str },
   /// Catch all unknown error.
-  Unknown,
+  Unknown { message: String },
 }
 
 impl fmt::Display for ParserError<'_> {
@@ -71,7 +71,7 @@ impl fmt::Display for ParserError<'_> {
       ParserError::NotImplemented { position, name } => {
         write!(f, "Error: feature '{}' not implemented at position {}", name, position)
       }
-      ParserError::Unknown => write!(f, "Error: unknown"),
+      ParserError::Unknown { message } => write!(f, "Error: unknown - {}", message),
     }
   }
 }
