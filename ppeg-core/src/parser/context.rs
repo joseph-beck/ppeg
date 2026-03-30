@@ -9,7 +9,8 @@ pub struct Context<'a> {
   pub pos: usize,
   /// The input string being parsed.
   pub input: &'a str,
-
+  /// Stores the choices made during parsing.
+  /// Helps track the current choice depth of the context.
   pub choices: Vec<Expression<'a>>,
 }
 
@@ -25,15 +26,16 @@ impl<'a> Context<'a> {
   }
 
   pub fn choice_depth(&mut self, choice: Expression<'a>) -> usize {
-    if self.choices.contains(&choice) {
-      self.choices.iter().position(|c| c == &choice).unwrap_or(0)
-    } else {
-      self.choices.push(choice);
-      self.choices.len()
+    match self.choices.contains(&choice) {
+      true => self.choices.iter().position(|c| c == &choice).unwrap_or(0),
+      false => {
+        self.choices.push(choice);
+        self.choices.len() - 1
+      }
     }
   }
 
-  pub fn reset_choice_depth(&mut self) {
+  pub fn reset_choices(&mut self) {
     self.choices.clear();
   }
 }
@@ -49,5 +51,27 @@ mod tests {
     assert_eq!(context.pos, 0);
     assert_eq!(context.input, "test");
     assert_eq!(context.choices, Vec::new());
+  }
+
+  #[test]
+  fn test_context_choice_depth() {
+    let mut context = Context::new(0, "test", 0);
+
+    let choice = Expression::Choice(vec![Expression::Char("a"), Expression::Char("b")]);
+
+    assert_eq!(context.choice_depth(choice.clone()), 0);
+  }
+
+  #[test]
+  fn test_context_reset_choices() {
+    let mut context = Context::new(0, "test", 0);
+
+    let choice = Expression::Choice(vec![Expression::Char("a"), Expression::Char("b")]);
+
+    context.choice_depth(choice.clone());
+    assert_eq!(context.choices.len(), 1);
+
+    context.reset_choices();
+    assert_eq!(context.choices.len(), 0);
   }
 }

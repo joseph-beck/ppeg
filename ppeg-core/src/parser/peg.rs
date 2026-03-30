@@ -95,11 +95,13 @@ impl<'a> Parser<'a> {
       cst.add(Some(CST::new(char, vec![], None)));
       ctx.pos += char.len();
 
+      println!("before reset {:?} {:?}", char, ctx.clone());
+
       // Reset choice depth and history as we have been productive.
-      ctx.reset_choice_depth();
+      ctx.reset_choices();
       self.history.clear();
 
-      println!("woo {:?} {:?}", char, ctx.clone());
+      println!("after reset {:?} {:?}", char, ctx.clone());
 
       Ok((ctx, Some(cst)))
     } else {
