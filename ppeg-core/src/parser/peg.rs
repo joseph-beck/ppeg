@@ -50,8 +50,16 @@ pub struct Parser<'a> {
   history: History<'a>,
 }
 
+impl<'a> Default for Parser<'a> {
+  /// Creates a default parser with an empty grammar input.
+  fn default() -> Self {
+    Parser::new(Grammar::default())
+  }
+}
+
 impl<'a> Parser<'a> {
   /// Creates a new instance of the parser with the given grammar.
+  /// Packrat and History are created and begin empty.
   pub fn new(grammar: Grammar<'a>) -> Self {
     Parser {
       grammar,
@@ -68,7 +76,9 @@ impl<'a> Parser<'a> {
     input: &mut &'a str,
     rule_name: &'a str,
   ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
+    // Creates a context that starts at the position 0 with the input.
     let context = Context::new(0, input, 0, rule_name);
+
     // Parse must always start with a named rule.
     // Simply call named rule here.
     match self.named_rule(context, rule_name) {
@@ -89,20 +99,16 @@ impl<'a> Parser<'a> {
       Expression::Char(char) => self.char(context, char),
       Expression::Sequence(exprs) => self.sequence(context, exprs),
       Expression::Choice(exprs) => self.choice(context, exprs),
-      Expression::Not(_expr) => Err(ParserError::NotImplemented {
-        position: context.pos,
-        name: "not",
-      }),
-      Expression::Optional(_expr) => Err(ParserError::NotImplemented {
-        position: context.pos,
-        name: "optional",
-      }),
+      Expression::Not(expr) => self.not(context, expr),
+      Expression::Optional(expr) => self.optional(context, expr),
       Expression::ZeroOrMore(expr) => self.zero_or_more(context, expr),
       Expression::OneOrMore(expr) => self.one_or_more(context, expr),
       Expression::NamedRule(n) => self.named_rule(context, n),
     }
   }
 
+  /// Parses an empty expression, which always succeeds without consuming any input.
+  /// Returns the same context and None for the CST.
   fn empty(&mut self, context: Context<'a>) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
     Ok((context, None))
   }
@@ -198,6 +204,48 @@ impl<'a> Parser<'a> {
       input: context.input,
       name: "choice",
     })
+  }
+
+  /// Parses a not expression.
+  /// In this case the expression must fail to match for the parse to be successful.
+  /// If the expression matches and advances the input, returns a `ParserError::FailedToMatch`.
+  fn not(
+    &mut self,
+    context: Context<'a>,
+    expression: &Expression<'a>,
+  ) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
+    match self.match_success(context.clone(), expression) {
+      Ok(_) => Err(ParserError::FailedToMatch {
+        position: context.pos,
+        input: context.input,
+        name: "not",
+      }),
+      Err(_) => Ok((
+        context,
+        Some(CST::new("not", vec![], Some(Label::default().with_hidden(true)))),
+      )),
+    }
+  }
+
+  /// Parses an optional expression.
+  /// In this case the expression may match or fail to match, but cases are successful.
+  fn optional(
+    &mut self,
+    context: Context<'a>,
+    expression: &Expression<'a>,
+  ) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
+    match self.match_success(context.clone(), expression) {
+      Ok((ctx, cst)) => {
+        let mut node = CST::new("optional", vec![], Some(Label::default().with_hidden(true)));
+
+        if let Some(child) = cst {
+          node.add(Some(child));
+        }
+
+        Ok((ctx, Some(node)))
+      }
+      Err(_) => Ok((context, None)),
+    }
   }
 
   /// Parses zero or more occurrences of the given expression from the input.
@@ -320,13 +368,6 @@ impl<'a> Parser<'a> {
         position: context.pos,
       }),
     }
-  }
-}
-
-impl<'a> Default for Parser<'a> {
-  /// Creates a default parser with an empty grammar input.
-  fn default() -> Self {
-    Parser::new(Grammar::default())
   }
 }
 
@@ -529,7 +570,25 @@ mod tests {
   }
 
   #[test]
-  fn test_parser_parse_not() {
+  fn test_parser_parse_not_success() {
+    let mut grammar = Grammar::default();
+    grammar.insert(Rule::new("rule", Expression::Not(Box::new(Expression::Char("a")))));
+
+    let mut parser = Parser::new(grammar);
+    let (remaining, cst) = parser.parse(&mut "b", "rule").unwrap();
+
+    assert_eq!(remaining, "b");
+    match cst {
+      Some(mut node) => {
+        assert_eq!(node.get(), "rule");
+        assert_eq!(node.child(0).unwrap().get(), "not");
+      }
+      None => assert!(false),
+    }
+  }
+
+  #[test]
+  fn test_parser_parse_not_fail() {
     let mut grammar = Grammar::default();
     grammar.insert(Rule::new("rule", Expression::Not(Box::new(Expression::Char("a")))));
 
@@ -540,14 +599,39 @@ mod tests {
   }
 
   #[test]
-  fn test_parser_parse_optional() {
+  fn test_parser_parse_optional_success() {
     let mut grammar = Grammar::default();
     grammar.insert(Rule::new("rule", Expression::Optional(Box::new(Expression::Char("a")))));
 
     let mut parser = Parser::new(grammar);
-    let result = parser.parse(&mut "a", "rule");
+    let (remaining, cst) = parser.parse(&mut "a", "rule").unwrap();
 
-    assert!(result.is_err());
+    assert!(remaining.is_empty());
+    match cst {
+      Some(mut node) => {
+        assert_eq!(node.get(), "rule");
+        assert_eq!(node.child(0).unwrap().get(), "optional");
+      }
+      None => assert!(false),
+    }
+  }
+
+  #[test]
+  fn test_parser_parse_optional_fail() {
+    // Optional should never fail, but this is the case it matches nothing and returns None as the CST.
+    let mut grammar = Grammar::default();
+    grammar.insert(Rule::new("rule", Expression::Optional(Box::new(Expression::Char("a")))));
+
+    let mut parser = Parser::new(grammar);
+    let (remaining, cst) = parser.parse(&mut "b", "rule").unwrap();
+
+    assert_eq!(remaining, "b");
+    match cst {
+      Some(node) => {
+        assert_eq!(node.get(), "rule");
+      }
+      None => assert!(false),
+    }
   }
 
   #[test]
@@ -753,10 +837,7 @@ mod tests {
     let (remaining, cst) = parser.parse(&mut "1+2+3", "rule_expr").unwrap();
 
     assert!(remaining.is_empty());
-    match cst {
-      Some(_) => assert!(true),
-      None => assert!(false),
-    }
+    assert!(cst.is_some());
   }
 
   #[test]
@@ -787,10 +868,7 @@ mod tests {
     let (remaining, cst) = parser.parse(&mut "1+2+3", "rule_expr").unwrap();
 
     assert!(remaining.is_empty());
-    match cst {
-      Some(_) => assert!(true),
-      None => assert!(false),
-    }
+    assert!(cst.is_some());
   }
 
   #[test]
@@ -832,10 +910,7 @@ mod tests {
     let (remaining, cst) = parser.parse(&mut "1*2+3*1", "rule_expr").unwrap();
 
     assert!(remaining.is_empty());
-    match cst {
-      Some(_) => assert!(true),
-      None => assert!(false),
-    }
+    assert!(cst.is_some());
   }
 
   #[test]
@@ -871,9 +946,69 @@ mod tests {
     let (remaining, cst) = parser.parse(&mut "1+2+3", "rule_expr").unwrap();
 
     assert!(remaining.is_empty());
-    match cst {
-      Some(_) => assert!(true),
-      None => assert!(false),
-    }
+    assert!(cst.is_some());
+  }
+
+  #[test]
+  fn test_parser_parse_direct_left_recursion_base_case() {
+    // This is more a of a sanity check, ensuring it defaults to the base case correctly
+    let rule_expr = Rule::new(
+      "rule_expr",
+      Expression::Choice(vec![
+        Expression::Sequence(vec![
+          Expression::NamedRule("rule_expr"),
+          Expression::Char("+"),
+          Expression::NamedRule("rule_expr"),
+        ]),
+        Expression::NamedRule("rule_num"),
+      ]),
+    );
+    let rule_num = Rule::new(
+      "rule_num",
+      Expression::OneOrMore(Box::new(Expression::Choice(vec![
+        Expression::Char("1"),
+        Expression::Char("2"),
+        Expression::Char("3"),
+      ]))),
+    );
+
+    let grammar = Grammar::default().with(rule_expr).with(rule_num);
+
+    let mut parser = Parser::new(grammar);
+    let (remaining, cst) = parser.parse(&mut "1+4", "rule_expr").unwrap();
+
+    assert_eq!(remaining, "+4");
+    assert!(cst.is_some());
+  }
+
+  #[test]
+  fn test_parser_parse_direct_left_recursion_with_fail() {
+    // Another sanity check, ensuring it completely fails on invalid input.
+    let rule_expr = Rule::new(
+      "rule_expr",
+      Expression::Choice(vec![
+        Expression::Sequence(vec![
+          Expression::NamedRule("rule_expr"),
+          Expression::Char("+"),
+          Expression::NamedRule("rule_expr"),
+        ]),
+        Expression::NamedRule("rule_num"),
+      ]),
+    );
+    let rule_num = Rule::new(
+      "rule_num",
+      Expression::OneOrMore(Box::new(Expression::Choice(vec![
+        Expression::Char("1"),
+        Expression::Char("2"),
+        Expression::Char("3"),
+      ]))),
+    );
+
+    let grammar = Grammar::default().with(rule_expr).with(rule_num);
+
+    let mut parser = Parser::new(grammar);
+    let result = parser.parse(&mut "4+1", "rule_expr");
+
+    assert!(result.is_err());
   }
 }
