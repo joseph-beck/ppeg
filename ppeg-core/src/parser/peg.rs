@@ -126,11 +126,9 @@ impl<'a> Parser<'a> {
     let mut cst = CST::new("sequence", vec![], Some(Label::default().with_hidden(true)));
     let mut ctx = context.clone();
 
-    for (i, expr) in expressions.iter().enumerate() {
+    for expr in expressions {
       let (new_ctx, node) = self.match_success(ctx, expr)?;
       ctx = new_ctx;
-
-      self.history.push(Artifact::Seq(i));
 
       cst.add(node);
     }
@@ -158,7 +156,7 @@ impl<'a> Parser<'a> {
         continue;
       }
 
-      self.history.push(node.clone());
+      self.history.preserve(node.clone());
 
       match self.match_success(ctx.clone(), expr) {
         Ok((c, cst)) => match cst {
@@ -271,8 +269,6 @@ impl<'a> Parser<'a> {
         // Every time we enter a named rule we reset the choice depth and update the current rule.
         ctx.current_choice_depth = 0;
         ctx.current_rule_name = name;
-
-        self.history.push(Artifact::Nm(name));
 
         match self.match_success(ctx.clone(), rule.expression()) {
           Ok((c, cst)) => {
