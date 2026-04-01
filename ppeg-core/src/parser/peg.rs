@@ -13,6 +13,8 @@ use crate::parser::{
   packrat::Packrat,
 };
 
+/// Parser, a PEG parser, that parses the input using the grammar and its rule.
+/// Using the grammar, packrat and history it can parse left recursive expressions.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Parser<'a> {
   /// Grammars lookup table.
@@ -147,16 +149,20 @@ impl<'a> Parser<'a> {
     let mut ctx = context.clone();
     ctx.current_choice_depth += 1;
 
+    let snapshot = self.history.clone();
+
     for (i, expr) in expressions.iter().enumerate() {
-      let node = Artifact::Ch(i, ctx.current_choice_depth, ctx.current_rule_name);
+      self.history = snapshot.clone();
 
-      println!("{:?}, {:?}", node, self.history);
+      let artifact = Artifact::Ch(i, ctx.current_choice_depth, ctx.current_rule_name);
 
-      if !self.history.prod(node.clone()) {
+      println!("{:?}, {:?}", artifact, self.history);
+
+      if !self.history.prod(artifact.clone()) {
         continue;
       }
 
-      self.history.preserve(node.clone());
+      self.history.preserve(artifact.clone());
 
       match self.match_success(ctx.clone(), expr) {
         Ok((c, cst)) => match cst {
@@ -251,6 +257,9 @@ impl<'a> Parser<'a> {
 
   /// Parses a named rule from the grammar.
   /// Looks up the rule by name and applies its expression to the input.
+  /// First uses the Packrat memo to check if the rule has already been parsed,
+  /// if it has that is returned.
+  /// Otherwise the rule is parsed, with its result being stored in the Packrat memo table.
   /// If the rule is not found, returns a `ParserError::RuleNotFound`.
   fn named_rule(
     &mut self,
@@ -805,6 +814,45 @@ mod tests {
 
     let mut parser = Parser::new(grammar);
     let (remaining, cst) = parser.parse(&mut "1*2+3*1", "rule_expr").unwrap();
+
+    assert!(remaining.is_empty());
+    match cst {
+      Some(_) => assert!(true),
+      None => assert!(false),
+    }
+  }
+
+  #[test]
+  fn test_parser_parse_direct_left_recursion_more_choices() {
+    let rule_expr = Rule::new(
+      "rule_expr",
+      Expression::Choice(vec![
+        Expression::Sequence(vec![
+          Expression::NamedRule("rule_expr"),
+          Expression::Char("*"),
+          Expression::NamedRule("rule_expr"),
+        ]),
+        Expression::Sequence(vec![
+          Expression::NamedRule("rule_expr"),
+          Expression::Char("+"),
+          Expression::NamedRule("rule_expr"),
+        ]),
+        Expression::NamedRule("rule_num"),
+      ]),
+    );
+    let rule_num = Rule::new(
+      "rule_num",
+      Expression::OneOrMore(Box::new(Expression::Choice(vec![
+        Expression::Char("1"),
+        Expression::Char("2"),
+        Expression::Char("3"),
+      ]))),
+    );
+
+    let grammar = Grammar::default().with(rule_expr).with(rule_num);
+
+    let mut parser = Parser::new(grammar);
+    let (remaining, cst) = parser.parse(&mut "1+2+3", "rule_expr").unwrap();
 
     assert!(remaining.is_empty());
     match cst {
