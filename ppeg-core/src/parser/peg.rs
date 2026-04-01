@@ -97,12 +97,8 @@ impl<'a> Parser<'a> {
       cst.add(Some(CST::new(char, vec![], None)));
       ctx.pos += char.len();
 
-      println!("before reset {:?} {:?}", char, ctx.clone());
-
       // Reset choice depth and history as we have been productive.
       self.history.clear();
-
-      println!("after reset {:?} {:?}", char, ctx.clone());
 
       Ok((ctx, Some(cst)))
     } else {
@@ -155,8 +151,6 @@ impl<'a> Parser<'a> {
       self.history = snapshot.clone();
 
       let artifact = Artifact::Ch(i, ctx.current_choice_depth, ctx.current_rule_name);
-
-      println!("{:?}, {:?}", artifact, self.history);
 
       if !self.history.prod(artifact.clone()) {
         continue;
