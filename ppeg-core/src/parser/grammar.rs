@@ -6,13 +6,13 @@
 //! use ppeg_core::prelude::*;
 //!
 //! // Create a grammar and insert the rule into it using with.
-//! let grammar = Grammar::new().with(Rule::new(
+//! let grammar = Grammar::default().with(Rule::new(
 //!   "ab",
 //!   Expression::Sequence(vec![Expression::Char("a"), Expression::Char("b")]),
 //! ));
 //!
 //! // Or create a mutable grammar and insert the rule into it using insert.
-//! let mut grammar = Grammar::new();
+//! let mut grammar = Grammar::default();
 //! grammar.insert(Rule::new(
 //!   "ab",
 //!   Expression::Sequence(vec![Expression::Char("a"), Expression::Char("b")]),

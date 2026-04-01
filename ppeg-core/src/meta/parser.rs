@@ -63,7 +63,7 @@
 //!
 //! ## Usage
 //! ```rust
-//! use ppeg_core::meta::Meta;
+//! use ppeg_core::prelude::*;
 //! use ppeg_core::parse;
 //!
 //! let grammar = Meta::new().generate("

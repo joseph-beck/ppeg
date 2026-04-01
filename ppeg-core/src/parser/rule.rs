@@ -4,13 +4,13 @@
 //!
 //! ## Example
 //! ```rust
-//! use ppeg_core::{rule::Rule, expression::Expression};
+//! use ppeg_core::prelude::*;
 //!
 //! // Create the rule "ab" that matches the sequence "a" followed by "b".
 //! let rule = Rule::new(
 //!   "ab",
 //!  Expression::Sequence(vec![Expression::Char("a"), Expression::Char("b")]),
-//! )
+//! );
 //!
 //! // Use a named expression to reference the rule in another rule.
 //! let named_expr = Expression::NamedRule("ab");
