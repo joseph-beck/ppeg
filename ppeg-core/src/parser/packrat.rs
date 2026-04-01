@@ -5,6 +5,15 @@
 //! ## Example
 //! ```rust
 //! use ppeg_core::prelude::*;
+//!
+//! // Create new Packrat instance.
+//! let mut packrat = Packrat::new();
+//!
+//! // Insert a memoized result for a given (rule, input) pair.
+//! packrat.insert(("rule", 0), Ok((Context::new(0, "input", 0, "rule"), None)));
+//!
+//! // Get a memoized result for a given (rule, input) pair.
+//! let result = packrat.get(("rule", 0));
 //! ```
 
 use std::collections::HashMap;

@@ -1,6 +1,9 @@
 //! ## Example
 //! ```rust
 //! use ppeg_core::prelude::*;
+//!
+//! let error = ParserError::FailedToMatch { position: 5, input: "abc", name: "rule1" };
+//! println!("{}", error);
 //! ```
 
 use std::fmt;

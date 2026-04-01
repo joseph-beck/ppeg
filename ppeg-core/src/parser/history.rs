@@ -1,3 +1,12 @@
+//! History enables the parser to parse left recursive expressions.
+//! This uses the history of artifacts to determine if using a certain choice, via prod,
+//! is productive or not.
+//! When a choice is not productive, the parser can choose to fail and explore a different branch of the expression.
+//!
+//! Artifacts are bits of information that are stored in the history, this is an enum.
+//! The Ch artifact is used to store information about choices,
+//! using the choice index, choice depth and the rule name that invoked the choice.
+
 /// Artifacts enum, these are stored in the History.
 /// Ch is a Choice artifact.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -6,6 +15,7 @@ pub enum Artifact<'a> {
   /// choice index, choice depth and the rule name that invoked the choice.
   /// The rule that invoked the choice may not have directly invoked the choice,
   /// but it is the closest rule that invoked the choice.
+  /// (choice_index, choice_depth, rule_name)
   Ch(usize, usize, &'a str),
 }
 

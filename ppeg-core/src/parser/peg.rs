@@ -1,5 +1,27 @@
-//! PPEG Parser module holds the logic for parsing expressions defined in PEG grammars.
-//! It includes the definitions for expressions, rules, and grammars.
+//! PEG module holds the main logic for parsing using PEGs.
+//! The parser takes in an input, grammar and a starting rule and
+//! returns the remaining input and the CST generated from parsing the input.
+//!
+//! This implementation of PEG uses Packrat parsing to avoid super linear parse times.
+//! Packrat stores previous results of parsing named rules in a memoization table.
+//! The parser also uses History to store the choices made by the parser,
+//! using history the parser can parse left recursive expressions by determining if a choice is productive or not.
+//!
+//! ## Example
+//! ```rust
+//! use ppeg_core::prelude::*;
+//!
+//! // Create a grammar with a single rule "ab" that matches the sequence "a" followed by "b".
+//! let mut grammar = Grammar::default();
+//! grammar.insert(Rule::new(
+//!   "ab",
+//!   Expression::Sequence(vec![Expression::Char("a"), Expression::Char("b")]),
+//! ));
+//!
+//! // Parse the input "ab" using the rule "ab" as the starting rule.
+//! let mut parser = Parser::new(grammar);
+//! let (remaining, cst) = parser.parse(&mut "ab", "ab").unwrap();
+//! ```
 
 use std::vec;
 

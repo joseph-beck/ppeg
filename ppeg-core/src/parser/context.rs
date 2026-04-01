@@ -1,3 +1,7 @@
+//! Parser contexts are used to store and transfer state during parsing.
+//! A Context holds the current position and input being parsed.
+//! For productive PEG parsing it also stores the current choice depth and rule being parsed.
+
 /// Context is used for parsing expressions and storing state during parsing.
 /// It holds the current position and the input string being parsed.
 /// Throughout parsing the context is updated to reflect the current parser state.

@@ -1,6 +1,9 @@
 //! ## Example
 //! ```rust
 //! use ppeg_core::prelude::*;
+//!
+//! let choice = Expression::Choice(vec![Expression::Char("A"), Expression::Char("B")]);
+//! let named = Expression::NamedRule("expr_x");
 //! ```
 
 /// Expression

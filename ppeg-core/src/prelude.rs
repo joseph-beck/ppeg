@@ -12,6 +12,7 @@ pub use crate::parser::{
   error::ParserError,
   expression::Expression,
   grammar::Grammar,
+  packrat::Packrat,
   peg::Parser,
   rule::Rule,
 };
