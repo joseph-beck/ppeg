@@ -3,7 +3,10 @@
 //! use ppeg_core::prelude::*;
 //! ```
 
-use std::fmt;
+use std::{
+  error::Error,
+  fmt::{Display, Formatter, Result},
+};
 
 // MetaError
 #[derive(Debug, Clone, PartialEq)]
@@ -18,8 +21,8 @@ pub enum MetaError {
   Unknown,
 }
 
-impl fmt::Display for MetaError {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Display for MetaError {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     match self {
       MetaError::InvalidInput { position, input } => {
         write!(f, "Error: invalid input at position {}: '{}'", position, input)
@@ -38,3 +41,5 @@ impl fmt::Display for MetaError {
     }
   }
 }
+
+impl Error for MetaError {}

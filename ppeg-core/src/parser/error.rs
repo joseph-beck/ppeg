@@ -6,7 +6,10 @@
 //! println!("{}", error);
 //! ```
 
-use std::fmt;
+use std::{
+  error::Error,
+  fmt::{Display, Formatter, Result},
+};
 
 /// ParserError
 #[derive(Debug, Clone, PartialEq)]
@@ -35,8 +38,8 @@ pub enum ParserError<'a> {
   Unknown { message: String },
 }
 
-impl fmt::Display for ParserError<'_> {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Display for ParserError<'_> {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     match self {
       ParserError::FailedToMatch { position, input, name } => write!(
         f,
@@ -78,3 +81,5 @@ impl fmt::Display for ParserError<'_> {
     }
   }
 }
+
+impl Error for ParserError<'_> {}
