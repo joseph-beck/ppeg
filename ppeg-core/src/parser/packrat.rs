@@ -70,19 +70,19 @@ mod tests {
     let mut packrat = Packrat::new();
     packrat
       .memo_table
-      .insert(("a", 0), Ok((Context::new(0, "input"), None)));
+      .insert(("a", 0), Ok((Context::new(0, "input", 0, "x"), None)));
 
     let result = packrat.get(("a", 0));
-    assert_eq!(result, Some(&Ok((Context::new(0, "input"), None))));
+    assert_eq!(result, Some(&Ok((Context::new(0, "input", 0, "x"), None))));
   }
 
   #[test]
   fn test_packrat_insert() {
     let mut packrat = Packrat::new();
-    packrat.insert(("a", 0), Ok((Context::new(0, "input"), None)));
+    packrat.insert(("a", 0), Ok((Context::new(0, "input", 0, "x"), None)));
 
     let result = packrat.memo_table.get(&("a", 0));
-    assert_eq!(result, Some(&Ok((Context::new(0, "input"), None))));
+    assert_eq!(result, Some(&Ok((Context::new(0, "input", 0, "x"), None))));
   }
 
   #[test]
@@ -90,10 +90,10 @@ mod tests {
     let mut packrat = Packrat::new();
     packrat
       .memo_table
-      .insert(("a", 0), Ok((Context::new(0, "input"), None)));
+      .insert(("a", 0), Ok((Context::new(0, "input", 0, "x"), None)));
 
     let result = packrat.memo_table.get(&("a", 0));
-    assert_eq!(result, Some(&Ok((Context::new(0, "input"), None))));
+    assert_eq!(result, Some(&Ok((Context::new(0, "input", 0, "x"), None))));
 
     packrat.remove(("a", 0));
     let result = packrat.memo_table.get(&("a", 0));

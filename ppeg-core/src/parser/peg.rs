@@ -9,10 +9,12 @@ use crate::parser::{
   error::ParserError,
   expression::Expression,
   grammar::Grammar,
-  history::History,
+  history::{Artifact, History},
   packrat::Packrat,
 };
 
+/// Parser, a PEG parser, that parses the input using the grammar and its rule.
+/// Using the grammar, packrat and history it can parse left recursive expressions.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Parser<'a> {
   /// Grammars lookup table.
@@ -44,7 +46,7 @@ impl<'a> Parser<'a> {
     input: &mut &'a str,
     rule_name: &'a str,
   ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
-    let context = Context::new(0, input);
+    let context = Context::new(0, input, 0, rule_name);
     // Parse must always start with a named rule.
     // Simply call named rule here.
     match self.named_rule(context, rule_name) {
@@ -90,13 +92,24 @@ impl<'a> Parser<'a> {
     let mut ctx = context.clone();
 
     // When matching a character advanced the input by one character.
+    // History can also be wiped here as we have been productive.
     if context.input[context.pos..].starts_with(char) {
       cst.add(Some(CST::new(char, vec![], None)));
       ctx.pos += char.len();
 
+      // Reset choice depth and history as we have been productive.
+      self.history.clear();
+
       Ok((ctx, Some(cst)))
     } else {
-      Err(ParserError::Unknown)
+      Err(ParserError::Unknown {
+        message: format!(
+          "failed to match char {:?} at position {}: remaining input {:?}",
+          char,
+          context.pos,
+          &context.input[context.pos..]
+        ),
+      })
     }
   }
 
@@ -129,21 +142,40 @@ impl<'a> Parser<'a> {
     context: Context<'a>,
     expressions: &Vec<Expression<'a>>,
   ) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
-    for expr in expressions {
-      match self.match_success(context.clone(), expr) {
-        Ok((ctx, cst)) => match cst {
+    let mut ctx = context.clone();
+    ctx.current_choice_depth += 1;
+
+    let snapshot = self.history.clone();
+
+    for (i, expr) in expressions.iter().enumerate() {
+      self.history = snapshot.clone();
+
+      let artifact = Artifact::Ch(i, ctx.current_choice_depth, ctx.current_rule_name);
+
+      if !self.history.prod(artifact.clone()) {
+        continue;
+      }
+
+      self.history.preserve(artifact.clone());
+
+      match self.match_success(ctx.clone(), expr) {
+        Ok((c, cst)) => match cst {
           Some(n) => {
             return Ok((
-              ctx,
+              c,
               Some(CST::new("choice", vec![n], Some(Label::default().with_hidden(true)))),
             ));
           }
-          None => return Ok((ctx, None)),
+          None => return Ok((c, None)),
         },
         Err(_) => continue,
       }
     }
-    Err(ParserError::Unknown)
+    Err(ParserError::FailedToMatch {
+      position: context.pos,
+      input: context.input,
+      name: "choice",
+    })
   }
 
   /// Parses zero or more occurrences of the given expression from the input.
@@ -159,7 +191,7 @@ impl<'a> Parser<'a> {
 
     // Zero or more continues until no progress is made on the input.
     loop {
-      let start_pos = context.pos;
+      let start_pos = ctx.pos;
 
       match self.match_success(ctx.clone(), expression) {
         Ok((new_ctx, cst)) => {
@@ -219,36 +251,48 @@ impl<'a> Parser<'a> {
 
   /// Parses a named rule from the grammar.
   /// Looks up the rule by name and applies its expression to the input.
+  /// First uses the Packrat memo to check if the rule has already been parsed,
+  /// if it has that is returned.
+  /// Otherwise the rule is parsed, with its result being stored in the Packrat memo table.
   /// If the rule is not found, returns a `ParserError::RuleNotFound`.
   fn named_rule(
     &mut self,
     context: Context<'a>,
     name: &'a str,
   ) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
-    if let Some(memo) = self.packrat.get((name, context.pos)) {
+    let memo_result = self.packrat.get((name, context.pos));
+    if let Some(memo) = memo_result {
       return memo.clone();
     }
 
+    let mut ctx = context.clone();
+
     match self.grammar.get(name) {
-      Some(rule) => match self.match_success(context.clone(), rule.expression()) {
-        Ok((ctx, cst)) => {
-          let mut node = CST::new(name, vec![], Some(Label::default().with_hidden(false)));
-          if let Some(n) = cst {
-            node.add(Some(n));
+      Some(rule) => {
+        // Every time we enter a named rule we reset the choice depth and update the current rule.
+        ctx.current_choice_depth = 0;
+        ctx.current_rule_name = name;
+
+        match self.match_success(ctx.clone(), rule.expression()) {
+          Ok((c, cst)) => {
+            let mut node = CST::new(name, vec![], Some(Label::default().with_hidden(false)));
+            if let Some(n) = cst {
+              node.add(Some(n));
+            }
+
+            let result = Ok((c, Some(node)));
+            self.packrat.insert((name, context.pos), result.clone());
+
+            return result;
           }
+          Err(err) => {
+            let result = Err(err);
+            self.packrat.insert((name, context.pos), result.clone());
 
-          let result = Ok((ctx, Some(node)));
-          self.packrat.insert((name, context.pos), result.clone());
-
-          return result;
+            return result;
+          }
         }
-        Err(err) => {
-          let result = Err(err);
-          self.packrat.insert((name, context.pos), result.clone());
-
-          return result;
-        }
-      },
+      }
       None => Err(ParserError::RuleNotFound {
         name,
         position: context.pos,
@@ -675,7 +719,7 @@ mod tests {
         Expression::Sequence(vec![
           Expression::NamedRule("rule_x"),
           Expression::Char("+"),
-          Expression::NamedRule("rule_num"),
+          Expression::NamedRule("rule_x"),
         ]),
         Expression::NamedRule("rule_num"),
       ]),
@@ -701,7 +745,91 @@ mod tests {
         Expression::Sequence(vec![
           Expression::NamedRule("rule_expr"),
           Expression::Char("+"),
+          Expression::NamedRule("rule_expr"),
+        ]),
+        Expression::NamedRule("rule_num"),
+      ]),
+    );
+    let rule_num = Rule::new(
+      "rule_num",
+      Expression::OneOrMore(Box::new(Expression::Choice(vec![
+        Expression::Char("1"),
+        Expression::Char("2"),
+        Expression::Char("3"),
+      ]))),
+    );
+
+    let grammar = Grammar::default().with(rule_expr).with(rule_num);
+
+    let mut parser = Parser::new(grammar);
+    let (remaining, cst) = parser.parse(&mut "1+2+3", "rule_expr").unwrap();
+
+    assert!(remaining.is_empty());
+    match cst {
+      Some(_) => assert!(true),
+      None => assert!(false),
+    }
+  }
+
+  #[test]
+  fn test_parser_parse_direct_left_recursion_nested() {
+    let rule_expr = Rule::new(
+      "rule_expr",
+      Expression::Choice(vec![
+        Expression::Sequence(vec![
+          Expression::NamedRule("rule_expr"),
+          Expression::Char("+"),
+          Expression::NamedRule("rule_term"),
+        ]),
+        Expression::NamedRule("rule_term"),
+      ]),
+    );
+    let rule_term = Rule::new(
+      "rule_term",
+      Expression::Choice(vec![
+        Expression::Sequence(vec![
+          Expression::NamedRule("rule_term"),
+          Expression::Char("*"),
           Expression::NamedRule("rule_num"),
+        ]),
+        Expression::NamedRule("rule_num"),
+      ]),
+    );
+    let rule_num = Rule::new(
+      "rule_num",
+      Expression::OneOrMore(Box::new(Expression::Choice(vec![
+        Expression::Char("1"),
+        Expression::Char("2"),
+        Expression::Char("3"),
+      ]))),
+    );
+
+    let grammar = Grammar::default().with(rule_expr).with(rule_term).with(rule_num);
+
+    let mut parser = Parser::new(grammar);
+    let (remaining, cst) = parser.parse(&mut "1*2+3*1", "rule_expr").unwrap();
+
+    assert!(remaining.is_empty());
+    match cst {
+      Some(_) => assert!(true),
+      None => assert!(false),
+    }
+  }
+
+  #[test]
+  fn test_parser_parse_direct_left_recursion_more_choices() {
+    let rule_expr = Rule::new(
+      "rule_expr",
+      Expression::Choice(vec![
+        Expression::Sequence(vec![
+          Expression::NamedRule("rule_expr"),
+          Expression::Char("*"),
+          Expression::NamedRule("rule_expr"),
+        ]),
+        Expression::Sequence(vec![
+          Expression::NamedRule("rule_expr"),
+          Expression::Char("+"),
+          Expression::NamedRule("rule_expr"),
         ]),
         Expression::NamedRule("rule_num"),
       ]),

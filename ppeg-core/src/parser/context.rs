@@ -7,12 +7,21 @@ pub struct Context<'a> {
   pub pos: usize,
   /// The input string being parsed.
   pub input: &'a str,
+  /// Stores the current choice depth of the context.
+  pub current_choice_depth: usize,
+  /// Stores the current rule being parsed.
+  pub current_rule_name: &'a str,
 }
 
 impl<'a> Context<'a> {
   /// Creates a new Context with the given position and input string.
-  pub fn new(pos: usize, input: &'a str) -> Self {
-    Context { pos, input }
+  pub fn new(pos: usize, input: &'a str, current_choice_depth: usize, current_rule_name: &'a str) -> Self {
+    Context {
+      pos,
+      input,
+      current_choice_depth,
+      current_rule_name,
+    }
   }
 }
 
@@ -22,9 +31,11 @@ mod tests {
 
   #[test]
   fn test_context_new() {
-    let context = Context::new(0, "test");
+    let context = Context::new(0, "test", 0, "test_rule");
 
     assert_eq!(context.pos, 0);
     assert_eq!(context.input, "test");
+    assert_eq!(context.current_choice_depth, 0);
+    assert_eq!(context.current_rule_name, "test_rule");
   }
 }
