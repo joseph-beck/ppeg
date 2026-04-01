@@ -18,7 +18,6 @@ struct CST {
 #[derive(Serialize, Debug, Clone, PartialEq, Eq)]
 struct Label {
   hidden: bool,
-  productive: bool,
 }
 
 fn map_cst(node: &cst::CST<'_>) -> CST {
@@ -27,7 +26,6 @@ fn map_cst(node: &cst::CST<'_>) -> CST {
     children: node.children().iter().map(map_cst).collect(),
     label: node.label().map(|label| Label {
       hidden: label.is_hidden(),
-      productive: label.is_productive(),
     }),
   }
 }
