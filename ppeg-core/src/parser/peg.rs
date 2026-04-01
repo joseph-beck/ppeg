@@ -98,7 +98,6 @@ impl<'a> Parser<'a> {
       println!("before reset {:?} {:?}", char, ctx.clone());
 
       // Reset choice depth and history as we have been productive.
-      ctx.reset_choices();
       self.history.clear();
 
       println!("after reset {:?} {:?}", char, ctx.clone());
