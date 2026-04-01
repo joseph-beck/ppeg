@@ -4,7 +4,6 @@ members = [
     "e2e",
     "example/arithmetic-expression",
     "example/demo",
-    "example/json",
     "example/left-recursion",
     "example/macros",
     "example/meta",
