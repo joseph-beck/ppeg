@@ -7,7 +7,6 @@ members = [
     "example/left-recursion",
     "example/macros",
     "example/meta",
-    "ppeg-cli",
     "ppeg-core",
     "ppeg-wasm",
 ]

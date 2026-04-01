@@ -454,10 +454,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ppeg-cli"
-version = "0.1.0"
-
-[[package]]
 name = "ppeg-core"
 version = "0.1.0"
 
