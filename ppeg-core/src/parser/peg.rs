@@ -9,7 +9,7 @@ use crate::parser::{
   error::ParserError,
   expression::Expression,
   grammar::Grammar,
-  history::{History, Node},
+  history::{Artifact, History},
   packrat::Packrat,
 };
 
@@ -44,7 +44,7 @@ impl<'a> Parser<'a> {
     input: &mut &'a str,
     rule_name: &'a str,
   ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
-    let context = Context::new(0, input, 0);
+    let context = Context::new(0, input, 0, rule_name);
     // Parse must always start with a named rule.
     // Simply call named rule here.
     match self.named_rule(context, rule_name) {
@@ -131,7 +131,7 @@ impl<'a> Parser<'a> {
       let (new_ctx, node) = self.match_success(ctx, expr)?;
       ctx = new_ctx;
 
-      self.history.add(Node::Seq(i));
+      self.history.push(Artifact::Seq(i));
 
       cst.add(node);
     }
@@ -147,10 +147,11 @@ impl<'a> Parser<'a> {
     context: Context<'a>,
     expressions: &Vec<Expression<'a>>,
   ) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
-    for (i, expr) in expressions.iter().enumerate() {
-      let mut ctx = context.clone();
+    let mut ctx = context.clone();
+    ctx.current_choice_depth += 1;
 
-      let node = Node::Ch(i, ctx.choice_depth(expr.clone()));
+    for (i, expr) in expressions.iter().enumerate() {
+      let node = Artifact::Ch(i, ctx.current_choice_depth, ctx.current_rule_name);
 
       println!("{:?}, {:?}", node, self.history);
 
@@ -158,7 +159,7 @@ impl<'a> Parser<'a> {
         continue;
       }
 
-      self.history.add(node.clone());
+      self.history.push(node.clone());
 
       match self.match_success(ctx.clone(), expr) {
         Ok((c, cst)) => match cst {
@@ -259,23 +260,29 @@ impl<'a> Parser<'a> {
     context: Context<'a>,
     name: &'a str,
   ) -> Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>> {
-    // let memo_result = self.packrat.get((name, context.pos));
-    // if let Some(memo) = memo_result {
-    //   return memo.clone();
-    // }
+    let memo_result = self.packrat.get((name, context.pos));
+    if let Some(memo) = memo_result {
+      return memo.clone();
+    }
+
+    let mut ctx = context.clone();
 
     match self.grammar.get(name) {
       Some(rule) => {
-        self.history.add(Node::Nm(name));
+        // Every time we enter a named rule we reset the choice depth and update the current rule.
+        ctx.current_choice_depth = 0;
+        ctx.current_rule_name = name;
 
-        match self.match_success(context.clone(), rule.expression()) {
-          Ok((ctx, cst)) => {
+        self.history.push(Artifact::Nm(name));
+
+        match self.match_success(ctx.clone(), rule.expression()) {
+          Ok((c, cst)) => {
             let mut node = CST::new(name, vec![], Some(Label::default().with_hidden(false)));
             if let Some(n) = cst {
               node.add(Some(n));
             }
 
-            let result = Ok((ctx, Some(node)));
+            let result = Ok((c, Some(node)));
             self.packrat.insert((name, context.pos), result.clone());
 
             return result;

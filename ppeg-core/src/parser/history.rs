@@ -1,6 +1,6 @@
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Node<'a> {
-  Ch(usize, usize),
+pub enum Artifact<'a> {
+  Ch(usize, usize, &'a str),
   Nm(&'a str),
   Seq(usize),
   Ct(&'a str),
@@ -8,28 +8,28 @@ pub enum Node<'a> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct History<'a> {
-  nodes: Vec<Node<'a>>,
+  artifacts: Vec<Artifact<'a>>,
 }
 
 impl<'a> History<'a> {
   pub fn new() -> Self {
-    History { nodes: Vec::new() }
+    History { artifacts: Vec::new() }
   }
 
-  pub fn add(&mut self, node: Node<'a>) {
-    self.nodes.push(node);
+  pub fn push(&mut self, node: Artifact<'a>) {
+    self.artifacts.push(node);
   }
 
-  pub fn get(&self) -> &Vec<Node<'a>> {
-    &self.nodes
+  pub fn artifacts(&self) -> &Vec<Artifact<'a>> {
+    &self.artifacts
   }
 
-  pub fn prod(&self, node: Node<'a>) -> bool {
-    !self.nodes.contains(&node)
+  pub fn prod(&self, node: Artifact<'a>) -> bool {
+    !self.artifacts.contains(&node)
   }
 
   pub fn clear(&mut self) {
-    self.nodes.clear();
+    self.artifacts.clear();
   }
 }
 
@@ -40,49 +40,52 @@ mod tests {
   #[test]
   fn test_history_new() {
     let history = History::new();
-    assert!(history.nodes.is_empty());
+    assert!(history.artifacts.is_empty());
   }
 
   #[test]
   fn test_history_add() {
     let mut history = History::new();
-    history.add(Node::Nm("test"));
+    history.push(Artifact::Nm("test"));
 
-    assert_eq!(history.nodes, vec![Node::Nm("test")]);
+    assert_eq!(history.artifacts, vec![Artifact::Nm("test")]);
   }
 
   #[test]
-  fn test_history_get() {
+  fn test_history_artifacts() {
     let mut history = History::new();
-    history.add(Node::Nm("test"));
+    history.push(Artifact::Nm("test"));
 
-    assert_eq!(history.get(), &vec![Node::Nm("test")]);
+    assert_eq!(history.artifacts(), &vec![Artifact::Nm("test")]);
   }
 
   #[test]
   fn test_history_prod() {
     let mut history = History::new();
-    let mut node = Node::Nm("test");
+    let mut node = Artifact::Nm("test");
     assert!(history.prod(node.clone()));
 
-    history.add(node.clone());
+    history.push(node.clone());
     assert!(!history.prod(node));
 
     history.clear();
 
-    node = Node::Ch(0, 0);
+    node = Artifact::Ch(0, 0, "a");
     assert!(history.prod(node.clone()));
 
-    history.add(node.clone());
+    history.push(node.clone());
     assert!(!history.prod(node));
+
+    let other_node = Artifact::Ch(0, 0, "b");
+    assert!(history.prod(other_node));
   }
 
   #[test]
   fn test_history_clear() {
     let mut history = History::new();
-    history.add(Node::Nm("test"));
+    history.push(Artifact::Nm("test"));
 
     history.clear();
-    assert!(history.nodes.is_empty());
+    assert!(history.artifacts.is_empty());
   }
 }

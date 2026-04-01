@@ -12,16 +12,21 @@ pub struct Context<'a> {
   /// Stores the choices made during parsing.
   /// Helps track the current choice depth of the context.
   pub choices: Vec<Expression<'a>>,
+  /// Stores the current choice depth of the context.
+  pub current_choice_depth: usize,
+  /// Stores the current rule being parsed.
+  pub current_rule_name: &'a str,
 }
 
 impl<'a> Context<'a> {
   /// Creates a new Context with the given position and input string.
-  pub fn new(pos: usize, input: &'a str, _choice_depth: usize) -> Self {
+  pub fn new(pos: usize, input: &'a str, current_choice_depth: usize, current_rule_name: &'a str) -> Self {
     Context {
       pos,
       input,
-
+      current_choice_depth,
       choices: Vec::new(),
+      current_rule_name,
     }
   }
 
@@ -46,16 +51,17 @@ mod tests {
 
   #[test]
   fn test_context_new() {
-    let context = Context::new(0, "test", 0);
+    let context = Context::new(0, "test", 0, "test_rule");
 
     assert_eq!(context.pos, 0);
     assert_eq!(context.input, "test");
     assert_eq!(context.choices, Vec::new());
+    assert_eq!(context.current_rule_name, "test_rule");
   }
 
   #[test]
   fn test_context_choice_depth() {
-    let mut context = Context::new(0, "test", 0);
+    let mut context = Context::new(0, "test", 0, "test_rule");
 
     let choice = Expression::Choice(vec![Expression::Char("a"), Expression::Char("b")]);
 
@@ -64,7 +70,7 @@ mod tests {
 
   #[test]
   fn test_context_reset_choices() {
-    let mut context = Context::new(0, "test", 0);
+    let mut context = Context::new(0, "test", 0, "test_rule");
 
     let choice = Expression::Choice(vec![Expression::Char("a"), Expression::Char("b")]);
 
