@@ -1,44 +1,54 @@
 import { useForm } from '@tanstack/react-form'
 
-import { parserSchemaTransform } from '@/lib/parser/parser-schema-transform'
 import { schema } from '@/types/ppeg/schema'
 
 import { defaultParserFormOpts } from './default-parser-form-opts'
 import { defaultParserFormMeta, ParserFormMeta } from './parser-form-meta'
 import { parserOutputStore } from './parser-output-store'
 import { parserRuleStore } from './parser-rule-store'
-import { useParserMutation } from './use-parser-mutation'
+import { useParser } from './use-parser'
 
 const useParserForm = () => {
-  const mutation = useParserMutation()
+  const { parse, getRules } = useParser()
 
   return useForm({
     ...defaultParserFormOpts,
     // still requires a manual cast even though it is of type ParserFormMeta
     onSubmitMeta: defaultParserFormMeta as ParserFormMeta,
     onSubmit: async ({ value, meta: _meta }) => {
-      const data = parserSchemaTransform(value)
+      try {
+        const rules = getRules(value.grammar)
+        parserRuleStore.setState(() => rules)
+      } catch (_) {
+        parserRuleStore.setState(() => [])
+      }
 
-      if (data?.grammar.rules) {
-        parserRuleStore.setState(() => {
-          return [...data.grammar.rules]
+      try {
+        // until we have some data no transformations should occur in the mutation or parser output store
+        if (!value || !value.rule || value.input === '') {
+          return
+        }
+
+        const result = parse(value.input, value.grammar, value.rule)
+
+        parserOutputStore.setState((state) => {
+          return {
+            ...state,
+            remaining: result?.remaining ?? '',
+            cst: result?.cst,
+          }
+        })
+      } catch (error) {
+        console.error('failed to parse input', error)
+
+        parserOutputStore.setState((state) => {
+          return {
+            ...state,
+            remaining: '',
+            cst: undefined,
+          }
         })
       }
-
-      // until we have some data no transformations should occur in the mutation or parser output store
-      if (!data || !data.rule || data.input === '') {
-        return
-      }
-
-      const result = await mutation.mutateAsync(data)
-
-      parserOutputStore.setState((state) => {
-        return {
-          ...state,
-          remaining: result?.remaining ?? '',
-          cst: result?.cst,
-        }
-      })
     },
     onSubmitInvalid: ({ value, meta }) => {
       console.error(value, meta)

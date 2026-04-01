@@ -23,6 +23,8 @@ const ParserInputForm = ({ nil: _nil }: ParserInputFormProps): ReactElement => {
         onSubmit={(e) => {
           e.preventDefault()
           e.stopPropagation()
+
+          void form.handleSubmit()
         }}
       >
         <InputGroup className="mb-4">

@@ -2,7 +2,7 @@ stages:
   - check
   - build
   - test
-  - docs
+  - reports
 
 # rust images are out of date.
 # here the latest rust toolchain is installed manually.
@@ -90,9 +90,12 @@ build:build-rs:
 
 # build the ui.
 build:build-ui:
-  extends: .pnpm
+  extends:
+    - .rust
+    - .pnpm
   stage: build
   script:
+    - cargo install wasm-pack
     - cd ppeg-ui
     - pnpm install
     - pnpm run build
@@ -110,20 +113,34 @@ test:test-rs:
 
 # test the ui.
 test:test-ui:
-  extends: .pnpm
+  extends:
+    - .rust
+    - .pnpm
   stage: test
   script:
+    - cargo install wasm-pack
     - cd ppeg-ui
     - pnpm install
     - pnpm run test
 
 # generate rustdoc, goes to target/doc.
 # stored as artifact for later.
-docs:docs:
+reports:docs:
   extends: .rust
-  stage: docs
+  stage: reports
   script:
     - "cargo doc"
   artifacts:
     paths:
       - target/doc
+
+# generate criterion benchmark results, goes to target/criterion.
+# stored as artifact for later.
+reports:bench:
+  extends: .rust
+  stage: reports
+  script:
+    - "cargo bench"
+  artifacts:
+    paths:
+      - target/criterion

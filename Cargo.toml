@@ -1,12 +1,21 @@
 [workspace]
 members = [
-    "ppeg-api",
+    "bench",
+    "e2e",
+    "example/arithmetic-expression",
+    "example/demo",
+    "example/json",
+    "example/left-recursion",
+    "example/macros",
+    "example/meta",
     "ppeg-cli",
     "ppeg-core",
-    "ppeg-example/arithmetic-expression",
-    "ppeg-example/demo",
-    "ppeg-example/json",
+    "ppeg-wasm",
 ]
 resolver = "1"
 
 [workspace.dependencies]
+
+[profile.profiling]
+inherits = "release"
+debug = true

@@ -13,10 +13,10 @@ import { InputGroupButton } from '@shadcn/input-group'
 import { ReactElement, useState } from 'react'
 
 import { isNonEmptyArray } from '@/lib/is/is-non-empty-array'
-import { Parse } from '@/types/ppeg/parse'
 
-import { getPresets } from './get-presets'
-import { parserOutputStore } from './parser-output-store'
+import { getPresets, PresetInput } from './get-presets'
+import { parserRuleStore } from './parser-rule-store'
+import { useParser } from './use-parser'
 import { useParserForm } from './use-parser-form'
 
 interface ParserGrammarPresetsProps {
@@ -26,15 +26,29 @@ interface ParserGrammarPresetsProps {
 const ParserGrammarPresets = ({ form }: ParserGrammarPresetsProps): ReactElement => {
   const [open, setOpen] = useState(false)
 
+  const { getRules } = useParser()
+
   const presets = getPresets()
 
-  const loadPreset = (preset: Parse) => {
-    form.setFieldValue('grammar', JSON.stringify(preset.grammar, null, 2))
+  const loadPreset = (preset: PresetInput) => {
+    form.setFieldValue('grammar', preset.grammar)
 
-    form.setFieldValue('rule', '')
-    form.setFieldValue('input', '')
+    form.setFieldValue('input', preset.input)
 
-    parserOutputStore.setState(() => ({ remaining: '', cst: undefined }))
+    try {
+      const rules = getRules(preset.grammar)
+      parserRuleStore.setState(() => rules)
+
+      const rule = rules.includes(preset.rule) ? preset.rule : ''
+
+      queueMicrotask(() => {
+        form.setFieldValue('rule', rule)
+      })
+    } catch (_) {
+      parserRuleStore.setState(() => [])
+    }
+
+    void form.handleSubmit()
 
     setOpen(false)
   }
@@ -44,11 +58,11 @@ const ParserGrammarPresets = ({ form }: ParserGrammarPresetsProps): ReactElement
       <DialogTrigger asChild>
         <InputGroupButton variant="default">presets</InputGroupButton>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3/4 md:w-1/3 lg:w-1/4">
+      <DialogContent className="sm:max-w-3/4 md:w-1/2 lg:w-1/3 h-[80%]">
         <DialogHeader>
-          <DialogTitle>parse tree</DialogTitle>
+          <DialogTitle>grammar presets</DialogTitle>
         </DialogHeader>
-        <div className="w-full h-full space-y-4">
+        <div className="w-full space-y-4 overflow-y-auto py-4">
           {isNonEmptyArray(presets)
             ? presets.map((preset, index) => (
                 <Card key={index} size="sm" className="mx-auto w-full max-w-sm">

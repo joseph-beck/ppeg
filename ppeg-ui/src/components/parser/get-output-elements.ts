@@ -35,6 +35,13 @@ const getOutputElements = (cst?: CST): GetOutputElementsResult => {
       },
       position: defaultNodePosition,
       draggable: false,
+      style: node.label?.hidden
+        ? {
+            backgroundColor: '#899499',
+          }
+        : {
+            border: '1px solid #f54a00',
+          },
     })
 
     if (parentId !== undefined) {
