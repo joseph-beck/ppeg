@@ -767,4 +767,49 @@ mod tests {
       None => assert!(false),
     }
   }
+
+  #[test]
+  fn test_parser_parse_direct_left_recursion_nested() {
+    let rule_expr = Rule::new(
+      "rule_expr",
+      Expression::Choice(vec![
+        Expression::Sequence(vec![
+          Expression::NamedRule("rule_expr"),
+          Expression::Char("+"),
+          Expression::NamedRule("rule_term"),
+        ]),
+        Expression::NamedRule("rule_term"),
+      ]),
+    );
+    let rule_term = Rule::new(
+      "rule_term",
+      Expression::Choice(vec![
+        Expression::Sequence(vec![
+          Expression::NamedRule("rule_term"),
+          Expression::Char("*"),
+          Expression::NamedRule("rule_num"),
+        ]),
+        Expression::NamedRule("rule_num"),
+      ]),
+    );
+    let rule_num = Rule::new(
+      "rule_num",
+      Expression::OneOrMore(Box::new(Expression::Choice(vec![
+        Expression::Char("1"),
+        Expression::Char("2"),
+        Expression::Char("3"),
+      ]))),
+    );
+
+    let grammar = Grammar::default().with(rule_expr).with(rule_term).with(rule_num);
+
+    let mut parser = Parser::new(grammar);
+    let (remaining, cst) = parser.parse(&mut "1*2+3*1", "rule_expr").unwrap();
+
+    assert!(remaining.is_empty());
+    match cst {
+      Some(_) => assert!(true),
+      None => assert!(false),
+    }
+  }
 }
