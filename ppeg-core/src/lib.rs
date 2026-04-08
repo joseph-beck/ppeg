@@ -21,12 +21,8 @@
 //! let (remaining, cst) = parse!(peg, &mut "ab", "a_and_b").unwrap();
 //! ```
 
-pub mod cst;
-pub mod error;
-pub mod input;
+pub mod meta;
 #[macro_use]
 pub mod macros;
-pub mod meta;
-pub mod packrat;
 pub mod parser;
-pub mod pratt;
+pub mod prelude;

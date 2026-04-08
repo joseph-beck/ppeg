@@ -1,4 +1,4 @@
-use ppeg_core::parser::{Expression, Grammar, Parser, Rule};
+use ppeg_core::prelude::*;
 
 // This example contains an indirect left-recursive grammar.
 fn main() {

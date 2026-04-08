@@ -1,5 +1,16 @@
 //! PPEG Concrete Syntax Tree (CST) module holds the data structures and logic for representing
 //! the Concrete Syntax Tree produced during parsing.
+//!
+//! ## Example
+//! ```rust
+//! use ppeg_core::prelude::*;
+//!
+//! let cst = CST::new(
+//!   "root",
+//!   vec![CST::new("child", vec![], None)],
+//!   None,
+//! );
+//! ```
 
 /// Concrete Syntax Tree (CST).
 #[derive(Debug, Clone, PartialEq)]
@@ -14,6 +25,7 @@ pub struct CST<'a> {
 }
 
 impl<'a> CST<'a> {
+  /// Creates a new CST node with the given value, children, and label.
   pub fn new(value: &'a str, children: Vec<CST<'a>>, label: Option<Label>) -> Self {
     CST { value, children, label }
   }
@@ -54,14 +66,6 @@ impl<'a> CST<'a> {
   /// Update the label of this CST node.
   pub fn update_label(&mut self, label: Label) {
     self.label = Some(label);
-  }
-
-  /// Has this CST node been labelled as productive?
-  pub fn is_productive(&self) -> bool {
-    match &self.label {
-      Some(label) => label.productive,
-      None => false,
-    }
   }
 
   /// Has this CST node been labelled as hidden?
@@ -114,32 +118,18 @@ impl<'a> Default for CST<'a> {
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct Label {
-  /// Has this been labelled as productive?
-  productive: bool,
   /// Should this item be hidden in the tree?
   hidden: bool,
 }
 
 impl Label {
-  pub fn new(productive: bool, hidden: bool) -> Self {
-    Label { productive, hidden }
-  }
-
-  /// Is this label marked as productive?
-  pub fn is_productive(&self) -> bool {
-    self.productive
+  pub fn new(hidden: bool) -> Self {
+    Label { hidden }
   }
 
   /// Is this label marked as hidden?
   pub fn is_hidden(&self) -> bool {
     self.hidden
-  }
-
-  /// Set the label as productive and then return self for chaining.
-  pub fn with_productive(mut self, productive: bool) -> Self {
-    self.productive = productive;
-
-    self
   }
 
   /// Set the label as hidden and then return self for chaining.
@@ -199,23 +189,6 @@ mod tests {
   }
 
   #[test]
-  fn test_cst_label_productive() {
-    let mut cst = CST::new("root", vec![], None);
-    assert!(cst.label.is_none());
-
-    cst.update_label(Label::new(true, false));
-    assert!(cst.label.is_some());
-  }
-
-  #[test]
-  fn test_cst_is_productive() {
-    let mut cst = CST::new("root", vec![], None);
-    cst.update_label(Label::new(true, false));
-
-    assert!(cst.is_productive());
-  }
-
-  #[test]
   fn test_cst_is_leaf() {
     let mut cst = CST::new("root", vec![], None);
     assert!(cst.is_leaf());
@@ -228,15 +201,7 @@ mod tests {
   fn test_label_default() {
     let label: Label = Default::default();
 
-    assert!(!label.productive);
     assert!(!label.hidden);
-  }
-
-  #[test]
-  fn test_label_with_productive() {
-    let label = Label::default().with_productive(true);
-
-    assert!(label.productive);
   }
 
   #[test]

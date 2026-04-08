@@ -2,7 +2,6 @@ import * as z from 'zod'
 
 const label = z.object({
   hidden: z.boolean(),
-  productive: z.boolean(),
 })
 
 type Label = z.infer<typeof label>

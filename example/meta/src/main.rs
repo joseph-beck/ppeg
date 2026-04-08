@@ -1,4 +1,4 @@
-use ppeg_core::{meta::Meta, parse};
+use ppeg_core::{parse, prelude::*};
 
 fn main() {
   let grammar = Meta::new()
@@ -13,12 +13,19 @@ fn main() {
           { 'd' }+ |
           { '\n' } // Example using an escape character for a newline
         }
+
+        // Not rule
+        not_c := { !char_c }
+
+        // Optional rule
+        optional_c := { char_c? }
       "#,
     )
     .unwrap();
 
   println!("{:#?}", grammar);
 
-  let (_, cst) = parse!(grammar, &mut "c", "char_c").unwrap();
+  let (remaining, cst) = parse!(grammar, &mut "c", "char_c").unwrap();
+  println!("{:#?}", remaining);
   println!("{:#?}", cst);
 }

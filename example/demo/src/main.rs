@@ -1,4 +1,4 @@
-use ppeg_core::parser::{Expression, Grammar, Parser, Rule};
+use ppeg_core::prelude::*;
 
 // {'a':1}
 fn main() {

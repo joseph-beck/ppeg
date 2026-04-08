@@ -310,13 +310,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "json"
-version = "0.1.0"
-dependencies = [
- "ppeg-core",
-]
-
-[[package]]
 name = "left-recursion"
 version = "0.1.0"
 dependencies = [
@@ -459,10 +452,6 @@ checksum = "51bae2ac328883f7acdfea3d66a7c35751187f870bc81f94563733a154d7a670"
 dependencies = [
  "plotters-backend",
 ]
-
-[[package]]
-name = "ppeg-cli"
-version = "0.1.0"
 
 [[package]]
 name = "ppeg-core"
