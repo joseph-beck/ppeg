@@ -1,4 +1,4 @@
-import init, { get_rules as getRulesWasm, parse as parseWasm } from 'ppeg-wasm'
+import init, { getRules as getRulesWasm, parse as parseWasm } from 'ppeg-wasm'
 import { createContext, ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Output, output } from '@/types/ppeg/output'
@@ -49,7 +49,7 @@ const ParserProvider = ({ children }: ParserProviderProps) => {
         return result.data
       }
 
-      throw new Error('failed to parse input')
+      throw new Error(`failed to parse input: ${result.error}`)
     },
     [isReady],
   )

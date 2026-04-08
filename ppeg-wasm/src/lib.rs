@@ -3,21 +3,21 @@ use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
 #[derive(Serialize, Debug, Clone, PartialEq, Eq)]
-struct Output {
-  remaining: String,
-  cst: Option<CST>,
+pub struct Output {
+  pub remaining: String,
+  pub cst: Option<CST>,
 }
 
 #[derive(Serialize, Debug, Clone, PartialEq, Eq)]
-struct CST {
-  value: String,
-  children: Vec<CST>,
-  label: Option<Label>,
+pub struct CST {
+  pub value: String,
+  pub children: Vec<CST>,
+  pub label: Option<Label>,
 }
 
 #[derive(Serialize, Debug, Clone, PartialEq, Eq)]
-struct Label {
-  hidden: bool,
+pub struct Label {
+  pub hidden: bool,
 }
 
 fn map_cst(node: &cst::CST<'_>) -> CST {
@@ -30,7 +30,7 @@ fn map_cst(node: &cst::CST<'_>) -> CST {
   }
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = "parse")]
 pub fn parse(input: &str, grammar: &str, rule: &str) -> Result<JsValue, JsValue> {
   let grammar = Meta::new()
     .generate(grammar)
@@ -51,7 +51,7 @@ pub fn parse(input: &str, grammar: &str, rule: &str) -> Result<JsValue, JsValue>
   serde_wasm_bindgen::to_value(&output).map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = "getRules")]
 pub fn get_rules(grammar: &str) -> Result<JsValue, JsValue> {
   let grammar = Meta::new()
     .generate(grammar)
