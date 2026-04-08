@@ -21,5 +21,6 @@
     "shadcn",
     "tabler",
     "xyflow"
-  ]
+  ],
+  "C_Cpp.errorSquiggles": "disabled"
 }
