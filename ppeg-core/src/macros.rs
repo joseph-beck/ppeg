@@ -21,7 +21,7 @@
 //! let peg = meta!(r#"
 //!   a_and_b := { 'a', 'b' }
 //!   c := { 'c' }
-//! #");
+//! "#);
 //!
 //! // Parse the result and unwrap the error to get the remaining input and CST.
 //! let (remaining, cst) = parse!(peg, &mut "ab", "a_and_b").unwrap();
