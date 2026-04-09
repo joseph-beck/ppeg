@@ -4,7 +4,7 @@
 //!
 //! ## Example
 //! ```rust
-//! use ppeg_core::{grammar, rule, c, seq, parse};
+//! use ppeg_core::{grammar, rule, c, seq, meta, parse};
 //!
 //! // Create a rule that matches the sequence "a" followed by "b".
 //! let a_and_b = rule!("a_and_b" => seq!(c!("a"), c!("b")));
