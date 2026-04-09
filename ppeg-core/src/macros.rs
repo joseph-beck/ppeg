@@ -9,12 +9,19 @@
 //! // Create a rule that matches the sequence "a" followed by "b".
 //! let a_and_b = rule!("a_and_b" => seq!(c!("a"), c!("b")));
 //!
+//! // Define a grammar with the rules we just created and another rule that matches "c".
 //! let peg = grammar!(
 //!   // Insert a predefined rule.
 //!   a_and_b,
 //!   // Or define a rule inline.
 //!   rule!("c" => c!("c"))
 //! );
+//!
+//! // Or define with a meta grammar string.
+//! let peg = meta!(r#"
+//!   a_and_b := { 'a', 'b' }
+//!   c := { 'c' }
+//! #");
 //!
 //! // Parse the result and unwrap the error to get the remaining input and CST.
 //! let (remaining, cst) = parse!(peg, &mut "ab", "a_and_b").unwrap();
@@ -285,6 +292,24 @@ macro_rules! grammar {
   };
 }
 
+/// Creates a `Grammar` from a meta grammar definition string.
+///
+/// ## Example
+/// ```rust
+/// use ppeg_core::meta;
+///
+/// let peg = meta!(r#"
+///   c := { 'a' }
+/// "#);
+/// ```
+#[macro_export]
+macro_rules! meta {
+  ( $meta:expr ) => {{
+    let parser = $crate::meta::parser::Meta::new();
+    parser.generate($meta).unwrap()
+  }};
+}
+
 /// Creates a `Parser` from a given `Grammar`.
 ///
 /// ## Example
@@ -514,6 +539,22 @@ mod tests {
       g.insert(rule!("c" => c!("c")));
       g
     };
+
+    assert_eq!(grammar, expected_grammar);
+  }
+
+  #[test]
+  fn test_meta_macro() {
+    let grammar = meta!(
+      r#"
+        a_and_b := { 'a', 'b' }
+        c := { 'c' }
+    "#
+    );
+
+    let expected_grammar = Grammar::default()
+      .with(rule!("a_and_b" => seq!(c!("a"), c!("b"))))
+      .with(rule!("c" => c!("c")));
 
     assert_eq!(grammar, expected_grammar);
   }
