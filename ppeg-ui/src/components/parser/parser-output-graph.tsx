@@ -3,7 +3,16 @@ import '@xyflow/react/dist/style.css'
 import { Button } from '@shadcn/button'
 import { P } from '@shadcn/typography'
 import { useStore } from '@tanstack/react-store'
-import { Background, ConnectionLineType, Panel, ReactFlow, useEdgesState, useNodesState } from '@xyflow/react'
+import {
+  Background,
+  ConnectionLineType,
+  Edge,
+  Node,
+  Panel,
+  ReactFlow,
+  useEdgesState,
+  useNodesState,
+} from '@xyflow/react'
 import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Direction, getElementLayout } from './get-element-layout'
@@ -12,6 +21,12 @@ import { parserOutputStore } from './parser-output-store'
 
 const ParserOutputGraph = (): ReactElement => {
   const [omitHidden, setOmitHidden] = useState(false)
+
+  const [direction, setDirection] = useState<Direction>('LR')
+
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
+
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
 
   const store = useStore(parserOutputStore)
 
@@ -23,33 +38,20 @@ const ParserOutputGraph = (): ReactElement => {
     [store.cst, omitHidden],
   )
 
-  const initialLayout = useMemo(() => getElementLayout(elements.nodes, elements.edges, 'LR'), [elements])
-
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialLayout.nodes)
-
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialLayout.edges)
-
   useEffect(() => {
-    const layout = getElementLayout(elements.nodes, elements.edges, 'LR')
+    const layout = getElementLayout(elements.nodes, elements.edges, direction)
 
     setNodes(layout.nodes)
 
     setEdges(layout.edges)
-  }, [store.cst, elements, setEdges, setNodes])
+  }, [store.cst, elements, direction, setEdges, setNodes])
 
-  const onLayout = useCallback(
-    (direction: Direction) => {
-      const layout = getElementLayout(nodes, edges, direction)
-
-      setNodes([...layout.nodes])
-
-      setEdges([...layout.edges])
-    },
-    [nodes, setEdges, edges, setNodes],
-  )
+  const onLayout = useCallback((newDirection: Direction) => {
+    setDirection(newDirection)
+  }, [])
 
   const className =
-    'w-full h-full lg:min-h-160 md:min-h-120 sm:min-h-80 flex items-center justify-center border rounded-lg bg-muted/20'
+    'w-full h-full xl:min-h-240 lg:min-h-160 md:min-h-120 sm:min-h-80 flex items-center justify-center border rounded-lg bg-muted/20'
 
   if (!store.cst) {
     return (
