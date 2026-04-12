@@ -353,13 +353,13 @@ impl<'a> Parser<'a> {
             let result = Ok((c, Some(node)));
             self.packrat.insert((name, context.pos), result.clone());
 
-            return result;
+            result
           }
           Err(err) => {
             let result = Err(err);
             self.packrat.insert((name, context.pos), result.clone());
 
-            return result;
+            result
           }
         }
       }
