@@ -20,11 +20,19 @@ use std::collections::HashMap;
 
 use crate::parser::{context::Context, cst::CST, error::ParserError};
 
+/// PackratKey is a tuple of (rule name, input position).
+/// This is used as the key in the Packrat memoization table.
+pub type PackratKey<'a> = (&'a str, usize);
+
+/// PackratValue is a Result of (Context, Option<CST>) or ParserError.
+/// This is used as the value in the Packrat memoization table.
+pub type PackratValue<'a> = Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>>;
+
 /// Packrat memo table for storing previous parser state.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Packrat<'a> {
   /// Memo table mapping (grammar rule, input position) to parser output.
-  memo_table: HashMap<(&'a str, usize), Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>>>,
+  memo_table: HashMap<PackratKey<'a>, PackratValue<'a>>,
 }
 
 impl<'a> Packrat<'a> {
@@ -37,17 +45,17 @@ impl<'a> Packrat<'a> {
   }
 
   /// Get a memoed result for a given (rule, input) pair.
-  pub fn get(&self, key: (&'a str, usize)) -> Option<&Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>>> {
+  pub fn get(&self, key: PackratKey<'a>) -> Option<&PackratValue<'a>> {
     self.memo_table.get(&key)
   }
 
   /// Insert a memoed result for a given (rule, input) pair.
-  pub fn insert(&mut self, key: (&'a str, usize), output: Result<(Context<'a>, Option<CST<'a>>), ParserError<'a>>) {
+  pub fn insert(&mut self, key: PackratKey<'a>, output: PackratValue<'a>) {
     self.memo_table.insert(key, output);
   }
 
   /// Remove a memoed result for a given (rule, input) pair.
-  pub fn remove(&mut self, key: (&'a str, usize)) {
+  pub fn remove(&mut self, key: PackratKey<'a>) {
     self.memo_table.remove(&key);
   }
 }
