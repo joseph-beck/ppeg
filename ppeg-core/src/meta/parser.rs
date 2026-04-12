@@ -112,6 +112,13 @@ impl<'a> Meta {
   }
 }
 
+impl Default for Meta {
+  /// Default implementation for Meta, creates a new Meta instance.
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 struct Parser<'a> {
   /// The input being parsed into a grammar.
   input: &'a str,
