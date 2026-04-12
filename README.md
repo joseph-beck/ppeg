@@ -2,11 +2,11 @@
 
 Productive PEG is a Rust PEG parsing library with support for left recursive grammars.
 
-## Getting started
+## Getting Started
 
 To get started with using Productive PEG follow the below guides.
 
-### Productive PEG usage
+### Productive PEG Usage
 
 ```sh
 # 1. clone the repository
@@ -28,7 +28,7 @@ cargo test
 cargo doc
 ```
 
-### Creating a new executable
+### Creating a New Executable
 
 Requires having cloned the repository with the steps above.
 
@@ -53,7 +53,7 @@ fn main() {
 cargo run --bin <name>
 ```
 
-### User interface usage
+### User Interface Usage
 
 ```sh
 # 1. install wasm-pack
