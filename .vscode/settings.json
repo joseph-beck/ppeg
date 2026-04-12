@@ -15,6 +15,7 @@
     "rankdir",
     "reactflow",
     "rlib",
+    "rustc",
     "rustdoc",
     "rustup",
     "serde",
