@@ -6,12 +6,16 @@ import { CST } from '@/types/ppeg/cst'
 
 import { defaultNodePosition } from './default-node-position'
 
+interface GetOutputElementsParams {
+  omitHidden?: boolean
+}
+
 interface GetOutputElementsResult {
   nodes: Node[]
   edges: Edge[]
 }
 
-const getOutputElements = (cst?: CST): GetOutputElementsResult => {
+const getOutputElements = (cst?: CST, params?: GetOutputElementsParams): GetOutputElementsResult => {
   const nodes: Node[] = []
   const edges: Edge[] = []
 
@@ -24,7 +28,15 @@ const getOutputElements = (cst?: CST): GetOutputElementsResult => {
 
   let nodeId = 0
 
-  const traverse = (node: CST, parentId?: string): string => {
+  const traverse = (node: CST, parentId?: string) => {
+    if (params?.omitHidden && node.label?.hidden) {
+      for (const child of node.children) {
+        traverse(child, parentId)
+      }
+
+      return
+    }
+
     const id = String(nodeId++)
 
     nodes.push({
@@ -56,8 +68,6 @@ const getOutputElements = (cst?: CST): GetOutputElementsResult => {
     for (const child of node.children) {
       traverse(child, id)
     }
-
-    return id
   }
 
   traverse(cst)

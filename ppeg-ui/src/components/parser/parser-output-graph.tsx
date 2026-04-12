@@ -4,16 +4,24 @@ import { Button } from '@shadcn/button'
 import { P } from '@shadcn/typography'
 import { useStore } from '@tanstack/react-store'
 import { Background, ConnectionLineType, Panel, ReactFlow, useEdgesState, useNodesState } from '@xyflow/react'
-import { ReactElement, useCallback, useEffect, useMemo } from 'react'
+import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Direction, getElementLayout } from './get-element-layout'
 import { getOutputElements } from './get-output-elements'
 import { parserOutputStore } from './parser-output-store'
 
 const ParserOutputGraph = (): ReactElement => {
+  const [omitHidden, setOmitHidden] = useState(false)
+
   const store = useStore(parserOutputStore)
 
-  const elements = useMemo(() => getOutputElements(store.cst), [store.cst])
+  const elements = useMemo(
+    () =>
+      getOutputElements(store.cst, {
+        omitHidden,
+      }),
+    [store.cst, omitHidden],
+  )
 
   const initialLayout = useMemo(() => getElementLayout(elements.nodes, elements.edges, 'LR'), [elements])
 
@@ -67,6 +75,9 @@ const ParserOutputGraph = (): ReactElement => {
           </Button>
           <Button onClick={() => onLayout('LR')} className="mr-2">
             horizontal layout
+          </Button>
+          <Button onClick={() => setOmitHidden((prev) => !prev)}>
+            {omitHidden ? 'show hidden nodes' : 'hide hidden nodes'}
           </Button>
         </Panel>
         <Background />
