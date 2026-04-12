@@ -84,6 +84,17 @@ chmod +x .githooks/pre-commit
 chmod +x .githooks/pre-push
 ```
 
+## Meta
+
+Using the meta syntax it is possible to define a grammar such that:
+
+```txt
+// Char expression of 'a'
+char := { 'a' }
+```
+
+To see the full specification please see [SPEC.md](./SPEC.md).
+
 ## Contributing
 
 For more information on how to contribute and standards followed within this codebase please see [CONTRIBUTING.md](./CONTRIBUTING.md).
