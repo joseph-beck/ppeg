@@ -19,10 +19,18 @@ import { Direction, getElementLayout } from './get-element-layout'
 import { getOutputElements } from './get-output-elements'
 import { parserOutputStore } from './parser-output-store'
 
-const ParserOutputGraph = (): ReactElement => {
-  const [omitHidden, setOmitHidden] = useState(false)
+interface ParserOutputGraphProps {
+  initialDirection?: Direction
+  initialOmitHidden?: boolean
+}
 
-  const [direction, setDirection] = useState<Direction>('LR')
+const ParserOutputGraph = ({
+  initialDirection = 'TB',
+  initialOmitHidden = true,
+}: ParserOutputGraphProps): ReactElement => {
+  const [omitHidden, setOmitHidden] = useState(initialOmitHidden)
+
+  const [direction, setDirection] = useState<Direction>(initialDirection)
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
 
@@ -87,5 +95,7 @@ const ParserOutputGraph = (): ReactElement => {
     </div>
   )
 }
+
+export type { ParserOutputGraphProps }
 
 export { ParserOutputGraph }
