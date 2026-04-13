@@ -1011,4 +1011,50 @@ mod tests {
 
     assert!(result.is_err());
   }
+
+  #[test]
+  fn test_parser_structured_data() {
+    let grammar = meta!(
+      r#"
+        open := { '{' }
+        close := { '}' }
+
+        char := {
+          'a' | 'b'
+        }
+
+        string := {
+          char+
+        }
+
+        root := {
+          open, objects, close
+        }
+
+        objects := {
+          {
+            objects, ',', objects
+          } | object
+        }
+
+        object := {
+          key, ':', value
+        }
+
+        key := {
+          string
+        }
+
+        value := {
+          '"', string, '"'
+        }
+        "#
+    );
+
+    let mut parser = Parser::new(grammar);
+    let (remaining, cst) = parser.parse(&mut r#"{a:"b",b:"a",ab:"ba"}"#, "root").unwrap();
+
+    assert!(remaining.is_empty());
+    assert!(cst.is_some());
+  }
 }
