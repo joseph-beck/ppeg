@@ -10,6 +10,7 @@ import {
   DialogTrigger,
 } from '@shadcn/dialog'
 import { InputGroupButton } from '@shadcn/input-group'
+import { IconAdjustments, IconFileImport } from '@tabler/icons-react'
 import { ReactElement, useState } from 'react'
 
 import { isNonEmptyArray } from '@/lib/is/is-non-empty-array'
@@ -56,7 +57,10 @@ const ParserGrammarPresets = ({ form }: ParserGrammarPresetsProps): ReactElement
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <InputGroupButton variant="default">presets</InputGroupButton>
+        <InputGroupButton variant="default">
+          <IconAdjustments />
+          presets
+        </InputGroupButton>
       </DialogTrigger>
       <DialogContent className="sm:max-w-3/4 md:w-1/2 lg:w-1/3 h-[80%]">
         <DialogHeader>
@@ -72,6 +76,7 @@ const ParserGrammarPresets = ({ form }: ParserGrammarPresetsProps): ReactElement
                   </CardHeader>
                   <CardFooter>
                     <Button variant="outline" size="sm" className="w-full" onClick={() => loadPreset(preset.parse)}>
+                      <IconFileImport />
                       load
                     </Button>
                   </CardFooter>

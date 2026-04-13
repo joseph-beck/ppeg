@@ -350,8 +350,8 @@ impl<'a> Parser<'a> {
               node.add(Some(n));
             }
 
-            let result = Ok((c, Some(node)));
-            self.packrat.insert((name, context.pos), result.clone());
+            let result = Ok((c.clone(), Some(node)));
+            self.packrat.insert((name, ctx.pos), result.clone());
 
             result
           }
