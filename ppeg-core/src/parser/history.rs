@@ -61,6 +61,14 @@ impl<'a> History<'a> {
   }
 }
 
+impl<'a> Default for History<'a> {
+  /// Default implementation for History, creates a new History.
+  /// Starts with an empty vector of artifacts.
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -114,6 +122,12 @@ mod tests {
     history.preserve(Artifact::Ch(0, 0, "test"));
 
     history.clear();
+    assert!(history.artifacts.is_empty());
+  }
+
+  #[test]
+  fn test_history_default() {
+    let history = History::default();
     assert!(history.artifacts.is_empty());
   }
 }

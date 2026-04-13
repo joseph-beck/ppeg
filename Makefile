@@ -1,6 +1,7 @@
-.PHONY: api
-api:
-	@cargo run --bin ppeg-api
+.PHONY: all
+all:
+	@cargo test
+	@cargo clippy
 
 .PHONY: ui
 ui:

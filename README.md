@@ -1,47 +1,76 @@
 # Productive PEG
 
-## Getting started
+Productive PEG is a Rust PEG parsing library with support for left recursive grammars.
 
-### PPEG Library Usage
+## Getting Started
 
-Ensure [Rust](https://rust-lang.org/learn/get-started/) is installed.
+To get started with using Productive PEG follow the below guides.
+
+### Productive PEG Usage
 
 ```sh
 # 1. clone the repository
 git clone https://gitlab.cim.rhul.ac.uk/zlac272/productive-peg.git
 
-# 2. list the executables
+# 2. install rust https://rust-lang.org/learn/get-started/ here and verify the installation.
+rustc --version
+
+# 3. list the executables
 cargo run --bin
 
-# 3. fmt & clippy
+# 4. fmt & clippy
 cargo fmt && cargo clippy
 
-# 4. test
+# 5. test
 cargo test
 
-# 5. create rustdoc
+# 6. create rustdoc
 cargo doc
 ```
 
-### PPEG UI & API Usage
+### Creating a New Executable
+
+Requires having cloned the repository with the steps above.
 
 ```sh
-# 1. clone the repository
-git clone https://gitlab.cim.rhul.ac.uk/zlac272/productive-peg.git
+# 1. create a new executable
+cargo new <name>
 
-# 2. run api
-cargo run --bin ppeg-api
-# or run
-make api
+# 2. create a parser using Productive PEG in your new project, and add the ppeg_core dependency in Cargo.toml
+...
 
-# 3. install ui dependencies
+[dependencies]
+ppeg-core = { path = "path-to/ppeg-core" }
+
+# 3. use the ppeg_core library in your executable.
+use ppeg_core::prelude::*;
+
+fn main() {
+    ...
+}
+
+# 4. run your executable
+cargo run --bin <name>
+```
+
+### User Interface Usage
+
+```sh
+# 1. install wasm-pack
+cargo install wasm-pack
+
+# 2. install pnpm, checkout https://pnpm.io/installation for more information
+npm i -g pnpm
+
+# 3. cd into ppeg-ui and install dependencies
 cd ppeg-ui
 pnpm i
 
-# 4. run ui
+# 4. run the application
 pnpm run dev
-# or run in at project root
-make ui
+
+# 5. build the application
+pnpm run build
 ```
 
 ### Hooks
@@ -54,3 +83,18 @@ chmod +x .githooks/commit-msg
 chmod +x .githooks/pre-commit
 chmod +x .githooks/pre-push
 ```
+
+## Meta
+
+Using the meta syntax it is possible to define a grammar such that:
+
+```txt
+// Char expression of 'a'
+char := { 'a' }
+```
+
+To see the full specification please see [SPEC.md](./SPEC.md).
+
+## Contributing
+
+For more information on how to contribute and standards followed within this codebase please see [CONTRIBUTING.md](./CONTRIBUTING.md).
