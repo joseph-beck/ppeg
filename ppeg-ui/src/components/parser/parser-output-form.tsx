@@ -9,6 +9,7 @@ import {
   DialogTrigger,
 } from '@shadcn/dialog'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupText } from '@shadcn/input-group'
+import { IconBinaryTree } from '@tabler/icons-react'
 import { ReactElement } from 'react'
 
 import { ParserOutputCopy } from './parser-output-copy'
@@ -29,7 +30,10 @@ const ParserOutput = (): ReactElement => {
         <InputGroupAddon align="block-end" className="border-t justify-end">
           <Dialog>
             <DialogTrigger asChild>
-              <InputGroupButton variant="default">view graph</InputGroupButton>
+              <InputGroupButton variant="default">
+                <IconBinaryTree />
+                view graph
+              </InputGroupButton>
             </DialogTrigger>
             <DialogContent className="sm:max-w-3/4">
               <DialogHeader>

@@ -77,7 +77,12 @@ impl<'a> Parser<'a> {
     rule_name: &'a str,
   ) -> Result<(&'a str, Option<CST<'a>>), ParserError<'a>> {
     // Creates a context that starts at the position 0 with the input.
-    let context = Context::new(0, input, 0, rule_name);
+    let context = Context::builder()
+      .pos(0)
+      .input(input)
+      .current_rule_name(rule_name)
+      .current_choice_depth(0)
+      .build();
 
     // Parse must always start with a named rule.
     // Simply call named rule here.
@@ -350,8 +355,8 @@ impl<'a> Parser<'a> {
               node.add(Some(n));
             }
 
-            let result = Ok((c, Some(node)));
-            self.packrat.insert((name, context.pos), result.clone());
+            let result = Ok((c.clone(), Some(node)));
+            self.packrat.insert((name, ctx.pos), result.clone());
 
             result
           }
