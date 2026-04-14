@@ -84,6 +84,10 @@ chmod +x .githooks/pre-commit
 chmod +x .githooks/pre-push
 ```
 
+### Makefile
+
+This project also contains a Makefile, to see available recipes run `make`
+
 ## Meta
 
 Using the meta syntax it is possible to define a grammar such that:
