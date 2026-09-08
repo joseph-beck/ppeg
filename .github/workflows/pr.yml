@@ -1,4 +1,4 @@
-name: Pull Request
+name: PR
 
 on:
   pull_request:
@@ -41,7 +41,7 @@ jobs:
           path: target/doc
 
   ui:
-    name: ui checks
+    name: UI checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
